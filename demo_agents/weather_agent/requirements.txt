@@ -1,0 +1,3 @@
+openai-agents
+pytest
+eval_type_backport  # cần cho Python 3.9 — SDK dùng cú pháp union `X | None` (3.10+ mới có native)

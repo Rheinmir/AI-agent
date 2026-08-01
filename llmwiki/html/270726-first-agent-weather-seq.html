@@ -1,0 +1,234 @@
+<title>270726 — Build agent đầu tiên: Weather MVP</title>
+<style>
+  :root {
+    --glass-bg: rgba(255,255,255,0.55);
+    --glass-bg-2: rgba(255,255,255,0.72);
+    --glass-border: rgba(255,255,255,0.6);
+    --edge-highlight: inset 0 1px 0 rgba(255,255,255,0.85), inset 0 0 0 1px rgba(255,255,255,0.35);
+    --ink: #1d2433;
+    --sub: #55607a;
+    --indigo: #4f5bd5;
+    --emerald: #16a37a;
+    --amber: #c07a12;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+    color: var(--ink);
+    background: linear-gradient(180deg,#f7fbff 0%, #eef3fb 35%, #e7edf9 100%);
+    min-height: 100vh;
+    padding: 32px 16px 80px;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; }
+  .titlebar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 16px;
+    border-radius: 14px 14px 0 0;
+    background: var(--glass-bg-2);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    box-shadow: var(--edge-highlight);
+    border: 1px solid var(--glass-border);
+    border-bottom: none;
+  }
+  .dot { width: 11px; height: 11px; border-radius: 50%; }
+  .dot.r { background: #ff5f57; } .dot.y { background: #febc2e; } .dot.g { background: #28c840; }
+  .titlebar .name { margin-left: 8px; font-size: 12px; color: var(--sub); }
+  .hero {
+    background: var(--glass-bg);
+    backdrop-filter: blur(22px) saturate(150%);
+    -webkit-backdrop-filter: blur(22px) saturate(150%);
+    border: 1px solid var(--glass-border);
+    border-radius: 0 0 20px 20px;
+    box-shadow: var(--edge-highlight), 0 20px 60px -30px rgba(30,40,80,0.35);
+    padding: 28px 28px 22px;
+    margin-bottom: 28px;
+  }
+  h1 { font-size: 22px; margin: 0 0 6px; }
+  .hero p { color: var(--sub); font-size: 14.5px; line-height: 1.6; margin: 6px 0 0; }
+  .badges { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+  .badge {
+    font-size: 11.5px; padding: 4px 10px; border-radius: 999px;
+    background: rgba(79,91,213,0.12); color: var(--indigo); font-weight: 600;
+    border: 1px solid rgba(79,91,213,0.25);
+  }
+  .card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(18px) saturate(150%);
+    -webkit-backdrop-filter: blur(18px) saturate(150%);
+    border: 1px solid var(--glass-border);
+    border-radius: 18px;
+    box-shadow: var(--edge-highlight), 0 16px 40px -28px rgba(30,40,80,0.3);
+    padding: 22px 24px;
+    margin-bottom: 22px;
+  }
+  .card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .card-head h2 { font-size: 16.5px; margin: 0; }
+  .agent-badge {
+    font-size: 11px; font-weight: 700; padding: 4px 11px; border-radius: 999px;
+    background: linear-gradient(180deg,#eef1ff, #dfe4ff);
+    color: var(--indigo); border: 1px solid rgba(79,91,213,0.3);
+  }
+  .diagram-box {
+    margin-top: 16px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.5);
+    box-shadow: var(--edge-highlight);
+    border: 1px solid rgba(255,255,255,0.55);
+    padding: 16px 18px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .lifelines { display: flex; justify-content: space-around; font-size: 12px; font-weight: 600; color: var(--sub); margin-bottom: 10px; }
+  .lifelines span { padding: 3px 10px; background: rgba(255,255,255,0.65); border-radius: 8px; border: 1px solid rgba(255,255,255,0.7); }
+  .msg-row { display: flex; align-items: center; gap: 10px; padding: 7px 4px; border-radius: 8px; transition: background .35s ease, transform .35s ease; }
+  .msg-row .arrow { font-size: 13px; width: 20px; text-align: center; }
+  .msg { flex: 1; font-size: 13px; opacity: 0.9; padding: 6px 10px; border-radius: 8px; border-left: 3px solid var(--indigo); background: rgba(79,91,213,0.06); }
+  .msg.add { border-left-color: var(--emerald); background: rgba(22,163,122,0.08); }
+  .msg.block { border-left-color: var(--amber); background: rgba(192,122,18,0.1); }
+  .msg-row.active { background: rgba(255,255,255,0.55); transform: translateX(2px); }
+  .msg-row.active .msg { opacity: 1; box-shadow: 0 2px 10px -4px rgba(30,40,80,0.35); }
+  .legend { display: flex; gap: 14px; font-size: 11.5px; color: var(--sub); margin-top: 10px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+  .legend .i-existing { background: var(--indigo); }
+  .legend .i-add { background: var(--emerald); }
+  .legend .i-block { background: var(--amber); }
+  .prose { font-size: 13.5px; line-height: 1.75; color: #313a4f; margin-top: 14px; }
+  .hint { font-size: 11px; color: var(--sub); margin-top: 10px; }
+  footer {
+    max-width: 980px; margin: 28px auto 0; font-size: 11px; color: var(--sub);
+    text-align: center; opacity: 0.8;
+  }
+  code.path { background: rgba(0,0,0,0.05); padding: 2px 6px; border-radius: 6px; }
+</style>
+
+<div class="wrap">
+  <div class="titlebar">
+    <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">270726-first-agent-weather-seq.html</span>
+  </div>
+  <div class="hero">
+    <h1>Build agent đầu tiên — Weather MVP</h1>
+    <p>Sơ đồ tuần tự cho 4 task hiện thực hóa 3 yếu tố nền tảng (Model, Tools, Instructions) từ tài liệu
+      "Hướng dẫn xây dựng Agent thực tế", dùng OpenAI Agents SDK. Mỗi khối bên dưới auto-loop highlight từng
+      bước — bấm vào khối để tạm dừng.</p>
+    <div class="badges">
+      <span class="badge">Task ID: T-260727-01</span>
+      <span class="badge">SPEC: 270726-first-agent-weather.md</span>
+      <span class="badge">Agent: Claude Code</span>
+    </div>
+  </div>
+
+  <!-- Task 1 -->
+  <div class="card">
+    <div class="card-head">
+      <h2>Task 1 — Scaffold thư mục + manifest</h2>
+      <span class="agent-badge">Claude Code</span>
+    </div>
+    <div class="diagram-box" data-task="1">
+      <div class="lifelines"><span>Dev</span><span>Claude Code</span><span>Filesystem</span></div>
+      <div class="msg-row"><span class="arrow">→</span><div class="msg">Dev: "build agent đầu tiên"</div></div>
+      <div class="msg-row"><span class="arrow">→</span><div class="msg">Claude Code kiểm tra repo hiện có (fact-check, không hỏi)</div></div>
+      <div class="msg-row"><span class="arrow">↳</span><div class="msg add">Tạo <code class="path">agents/weather_agent/</code></div></div>
+      <div class="msg-row"><span class="arrow">↳</span><div class="msg add">Tạo <code class="path">requirements.txt</code> (openai-agents)</div></div>
+      <div class="msg-row"><span class="arrow">↳</span><div class="msg add">Tạo <code class="path">.env.example</code> (OPENAI_API_KEY= để trống)</div></div>
+      <div class="legend"><span><i class="i-existing"></i>đã có</span><span><i class="i-add"></i>mới thêm</span><span><i class="i-block"></i>chặn/nhánh lỗi</span></div>
+    </div>
+    <p class="prose">Trước khi có bất kỳ agent nào, repo cần một chỗ đứng cho code ứng dụng tách biệt khỏi
+      wiki tri thức đã ingest. Bước này chỉ dựng khung thư mục và khai dependency, chưa viết logic — nhờ
+      vậy Task 2 không phải vừa viết code vừa quyết định cấu trúc thư mục cùng lúc. Không có nhánh rủi ro ở
+      bước này vì chỉ tạo file mới, không sửa gì đã tồn tại.</p>
+  </div>
+
+  <!-- Task 2 -->
+  <div class="card">
+    <div class="card-head">
+      <h2>Task 2 — Implement agent (model + tools + instructions)</h2>
+      <span class="agent-badge">Claude Code</span>
+    </div>
+    <div class="diagram-box" data-task="2">
+      <div class="lifelines"><span>agent.py</span><span>OpenAI Agents SDK</span><span>get_weather()</span></div>
+      <div class="msg-row"><span class="arrow">↳</span><div class="msg add">Agent(model="gpt-4o-mini", …) — chọn theo nguyên tắc chi phí/độ trễ</div></div>
+      <div class="msg-row"><span class="arrow">↳</span><div class="msg add">instructions: hành động rõ ràng + bao quát edge case</div></div>
+      <div class="msg-row"><span class="arrow">↳</span><div class="msg add">tools=[get_weather] — @function_tool</div></div>
+      <div class="msg-row"><span class="arrow">→</span><div class="msg">get_weather(city) tra dict mock cố định</div></div>
+      <div class="msg-row"><span class="arrow">⤷</span><div class="msg block">city không có trong dict → trả "không có dữ liệu", KHÔNG bịa số</div></div>
+      <div class="legend"><span><i class="i-existing"></i>đã có</span><span><i class="i-add"></i>mới thêm</span><span><i class="i-block"></i>chặn/nhánh lỗi</span></div>
+    </div>
+    <p class="prose">Đây là bước hiện thực hóa trực tiếp ba khái niệm vừa ingest: model được chọn theo
+      nguyên tắc "tối ưu chi phí và độ trễ" (không cần model mạnh nhất cho một tác vụ tra cứu đơn giản),
+      tool là một hàm Python thuần trả dữ liệu mock nên kiểm thử được mà không cần gọi LLM, và instructions
+      viết theo đúng bốn thực hành tốt đã ingest — đặc biệt nhánh amber (chặn/nhánh lỗi) xử lý rõ trường hợp
+      thành phố không có dữ liệu, để agent không tự bịa nhiệt độ khi không biết.</p>
+  </div>
+
+  <!-- Task 3 -->
+  <div class="card">
+    <div class="card-head">
+      <h2>Task 3 — Unit test offline cho tool</h2>
+      <span class="agent-badge">Claude Code</span>
+    </div>
+    <div class="diagram-box" data-task="3">
+      <div class="lifelines"><span>test_tool.py</span><span>get_weather()</span><span>pytest</span></div>
+      <div class="msg-row"><span class="arrow">→</span><div class="msg">gọi get_weather("Hà Nội") trực tiếp — không qua LLM</div></div>
+      <div class="msg-row"><span class="arrow">↳</span><div class="msg add">assert dữ liệu mock đúng định dạng</div></div>
+      <div class="msg-row"><span class="arrow">→</span><div class="msg">gọi get_weather("thành phố lạ")</div></div>
+      <div class="msg-row"><span class="arrow">⤷</span><div class="msg block">assert trả tín hiệu "không có dữ liệu" rõ ràng, không None âm thầm</div></div>
+      <div class="msg-row"><span class="arrow">✓</span><div class="msg add">pytest chạy xanh — không cần OPENAI_API_KEY</div></div>
+      <div class="legend"><span><i class="i-existing"></i>đã có</span><span><i class="i-add"></i>mới thêm</span><span><i class="i-block"></i>chặn/nhánh lỗi</span></div>
+    </div>
+    <p class="prose">Vì sandbox hiện tại không có OPENAI_API_KEY, phần duy nhất kiểm chứng được ngay bây giờ
+      — không phải chờ user cấp key — là logic của tool. Test này tách hẳn khỏi LLM nên chạy được vô điều
+      kiện, và đóng vai trò bằng chứng máy cho SC-004 trong SPEC, trong khi SC-001 đến SC-003 vẫn là tiêu
+      chí đo con người (đọc hiểu, chạy live, không bịa số liệu).</p>
+  </div>
+
+  <!-- Task 4 -->
+  <div class="card">
+    <div class="card-head">
+      <h2>Task 4 — README + run.py</h2>
+      <span class="agent-badge">Claude Code</span>
+    </div>
+    <div class="diagram-box" data-task="4">
+      <div class="lifelines"><span>User</span><span>run.py</span><span>Runner.run()</span></div>
+      <div class="msg-row"><span class="arrow">→</span><div class="msg">python run.py "Thời tiết ở Hà Nội thế nào?"</div></div>
+      <div class="msg-row"><span class="arrow">⤷</span><div class="msg block">thiếu OPENAI_API_KEY → báo lỗi rõ ràng, không traceback khó hiểu</div></div>
+      <div class="msg-row"><span class="arrow">↳</span><div class="msg add">có key → Runner.run(weather_agent, input) chạy vòng lặp thật</div></div>
+      <div class="msg-row"><span class="arrow">←</span><div class="msg">trả lời tự nhiên có nhắc nhiệt độ/thành phố</div></div>
+      <div class="legend"><span><i class="i-existing"></i>đã có</span><span><i class="i-add"></i>mới thêm</span><span><i class="i-block"></i>chặn/nhánh lỗi</span></div>
+    </div>
+    <p class="prose">README phải nói thật giới hạn của phiên build này: code đã sẵn sàng chạy, nhưng sandbox
+      không có OPENAI_API_KEY nên chưa ai chạy live được trong phiên này — người dùng cần tự thêm key riêng
+      vào <code class="path">.env</code>. Nhánh amber ở đây quan trọng: thay vì để chương trình crash với
+      traceback khó hiểu khi thiếu key, run.py chặn sớm và báo lỗi rõ ràng, để không ai hiểu nhầm rằng đã
+      chạy thử thành công khi thực ra mới chỉ verify offline qua Task 3.</p>
+  </div>
+
+  <p class="hint">Tổng số khối sơ đồ: 4 — khớp 4 task trong SPEC (270726-first-agent-weather.md). Bấm vào
+    một khối để tạm dừng vòng lặp highlight; bấm lại để tiếp tục.</p>
+</div>
+
+<footer>
+  /Users/admin/orca/projects/AI-agent/llmwiki/html/270726-first-agent-weather-seq.html
+</footer>
+
+<script>
+  document.querySelectorAll('.diagram-box').forEach(function (box) {
+    var rows = box.querySelectorAll('.msg-row');
+    var idx = 0;
+    var paused = false;
+    function tick() {
+      if (paused) return;
+      rows.forEach(function (r) { r.classList.remove('active'); });
+      rows[idx % rows.length].classList.add('active');
+      idx++;
+    }
+    var timer = setInterval(tick, 1100);
+    tick();
+    box.addEventListener('click', function () {
+      paused = !paused;
+      box.style.outline = paused ? '2px solid rgba(79,91,213,0.4)' : 'none';
+    });
+  });
+</script>
