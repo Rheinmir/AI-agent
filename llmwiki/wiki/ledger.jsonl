@@ -23,3 +23,8 @@
 {"ts": "2026-07-27T10:17:39", "session": "bdb1a446", "action": "modify", "target": "sources/draft/270726-first-agent-weather-PLAN.md", "tool": "Edit"}
 {"ts": "2026-07-27T10:18:49", "session": "bdb1a446", "action": "modify", "target": "sources/draft/270726-first-agent-weather-PLAN.md", "tool": "Edit"}
 {"ts": "2026-07-27T10:19:35", "session": "bdb1a446", "action": "add", "target": "draft/orca/270726-first-agent-weather-build.md", "tool": "Write"}
+{"ts": "2026-08-01T13:40:41", "session": "bdb1a446", "action": "add", "target": "sources/draft/010826-weather-agent-docs.md", "tool": "Write"}
+{"ts": "2026-08-01T13:41:58", "session": "bdb1a446", "action": "add", "target": "sources/evals/weather-known-city.md", "tool": "Write"}
+{"ts": "2026-08-01T13:42:03", "session": "bdb1a446", "action": "add", "target": "sources/evals/weather-case-insensitive.md", "tool": "Write"}
+{"ts": "2026-08-01T13:42:08", "session": "bdb1a446", "action": "add", "target": "sources/evals/weather-unknown-city.md", "tool": "Write"}
+{"ts": "2026-08-01T13:42:36", "session": "bdb1a446", "action": "add", "target": "draft/orca/010826-weather-agent-eval.md", "tool": "Write"}

@@ -1,0 +1,916 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Weather Agent MVP — Model, Tools, Instructions</title>
+<meta name="description" content="Docs site cho agent Python đầu tiên của dự án: 3 yếu tố nền tảng (Model, Tools, Instructions) và quy trình propose→plan→build.">
+<meta name="theme-color" content="#eaf2fd">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230a84ff'/%3E%3C/svg%3E">
+<script>(function(){try{var t=localStorage.getItem("weather-agent-docs-theme");
+if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}})();</script>
+<style>
+:root{
+  --glass-1: rgba(255,255,255,.55);
+  --glass-2: rgba(255,255,255,.7);
+  --glass-3: rgba(255,255,255,.88);
+  --blur-1: 24px; --blur-2: 8px; --blur-3: 4px;
+  --edge-hi: inset 0 1px 0 rgba(255,255,255,.85);
+  --border: rgba(30,90,170,.14);
+  --font-text: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', 'Roboto', 'Segoe UI', sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', 'Roboto', 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', ui-monospace, 'SFMono-Regular', Menlo, 'Roboto Mono', Consolas, monospace;
+  --ink: #0f0f12; --ink2: #4a4a55;
+}
+*{box-sizing:border-box}
+html{background:#e9f0fb;scrollbar-width:thin;scrollbar-color:transparent transparent;scroll-behavior:smooth}
+html.scrolling{scrollbar-color:rgba(10,132,255,.32) transparent}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{
+  margin:0;font-family:var(--font-text);color:var(--ink);
+  background:
+    radial-gradient(900px 500px at 12% -10%, rgba(10,132,255,.10), transparent 60%),
+    radial-gradient(700px 420px at 95% 15%, rgba(90,162,232,.08), transparent 55%),
+    linear-gradient(180deg,#f7fbff 0%,#eaf2fd 100%);
+  padding-left:200px;
+  transition:padding-left .28s cubic-bezier(.4,0,.2,1);
+}
+body::before{content:'';position:fixed;inset:-10%;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(640px 440px at 10% 14%,rgba(10,132,255,.22),transparent 65%),
+    radial-gradient(380px 460px at 4% 52%,rgba(48,176,199,.18),transparent 65%),
+    radial-gradient(540px 400px at 88% 10%,rgba(88,86,214,.13),transparent 60%),
+    radial-gradient(720px 500px at 74% 76%,rgba(48,176,199,.13),transparent 65%),
+    radial-gradient(480px 380px at 16% 86%,rgba(255,149,0,.12),transparent 60%);
+  animation:orbDrift 46s ease-in-out infinite alternate}
+@keyframes orbDrift{100%{transform:translate(2.2%,1.6%) scale(1.045)}}
+body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background-image:radial-gradient(rgba(30,90,170,.11) 1px,transparent 1.3px);
+  background-size:22px 22px;
+  mask-image:linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,.22))}
+h1,h2,h3,.logo{font-family:var(--font-display);letter-spacing:-.02em}
+p{font-size:13px;line-height:1.65;color:var(--ink2);text-wrap:pretty}
+.lead{font-size:14px}
+:focus-visible{outline:2px solid #0a84ff;outline-offset:2px;border-radius:8px}
+:focus:not(:focus-visible){outline:none}
+.skip-link{position:fixed;top:8px;left:8px;z-index:200;padding:8px 14px;border-radius:10px;
+  background:var(--glass-1);backdrop-filter:blur(var(--blur-1));border:1px solid var(--border);
+  transform:translateY(-150%);transition:transform .2s}
+.skip-link:focus-visible{transform:translateY(0)}
+section[id]{scroll-margin-top:24px}
+table, .diagram-box text, .mm .node .ct{font-variant-numeric:tabular-nums}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;
+    transition-duration:.001ms!important;scroll-behavior:auto!important}
+}
+
+/* ---------- Scrollbar overlay ---------- */
+::-webkit-scrollbar{width:11px;height:11px;background:transparent}
+::-webkit-scrollbar-track,::-webkit-scrollbar-track-piece,::-webkit-scrollbar-corner,::-webkit-scrollbar-button{background:transparent;border:0;box-shadow:none}
+::-webkit-scrollbar-thumb{background:transparent;border-radius:8px;border:3px solid transparent;background-clip:content-box;transition:background-color .25s ease}
+html.scrolling::-webkit-scrollbar-thumb, nav.scrolling::-webkit-scrollbar-thumb, ::-webkit-scrollbar-thumb:hover{background-color:rgba(10,132,255,.32)}
+::-webkit-scrollbar-thumb:active{background-color:rgba(10,132,255,.6)}
+
+/* ---------- Sidebar ---------- */
+nav{position:fixed;top:0;left:0;bottom:0;width:200px;z-index:100;
+  display:flex;flex-direction:column;align-items:stretch;gap:2px;padding:18px 12px;
+  background:linear-gradient(165deg,rgba(255,255,255,.46) 0%,rgba(255,255,255,.22) 48%,rgba(240,248,255,.34) 100%);
+  backdrop-filter:blur(var(--blur-1)) saturate(1.7) brightness(1.04);
+  -webkit-backdrop-filter:blur(var(--blur-1)) saturate(1.7) brightness(1.04);
+  border-right:1px solid rgba(255,255,255,.55);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 1px 0 0 rgba(255,255,255,.5),
+    inset -1px 0 0 rgba(30,90,170,.10),4px 0 24px rgba(30,90,170,.08);
+  overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none;
+  transition:transform .28s cubic-bezier(.4,0,.2,1)}
+nav::-webkit-scrollbar{width:0;height:0;display:none}
+nav>*{flex-shrink:0;position:relative}
+nav::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(220px 160px at 18% 4%,rgba(255,255,255,.55),transparent 70%),
+    linear-gradient(115deg,rgba(255,255,255,.28) 0%,transparent 28%,transparent 72%,rgba(255,255,255,.14) 100%)}
+nav .logo{margin:0 0 12px;padding:6px 10px;font-size:14px;font-weight:700;
+  background:linear-gradient(135deg,#0a84ff,#64b5f7);-webkit-background-clip:text;background-clip:text;color:transparent}
+nav a{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:10px;font-size:12px;
+  position:relative;overflow:hidden;text-decoration:none;color:var(--ink2)}
+nav a.active{color:#0a84ff;background:rgba(10,132,255,.08);font-weight:600}
+nav a .ic{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;flex-shrink:0}
+nav a .ic svg{width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+body.nav-collapsed nav{transform:translateX(-100%)}
+body.nav-collapsed{padding-left:0}
+@media(max-width:640px){body{padding-left:0}nav{box-shadow:0 8px 30px rgba(0,0,0,.14)}}
+
+.nav-toggle{position:fixed;top:12px;left:12px;z-index:120;width:32px;height:32px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;font-size:14px;color:#4a4a55;cursor:pointer;
+  background:linear-gradient(165deg,rgba(255,255,255,.5),rgba(255,255,255,.24));
+  backdrop-filter:blur(var(--blur-1)) saturate(1.7) brightness(1.04);
+  -webkit-backdrop-filter:blur(var(--blur-1)) saturate(1.7) brightness(1.04);
+  border:1px solid transparent;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.75),0 0 0 1px rgba(30,90,170,.08),0 2px 10px rgba(30,90,170,.12);
+  transition:opacity .2s,transform .28s cubic-bezier(.4,0,.2,1)}
+.nav-toggle:hover{color:#0a84ff}
+body:not(.nav-collapsed) .nav-toggle{opacity:0;pointer-events:none;transform:translateX(-6px)}
+.nav-close{position:absolute;top:10px;right:10px;width:26px;height:26px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;font-size:12px;color:#4a4a55;cursor:pointer;
+  background:rgba(0,0,0,.04);border:none;overflow:hidden}
+.nav-close:hover{color:#0a84ff;background:rgba(10,132,255,.10)}
+
+.ripple-ink{position:absolute;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.70) 0%,rgba(255,255,255,.28) 38%,rgba(10,132,255,.20) 72%,transparent 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 0 -10px 20px rgba(10,132,255,.12),0 0 14px rgba(10,132,255,.10);
+  backdrop-filter:blur(2px) saturate(1.25);-webkit-backdrop-filter:blur(2px) saturate(1.25);
+  transform:scale(0);opacity:1;animation:rippleGrow .6s cubic-bezier(.25,.46,.45,.94) forwards}
+@keyframes rippleGrow{55%{transform:scale(1);opacity:.75}100%{transform:scale(1.04);opacity:0}}
+
+.theme-row{position:sticky;bottom:-18px;margin-top:auto;display:flex;align-items:center;justify-content:space-between;
+  padding:11px 16px;border-top:1px solid rgba(30,90,170,.14);background:rgba(255,255,255,.4);backdrop-filter:blur(14px)}
+.theme-row .lbl{font-size:11.5px;color:var(--ink2)}
+.theme-switch .track{position:relative;width:50px;height:26px;border-radius:999px;background:rgba(0,0,0,.08);
+  display:flex;align-items:center;font-size:11px;cursor:pointer}
+.theme-switch .track::before{content:'☀️';position:absolute;left:6px}
+.theme-switch .track::after{content:'🌙';position:absolute;right:6px}
+.theme-switch .knob{position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;
+  box-shadow:0 1px 3px rgba(0,0,0,.3);transition:left .18s}
+.theme-switch.on .knob{left:26px}
+.theme-switch.on .track{background:rgba(10,132,255,.5)}
+
+/* ---------- Hero ---------- */
+main{display:block}
+.hero{max-width:1100px;margin:0 auto;padding:56px 24px 24px}
+.hero h1{font-size:clamp(26px,4vw,40px);text-wrap:balance;margin:0 0 10px;
+  background:linear-gradient(135deg,#0a84ff,#5aa2e8,#cfe3fb);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero .sub{font-size:14px;color:var(--ink2);max-width:640px}
+.hero .badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.hero .badge{font-size:11px;padding:4px 10px;border-radius:999px;background:rgba(10,132,255,.10);color:#0a84ff;font-weight:600}
+
+/* ---------- Mind map ---------- */
+.mm{overflow-x:auto;padding:14px 4px 6px;max-width:1100px;margin:0 auto 8px;padding-left:24px;padding-right:24px}
+.mm-canvas{position:relative;width:max-content}
+.mm-links{position:absolute;top:0;left:0;pointer-events:none;overflow:visible;z-index:0}
+.mm-links path{fill:none;stroke-width:2.2;opacity:.55;stroke-linecap:round}
+.mm .tree{position:relative;z-index:1}
+.mm .tree,.mm .children{display:flex;flex-direction:column;gap:9px;justify-content:center}
+.mm .row{display:flex;align-items:center;gap:48px;position:relative}
+.mm .children{position:relative}.mm .children.collapsed{display:none}
+.mm .node{position:relative;display:inline-flex;flex-direction:column;gap:1px;padding:7px 13px;border-radius:13px;cursor:default;white-space:nowrap;background:rgba(255,255,255,.72);backdrop-filter:blur(7px) saturate(1.1);border:1px solid var(--border);box-shadow:inset 0 1px 0 rgba(255,255,255,.85),0 3px 14px rgba(20,40,90,.07);transition:transform .12s}
+.mm .node.has-children{cursor:pointer}.mm .node:hover{transform:translateY(-1px)}
+.mm .node .nm{font-size:13px;font-weight:700;letter-spacing:-.01em}.mm .node .ds{font-size:10.5px;color:var(--ink2)}
+.mm .node .ct{font-size:10px;color:#fff;font-weight:700;padding:1px 7px;border-radius:999px;position:absolute;top:-8px;right:-8px;background:#0a84ff}
+.mm .node.has-children::after{content:'';position:absolute;right:-7px;top:50%;width:6px;height:6px;border-right:2px solid var(--ink2);border-bottom:2px solid var(--ink2);transform:translateY(-50%) rotate(-45deg);opacity:.5}
+.mm .node.collapsed-parent::after{transform:translateY(-50%) rotate(45deg)}
+.mm .node.root{background:linear-gradient(135deg,rgba(10,132,255,.16),rgba(88,86,214,.14));border-color:rgba(10,132,255,.4)}
+.mm .node.b-0{border-color:rgba(48,176,199,.4)}.mm .node.b-0 .nm{color:#30b0c7}.mm .node.b-0 .ct{background:#30b0c7}
+.mm .node.b-1{border-color:rgba(88,86,214,.4)}.mm .node.b-1 .nm{color:#5856d6}.mm .node.b-1 .ct{background:#5856d6}
+.mm .node.b-2{border-color:rgba(255,149,0,.4)}.mm .node.b-2 .nm{color:#f08c00}.mm .node.b-2 .ct{background:#ff9500}
+.mm .node.b-3{border-color:rgba(52,199,89,.4)}.mm .node.b-3 .nm{color:#28a745}.mm .node.b-3 .ct{background:#34c759}
+
+/* ---------- Sections ---------- */
+.section-bg{position:relative;overflow:visible}
+.section-bg::before{content:'';position:absolute;top:0;bottom:0;left:50%;width:100vw;transform:translateX(-50%);pointer-events:none}
+.section-inner{max-width:1100px;margin:0 auto;padding:64px 24px 72px}
+.section-header{margin-bottom:20px}
+.tag{display:inline-block;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;margin-bottom:10px}
+.section-header h2{font-size:21px;margin:0 0 8px;color:#1d1d1f}
+
+.card{background:var(--glass-2);backdrop-filter:blur(var(--blur-2)) saturate(1.1);
+  border:1px solid var(--border);border-radius:16px;box-shadow:var(--edge-hi),0 4px 20px rgba(20,40,90,.08);padding:20px}
+.content-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.card h4{font-size:13.5px;margin:0 0 8px}
+.card ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+.card li{font-size:12.5px;color:var(--ink2);padding-left:14px;position:relative}
+.card li::before{content:'›';position:absolute;left:0;font-weight:700}
+@media(max-width:700px){.content-grid{grid-template-columns:1fr}}
+
+.table-wrap{overflow-x:auto;margin-top:16px}
+table{width:100%;border-collapse:collapse;background:var(--glass-3);backdrop-filter:blur(var(--blur-3));
+  border:1px solid var(--border);border-radius:12px;overflow:hidden;font-size:12.5px}
+th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--border)}
+th{font-weight:700;color:#1d1d1f;background:rgba(255,255,255,.4)}
+tr:last-child td{border-bottom:none}
+code{font-family:var(--font-mono);font-size:11.5px;background:rgba(10,132,255,.08);padding:1px 5px;border-radius:5px}
+
+pre.code-block{font-family:var(--font-mono);font-size:12px;line-height:1.6;background:#12141c;color:#dbe4f3;
+  border-radius:12px;padding:16px 18px;overflow-x:auto;margin:14px 0}
+.code-wrap{position:relative}
+.code-copy{position:absolute;top:7px;right:7px;z-index:2;width:28px;height:26px;display:inline-flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,.1);color:#cbd5e1;border:1px solid rgba(255,255,255,.15);
+  border-radius:7px;cursor:pointer;opacity:0;transition:opacity .15s,background .15s,color .15s}
+.code-copy svg{width:14px;height:14px;display:block}
+.code-wrap:hover .code-copy{opacity:1}
+.code-copy:hover{background:rgba(255,255,255,.2);color:#fff}
+.code-copy.copied{background:rgba(16,185,129,.25);color:#6ee7b7;border-color:rgba(16,185,129,.45);opacity:1}
+@media(max-width:640px){.code-copy{opacity:1}}
+
+.foot-link{display:inline-block;margin-top:16px;font-size:12px;color:#0a84ff;text-decoration:none;font-family:var(--font-mono)}
+.foot-link:hover{text-decoration:underline}
+
+.ripple{position:absolute;border-radius:50%;pointer-events:none;transform:scale(0);opacity:.9;
+  background:radial-gradient(circle, rgba(255,255,255,.6) 0%, rgba(10,132,255,.22) 35%, transparent 70%);
+  box-shadow:0 0 0 1px rgba(255,255,255,.45);
+  animation:rippleWave .65s cubic-bezier(.2,.6,.3,1) forwards}
+@keyframes rippleWave{to{transform:scale(2.8);opacity:0}}
+
+.checklist{list-style:none;display:flex;flex-direction:column;gap:8px;padding:0;margin:14px 0}
+.checklist li{display:flex;align-items:flex-start;gap:10px;font-size:12.5px;color:var(--ink2);cursor:pointer}
+.checklist li::before{display:none}
+.checklist input[type="checkbox"]{width:16px;height:16px;border-radius:4px;border:1.5px solid #cbd5e1;
+  appearance:none;-webkit-appearance:none;cursor:pointer;flex-shrink:0;background:rgba(255,255,255,.8);margin-top:2px;transition:all .15s}
+.checklist input[type="checkbox"]:checked{background:#0a84ff;border-color:#0a84ff;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M13 4L6.5 11 3 7.5' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
+  background-size:contain}
+.checklist label{cursor:pointer;line-height:1.5}
+.checklist input[type="checkbox"]:checked + label{text-decoration:line-through;color:#94a3b8}
+
+/* ---------- Diagram box ---------- */
+.diagram-box{background:var(--glass-2);backdrop-filter:blur(var(--blur-2)) saturate(1.1);
+  border:1px solid var(--border);border-radius:16px;box-shadow:var(--edge-hi),0 4px 20px rgba(20,40,90,.08);
+  padding:24px;margin:24px 0;position:relative;overflow:hidden;display:flex;flex-direction:column;
+  resize:vertical;min-height:160px;transition:box-shadow .2s ease}
+.diagram-box:hover{box-shadow:var(--edge-hi),0 6px 28px rgba(20,40,90,.14)}
+.diagram-viewport{position:relative;flex:1 1 auto;width:100%;overflow:hidden;cursor:grab;touch-action:none}
+.diagram-viewport.grabbing{cursor:grabbing}
+.diagram-viewport svg{width:100%;height:auto;display:block;overflow:visible;transform-origin:0 0;will-change:transform;user-select:none;-webkit-user-select:none}
+.dnode{cursor:move}
+.dnode>rect{transition:filter .15s ease}
+.dnode:hover>rect:first-of-type{filter:drop-shadow(0 3px 8px rgba(0,0,0,.18))}
+.diagram-hint{position:absolute;top:8px;right:12px;z-index:5;font-size:10px;color:#4a4a55;
+  background:rgba(255,255,255,.75);border:1px solid rgba(0,0,0,.05);border-radius:20px;padding:3px 10px;white-space:nowrap;opacity:0;transition:opacity .2s;pointer-events:none}
+.diagram-box:hover .diagram-hint{opacity:.9}
+.diagram-reset{position:absolute;bottom:8px;right:10px;z-index:5;font-size:11px;
+  background:rgba(255,255,255,.85);border:1px solid rgba(0,0,0,.08);border-radius:8px;padding:3px 9px;cursor:pointer;color:#4a4a55;opacity:0;transition:opacity .2s}
+.diagram-box:hover .diagram-reset{opacity:1}
+.diagram-reset:hover{background:#fff;color:#0f0f12}
+.diagram-box::after{content:'';position:absolute;right:5px;bottom:5px;width:16px;height:16px;pointer-events:none;opacity:0;transition:opacity .25s ease;
+  clip-path:polygon(100% 0,100% 100%,0 100%);
+  background:repeating-linear-gradient(135deg,transparent 0 3.5px,rgba(10,132,255,.45) 3.5px 5px)}
+.diagram-box:hover::after{opacity:.85}
+.diagram-box::-webkit-resizer{display:none}
+
+@keyframes flowArrow{0%{stroke-dashoffset:20}100%{stroke-dashoffset:0}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+
+footer{max-width:1100px;margin:0 auto;padding:40px 24px 80px;font-size:11.5px;color:var(--ink2)}
+
+/* ---------- Section accent cycle ---------- */
+#sec-0 .tag{background:rgba(10,132,255,.10);color:#0a84ff}
+#sec-0 .card h4{color:#0a84ff}#sec-0 .card li::before{color:#0a84ff}
+.s-bg0::before{background:linear-gradient(180deg, rgba(10,132,255,.05) 0%, transparent 60%)}
+
+#sec-1 .tag{background:rgba(48,176,199,.10);color:#30b0c7}
+#sec-1 .card h4{color:#30b0c7}#sec-1 .card li::before{color:#30b0c7}
+.s-bg1::before{background:linear-gradient(180deg, rgba(48,176,199,.05) 0%, transparent 60%)}
+
+#sec-2 .tag{background:rgba(88,86,214,.10);color:#5856d6}
+#sec-2 .card h4{color:#5856d6}#sec-2 .card li::before{color:#5856d6}
+.s-bg2::before{background:linear-gradient(180deg, rgba(88,86,214,.05) 0%, transparent 60%)}
+
+#sec-3 .tag{background:rgba(52,199,89,.10);color:#34c759}
+#sec-3 .card h4{color:#28a745}#sec-3 .card li::before{color:#28a745}
+.s-bg3::before{background:linear-gradient(180deg, rgba(52,199,89,.05) 0%, transparent 60%)}
+
+#sec-4 .tag{background:rgba(255,149,0,.10);color:#ff9500}
+#sec-4 .card h4{color:#f08c00}#sec-4 .card li::before{color:#f08c00}
+.s-bg4::before{background:linear-gradient(180deg, rgba(255,149,0,.06) 0%, transparent 60%)}
+
+#sec-5 .tag{background:rgba(255,45,85,.10);color:#ff2d55}
+#sec-5 .card h4{color:#e0264b}#sec-5 .card li::before{color:#e0264b}
+.s-bg5::before{background:linear-gradient(180deg, rgba(255,45,85,.05) 0%, transparent 60%)}
+
+#sec-0 .section-header h2,#sec-1 .section-header h2,#sec-2 .section-header h2,
+#sec-3 .section-header h2,#sec-4 .section-header h2,#sec-5 .section-header h2{color:#1d1d1f}
+
+/* ---------- Dark mode ---------- */
+@media (prefers-color-scheme: dark){
+  html:not([data-theme=light]){background:#0c0f16}
+  html:not([data-theme=light]) body{color:#eef2f8;
+    background:radial-gradient(900px 500px at 12% -10%, rgba(10,132,255,.16), transparent 60%),
+      radial-gradient(700px 420px at 95% 15%, rgba(90,162,232,.10), transparent 55%),
+      linear-gradient(180deg,#12151d 0%,#0c0f16 100%)}
+  html:not([data-theme=light]) p{color:#a7b0c0}
+  html:not([data-theme=light]) nav{background:linear-gradient(165deg,rgba(30,34,46,.6) 0%,rgba(30,34,46,.4) 48%,rgba(20,28,42,.5) 100%);border-right-color:rgba(255,255,255,.08)}
+  html:not([data-theme=light]) .card,html:not([data-theme=light]) .diagram-box{background:rgba(30,34,46,.6);border-color:rgba(255,255,255,.08)}
+  html:not([data-theme=light]) table{background:rgba(24,28,38,.85);border-color:rgba(255,255,255,.08)}
+  html:not([data-theme=light]) th{background:rgba(255,255,255,.04);color:#eef2f8}
+  html:not([data-theme=light]) .section-header h2{color:#f2f4f8}
+  html:not([data-theme=light]) .hero .sub{color:#a7b0c0}
+  html:not([data-theme=light]) code{background:rgba(10,132,255,.16)}
+}
+html[data-theme=dark]{background:#0c0f16}
+html[data-theme=dark] body{color:#eef2f8;
+  background:radial-gradient(900px 500px at 12% -10%, rgba(10,132,255,.16), transparent 60%),
+    radial-gradient(700px 420px at 95% 15%, rgba(90,162,232,.10), transparent 55%),
+    linear-gradient(180deg,#12151d 0%,#0c0f16 100%)}
+html[data-theme=dark] p{color:#a7b0c0}
+html[data-theme=dark] nav{background:linear-gradient(165deg,rgba(30,34,46,.6) 0%,rgba(30,34,46,.4) 48%,rgba(20,28,42,.5) 100%);border-right-color:rgba(255,255,255,.08)}
+html[data-theme=dark] .card,html[data-theme=dark] .diagram-box{background:rgba(30,34,46,.6);border-color:rgba(255,255,255,.08)}
+html[data-theme=dark] table{background:rgba(24,28,38,.85);border-color:rgba(255,255,255,.08)}
+html[data-theme=dark] th{background:rgba(255,255,255,.04);color:#eef2f8}
+html[data-theme=dark] .section-header h2{color:#f2f4f8}
+html[data-theme=dark] .hero .sub{color:#a7b0c0}
+html[data-theme=dark] code{background:rgba(10,132,255,.16)}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<nav>
+  <div class="logo">Weather Agent</div>
+  <a href="#sec-0" class="active"><span class="ic" style="background:#0a84ff"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg></span>Tổng quan</a>
+  <a href="#sec-1"><span class="ic" style="background:#30b0c7"><svg viewBox="0 0 24 24"><path d="M12 2a4 4 0 0 1 4 4v3a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z"/><path d="M6 11v1a6 6 0 0 0 12 0v-1"/><path d="M12 18v4M9 22h6"/></svg></span>Model</a>
+  <a href="#sec-2"><span class="ic" style="background:#5856d6"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.1-3.1a5 5 0 0 1-6.9 6.9l-6.4 6.4a2 2 0 0 1-2.8-2.8l6.4-6.4a5 5 0 0 1 6.9-6.9z"/></svg></span>Tools</a>
+  <a href="#sec-3"><span class="ic" style="background:#34c759"><svg viewBox="0 0 24 24"><path d="M4 19h16M4 5h16M4 12h10"/></svg></span>Instructions</a>
+  <a href="#sec-4"><span class="ic" style="background:#ff9500"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>Quy trình</a>
+  <a href="#sec-5"><span class="ic" style="background:#ff2d55"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>Kết quả</a>
+</nav>
+
+<main id="main">
+<div class="hero">
+  <h1>Weather Agent — MVP đầu tiên</h1>
+  <p class="sub">Agent Python đầu tiên của dự án, dựng từ tài liệu "Hướng dẫn xây dựng Agent thực tế" (OpenAI) đã ingest — minh hoạ đúng ba yếu tố nền tảng: <strong>Model</strong>, <strong>Tools</strong>, <strong>Instructions</strong>, dùng OpenAI Agents SDK thật.</p>
+  <div class="badges">
+    <span class="badge">gpt-4o-mini</span>
+    <span class="badge">openai-agents SDK</span>
+    <span class="badge">4/4 test pass</span>
+    <span class="badge">task T-260727-01</span>
+  </div>
+</div>
+
+<div class="mm" role="group" aria-label="Sơ đồ tư duy tóm tắt trang">
+  <div class="mm-canvas"><svg class="mm-links" role="img"><title>Đường nối giữa các nhánh sơ đồ tư duy</title></svg><div class="tree">
+    <div class="row">
+      <div class="node root has-children"><span class="nm">Weather Agent MVP</span><span class="ds">tổng quan trang này</span><span class="ct">4</span></div>
+      <div class="children">
+        <div class="row">
+          <div class="node b-0 cat has-children"><span class="nm">3 yếu tố nền tảng</span><span class="ds">Model · Tools · Instructions</span><span class="ct">3</span></div>
+          <div class="children">
+            <div class="row"><div class="node b-0 leaf"><span class="nm">Model</span><span class="ds">gpt-4o-mini</span></div></div>
+            <div class="row"><div class="node b-0 leaf"><span class="nm">Tools</span><span class="ds">get_weather (@function_tool)</span></div></div>
+            <div class="row"><div class="node b-0 leaf"><span class="nm">Instructions</span><span class="ds">luôn gọi tool, không bịa số liệu</span></div></div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="node b-1 cat has-children"><span class="nm">Quy trình</span><span class="ds">propose → gate → plan → build</span><span class="ct">4</span></div>
+          <div class="children">
+            <div class="row"><div class="node b-1 leaf"><span class="nm">ingest</span><span class="ds">PDF → 13 trang wiki</span></div></div>
+            <div class="row"><div class="node b-1 leaf"><span class="nm">propose</span><span class="ds">SPEC + sequence diagram</span></div></div>
+            <div class="row"><div class="node b-1 leaf"><span class="nm">plan</span><span class="ds">4 task chi tiết, TDD</span></div></div>
+            <div class="row"><div class="node b-1 leaf"><span class="nm">build</span><span class="ds">code thật + test</span></div></div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="node b-2 cat has-children"><span class="nm">Lỗi thật gặp phải</span><span class="ds">bắt được lúc chạy, không phải giả định</span><span class="ct">4</span></div>
+          <div class="children">
+            <div class="row"><div class="node b-2 leaf"><span class="nm">Đụng tên package</span><span class="ds">agents/ → demo_agents/</span></div></div>
+            <div class="row"><div class="node b-2 leaf"><span class="nm">Python 3.9 union syntax</span><span class="ds">eval_type_backport</span></div></div>
+            <div class="row"><div class="node b-2 leaf"><span class="nm">Dấu tiếng Việt</span><span class="ds">.lower() không bỏ dấu</span></div></div>
+            <div class="row"><div class="node b-2 leaf"><span class="nm">ModuleNotFoundError</span><span class="ds">chạy bằng python -m</span></div></div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="node b-3 cat has-children"><span class="nm">Kết quả</span><span class="ds">bằng chứng máy</span><span class="ct">2</span></div>
+          <div class="children">
+            <div class="row"><div class="node b-3 leaf"><span class="nm">pytest</span><span class="ds">4 passed, offline</span></div></div>
+            <div class="row"><div class="node b-3 leaf"><span class="nm">Giới hạn</span><span class="ds">chưa chạy live — thiếu OPENAI_API_KEY</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div></div>
+</div>
+
+<!-- SECTION 0 — Tổng quan -->
+<section id="sec-0" class="section-bg s-bg0">
+<div class="section-inner">
+  <div class="section-header">
+    <span class="tag">00 · Tổng quan</span>
+    <h2>Vì sao đây là một "agent", không phải một script</h2>
+    <p class="lead">Theo <a href="../wiki/concepts/agent.md">concepts/agent.md</a>, một agent tận dụng LLM để tự quản lý việc thực thi workflow và có quyền truy cập tools để hành động — ở dạng nền tảng nhất, nó gồm đúng ba thành phần dưới đây.</p>
+  </div>
+
+  <div class="diagram-box">
+    <svg viewBox="0 0 900 220" role="img">
+      <title>Ba yếu tố nền tảng hợp thành một Agent</title>
+      <defs><marker id="arrow0" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#0a84ff"/></marker></defs>
+      <rect x="40" y="30" width="180" height="60" rx="8" fill="rgba(255,255,255,.7)" stroke="#0a84ff" stroke-width="2"/>
+      <text x="130" y="55" text-anchor="middle" font-size="11" font-weight="600" fill="#0f0f12">Model</text>
+      <text x="130" y="72" text-anchor="middle" font-size="9" fill="#4a4a55">gpt-4o-mini</text>
+
+      <rect x="40" y="120" width="180" height="60" rx="8" fill="rgba(255,255,255,.7)" stroke="#5856d6" stroke-width="2"/>
+      <text x="130" y="145" text-anchor="middle" font-size="11" font-weight="600" fill="#0f0f12">Tools</text>
+      <text x="130" y="162" text-anchor="middle" font-size="9" fill="#4a4a55">get_weather()</text>
+
+      <rect x="40" y="30" width="180" height="60" rx="8" fill="transparent"/>
+      <rect x="340" y="30" width="180" height="150" rx="8" fill="rgba(255,255,255,.7)" stroke="#34c759" stroke-width="2"/>
+      <text x="430" y="100" text-anchor="middle" font-size="11" font-weight="600" fill="#0f0f12">Instructions</text>
+      <text x="430" y="117" text-anchor="middle" font-size="9" fill="#4a4a55">guardrail: luôn gọi tool</text>
+      <text x="430" y="132" text-anchor="middle" font-size="9" fill="#4a4a55">trước khi trả lời</text>
+
+      <rect x="660" y="75" width="180" height="60" rx="8" fill="rgba(10,132,255,.14)" stroke="#0a84ff" stroke-width="2" class="pulse"/>
+      <text x="750" y="100" text-anchor="middle" font-size="12" font-weight="700" fill="#0a84ff">Weather Agent</text>
+      <text x="750" y="117" text-anchor="middle" font-size="9" fill="#4a4a55">Agent(...)</text>
+
+      <line x1="220" y1="60" x2="330" y2="90" stroke="#0a84ff" stroke-width="2" stroke-dasharray="6 4" class="flow" marker-end="url(#arrow0)"/>
+      <line x1="220" y1="150" x2="330" y2="110" stroke="#5856d6" stroke-width="2" stroke-dasharray="6 4" class="flow" marker-end="url(#arrow0)"/>
+      <line x1="520" y1="105" x2="650" y2="105" stroke="#34c759" stroke-width="2" stroke-dasharray="6 4" class="flow" marker-end="url(#arrow0)"/>
+    </svg>
+  </div>
+
+  <div class="content-grid">
+    <div class="card">
+      <h4>Hai đặc điểm cốt lõi của agent</h4>
+      <ul>
+        <li>Dùng LLM để quản lý thực thi + ra quyết định của workflow, biết khi nào hoàn tất hoặc cần dừng lại chuyển quyền cho người dùng.</li>
+        <li>Có quyền truy cập nhiều tools để vừa thu thập ngữ cảnh vừa hành động, luôn trong guardrails đã định.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Weather agent thể hiện điều đó thế nào</h4>
+      <ul>
+        <li>Model chọn có nên gọi tool và diễn giải kết quả tool trả về.</li>
+        <li>Tool duy nhất <code>get_weather</code> là nguồn sự thật — instructions cấm agent tự bịa số liệu.</li>
+        <li>Nhánh "không có dữ liệu" (<code>NO_DATA:</code>) là một guardrail nhỏ, xử lý edge case rõ ràng.</li>
+      </ul>
+    </div>
+  </div>
+  <a class="foot-link" href="../wiki/concepts/agent.md">Chi tiết: wiki/concepts/agent.md</a>
+</div>
+</section>
+
+<!-- SECTION 1 — Model -->
+<section id="sec-1" class="section-bg s-bg1">
+<div class="section-inner">
+  <div class="section-header">
+    <span class="tag">01 · Model</span>
+    <h2>Chọn model đúng độ khó của tác vụ</h2>
+    <p class="lead">Model cung cấp năng lực suy luận và ra quyết định cho agent. Không phải tác vụ nào cũng cần model mạnh nhất — weather agent chỉ cần phân loại intent + gọi đúng tool, nên <code>gpt-4o-mini</code> là đủ.</p>
+  </div>
+
+  <div class="diagram-box">
+    <svg viewBox="0 0 900 200" role="img">
+      <title>Quy trình chọn model: baseline mạnh nhất → hạ dần theo eval</title>
+      <defs><marker id="arrow1" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#30b0c7"/></marker></defs>
+      <rect x="40" y="70" width="180" height="60" rx="8" fill="rgba(255,255,255,.7)" stroke="#30b0c7" stroke-width="2"/>
+      <text x="130" y="95" text-anchor="middle" font-size="11" font-weight="600" fill="#0f0f12">1. Prototype</text>
+      <text x="130" y="112" text-anchor="middle" font-size="9" fill="#4a4a55">model mạnh nhất, mọi tác vụ</text>
+
+      <rect x="340" y="70" width="180" height="60" rx="8" fill="rgba(255,255,255,.7)" stroke="#30b0c7" stroke-width="2"/>
+      <text x="430" y="95" text-anchor="middle" font-size="11" font-weight="600" fill="#0f0f12">2. Đo baseline</text>
+      <text x="430" y="112" text-anchor="middle" font-size="9" fill="#4a4a55">evals cho từng tác vụ</text>
+
+      <rect x="640" y="70" width="200" height="60" rx="8" fill="rgba(48,176,199,.14)" stroke="#30b0c7" stroke-width="2" class="pulse"/>
+      <text x="740" y="95" text-anchor="middle" font-size="11" font-weight="700" fill="#30b0c7">3. gpt-4o-mini</text>
+      <text x="740" y="112" text-anchor="middle" font-size="9" fill="#4a4a55">đủ tốt, rẻ hơn, nhanh hơn</text>
+
+      <line x1="220" y1="100" x2="330" y2="100" stroke="#30b0c7" stroke-width="2" stroke-dasharray="6 4" class="flow" marker-end="url(#arrow1)"/>
+      <line x1="520" y1="100" x2="630" y2="100" stroke="#30b0c7" stroke-width="2" stroke-dasharray="6 4" class="flow" marker-end="url(#arrow1)"/>
+    </svg>
+  </div>
+
+  <div class="content-grid">
+    <div class="card">
+      <h4>Ba nguyên tắc chọn model</h4>
+      <ul>
+        <li>Thiết lập evals để tạo baseline hiệu năng.</li>
+        <li>Tập trung đạt độ chính xác bằng model tốt nhất hiện có trước.</li>
+        <li>Tối ưu chi phí/độ trễ bằng cách hạ xuống model nhỏ hơn khi vẫn đạt kết quả chấp nhận được.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Trong code</h4>
+      <pre class="code-block">weather_agent = Agent(
+    name="Weather agent",
+    model="gpt-4o-mini",
+    instructions=INSTRUCTIONS,
+    tools=[get_weather],
+)</pre>
+    </div>
+  </div>
+  <a class="foot-link" href="../wiki/concepts/model-selection.md">Chi tiết: wiki/concepts/model-selection.md</a>
+</div>
+</section>
+
+<!-- SECTION 2 — Tools -->
+<section id="sec-2" class="section-bg s-bg2">
+<div class="section-inner">
+  <div class="section-header">
+    <span class="tag">02 · Tools</span>
+    <h2>get_weather — tool duy nhất, tách khỏi SDK để test được</h2>
+    <p class="lead">Tools mở rộng năng lực agent bằng API. Điểm quyết định trong build: tách logic thuần <code>_get_weather_impl</code> khỏi wrapper <code>@function_tool</code>, để unit test chạy offline không cần <code>OPENAI_API_KEY</code>.</p>
+  </div>
+
+  <div class="diagram-box">
+    <svg viewBox="0 0 900 200" role="img">
+      <title>Luồng gọi tool get_weather từ input tới output</title>
+      <defs><marker id="arrow2" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#5856d6"/></marker></defs>
+      <rect x="30" y="70" width="160" height="60" rx="8" fill="rgba(255,255,255,.7)" stroke="#5856d6" stroke-width="2"/>
+      <text x="110" y="95" text-anchor="middle" font-size="11" font-weight="600" fill="#0f0f12">city: str</text>
+      <text x="110" y="112" text-anchor="middle" font-size="9" fill="#4a4a55">"  HÀ NỘI  "</text>
+
+      <rect x="270" y="70" width="180" height="60" rx="8" fill="rgba(255,255,255,.7)" stroke="#5856d6" stroke-width="2"/>
+      <text x="360" y="90" text-anchor="middle" font-size="10.5" font-weight="600" fill="#0f0f12">_normalize()</text>
+      <text x="360" y="105" text-anchor="middle" font-size="9" fill="#4a4a55">.strip().lower()</text>
+      <text x="360" y="119" text-anchor="middle" font-size="9" fill="#4a4a55">→ "hà nội"</text>
+
+      <rect x="530" y="70" width="180" height="60" rx="8" fill="rgba(255,255,255,.7)" stroke="#5856d6" stroke-width="2"/>
+      <text x="620" y="90" text-anchor="middle" font-size="10.5" font-weight="600" fill="#0f0f12">_WEATHER_DATA</text>
+      <text x="620" y="105" text-anchor="middle" font-size="9" fill="#4a4a55">dict lookup</text>
+      <text x="620" y="119" text-anchor="middle" font-size="9" fill="#4a4a55">key có dấu</text>
+
+      <rect x="740" y="30" width="140" height="46" rx="8" fill="rgba(88,86,214,.14)" stroke="#5856d6" stroke-width="2" class="pulse"/>
+      <text x="810" y="52" text-anchor="middle" font-size="9.5" font-weight="700" fill="#5856d6">hit</text>
+      <text x="810" y="66" text-anchor="middle" font-size="8.5" fill="#4a4a55">"Hà Nội: 29°C..."</text>
+
+      <rect x="740" y="120" width="140" height="46" rx="8" fill="rgba(255,45,85,.10)" stroke="#5856d6" stroke-width="2"/>
+      <text x="810" y="142" text-anchor="middle" font-size="9.5" font-weight="700" fill="#e0264b">miss</text>
+      <text x="810" y="156" text-anchor="middle" font-size="8.5" fill="#4a4a55">"NO_DATA:&lt;city&gt;"</text>
+
+      <line x1="190" y1="100" x2="260" y2="100" stroke="#5856d6" stroke-width="2" stroke-dasharray="6 4" class="flow" marker-end="url(#arrow2)"/>
+      <line x1="450" y1="100" x2="520" y2="100" stroke="#5856d6" stroke-width="2" stroke-dasharray="6 4" class="flow" marker-end="url(#arrow2)"/>
+      <line x1="710" y1="85" x2="735" y2="55" stroke="#5856d6" stroke-width="2" stroke-dasharray="6 4" class="flow" marker-end="url(#arrow2)"/>
+      <line x1="710" y1="115" x2="735" y2="140" stroke="#5856d6" stroke-width="2" stroke-dasharray="6 4" class="flow" marker-end="url(#arrow2)"/>
+    </svg>
+  </div>
+
+  <div class="content-grid">
+    <div class="card">
+      <h4>Ba loại tools (theo tài liệu ingest)</h4>
+      <ul>
+        <li><strong>Data</strong> — truy xuất ngữ cảnh (weather agent: <code>get_weather</code> tra dữ liệu mock).</li>
+        <li><strong>Action</strong> — tương tác hệ thống để hành động (không dùng trong MVP này).</li>
+        <li><strong>Orchestration</strong> — agent làm tool cho agent khác (ngoài phạm vi MVP, xem <a href="../wiki/concepts/manager-pattern.md">manager-pattern</a>).</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Vì sao tách hàm thuần</h4>
+      <ul>
+        <li><code>_get_weather_impl</code> không phụ thuộc SDK → test được bằng pytest thuần, không cần API key.</li>
+        <li><code>@function_tool</code> chỉ là wrapper mỏng gọi lại hàm thuần — giữ một nguồn logic duy nhất.</li>
+        <li>Bug thật bắt được nhờ cách tách này: <code>.lower()</code> không bỏ dấu tiếng Việt, lộ ra ngay khi verify offline.</li>
+      </ul>
+    </div>
+  </div>
+  <a class="foot-link" href="../wiki/concepts/tools.md">Chi tiết: wiki/concepts/tools.md</a>
+</div>
+</section>
+
+<!-- SECTION 3 — Instructions -->
+<section id="sec-3" class="section-bg s-bg3">
+<div class="section-inner">
+  <div class="section-header">
+    <span class="tag">03 · Instructions</span>
+    <h2>Guardrail bằng lời: không bao giờ bịa số liệu</h2>
+    <p class="lead">Instructions là hướng dẫn + guardrail xác định cách agent hành xử. Điểm mấu chốt của weather agent: bắt buộc gọi tool trước khi trả lời, và xử lý rõ ràng nhánh không có dữ liệu.</p>
+  </div>
+
+  <div class="diagram-box">
+    <svg viewBox="0 0 900 200" role="img">
+      <title>Instructions dẫn hai nhánh xử lý: có dữ liệu và không có dữ liệu</title>
+      <defs><marker id="arrow3" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#34c759"/></marker></defs>
+      <rect x="30" y="70" width="190" height="60" rx="8" fill="rgba(255,255,255,.7)" stroke="#34c759" stroke-width="2"/>
+      <text x="125" y="95" text-anchor="middle" font-size="11" font-weight="600" fill="#0f0f12">Câu hỏi người dùng</text>
+      <text x="125" y="112" text-anchor="middle" font-size="9" fill="#4a4a55">"Thời tiết ở Hà Nội?"</text>
+
+      <rect x="280" y="70" width="190" height="60" rx="8" fill="rgba(52,199,89,.14)" stroke="#34c759" stroke-width="2" class="pulse"/>
+      <text x="375" y="90" text-anchor="middle" font-size="10.5" font-weight="700" fill="#28a745">Instructions</text>
+      <text x="375" y="106" text-anchor="middle" font-size="9" fill="#4a4a55">"luôn gọi get_weather</text>
+      <text x="375" y="120" text-anchor="middle" font-size="9" fill="#4a4a55">trước khi trả lời"</text>
+
+      <rect x="580" y="30" width="200" height="46" rx="8" fill="rgba(255,255,255,.7)" stroke="#34c759" stroke-width="2"/>
+      <text x="680" y="52" text-anchor="middle" font-size="9.5" font-weight="600" fill="#0f0f12">kết quả có dữ liệu</text>
+      <text x="680" y="66" text-anchor="middle" font-size="8.5" fill="#4a4a55">→ trả lời trực tiếp</text>
+
+      <rect x="580" y="120" width="200" height="50" rx="8" fill="rgba(255,45,85,.10)" stroke="#34c759" stroke-width="2"/>
+      <text x="680" y="140" text-anchor="middle" font-size="9.5" font-weight="600" fill="#e0264b">bắt đầu bằng NO_DATA:</text>
+      <text x="680" y="154" text-anchor="middle" font-size="8.5" fill="#4a4a55">→ nói rõ không có dữ liệu, không đoán</text>
+
+      <line x1="220" y1="100" x2="270" y2="100" stroke="#34c759" stroke-width="2" stroke-dasharray="6 4" class="flow" marker-end="url(#arrow3)"/>
+      <line x1="470" y1="90" x2="570" y2="55" stroke="#34c759" stroke-width="2" stroke-dasharray="6 4" class="flow" marker-end="url(#arrow3)"/>
+      <line x1="470" y1="110" x2="570" y2="140" stroke="#34c759" stroke-width="2" stroke-dasharray="6 4" class="flow" marker-end="url(#arrow3)"/>
+    </svg>
+  </div>
+
+  <div class="content-grid">
+    <div class="card">
+      <h4>Thực hành tốt đã áp dụng</h4>
+      <ul>
+        <li>Định nghĩa hành động rõ ràng: "luôn gọi tool trước khi trả lời".</li>
+        <li>Bao quát edge case: nhánh <code>NO_DATA:</code> có hướng dẫn xử lý riêng, không để model tự suy diễn.</li>
+        <li>Cấm rõ ràng hành vi không mong muốn: "không bao giờ tự bịa nhiệt độ hay tình trạng thời tiết".</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>INSTRUCTIONS thật trong agent.py</h4>
+      <pre class="code-block">"Bạn là weather agent. Luôn gọi tool get_weather
+để lấy dữ liệu trước khi trả lời — không bao giờ
+tự bịa nhiệt độ hay tình trạng thời tiết.
+Nếu kết quả tool bắt đầu bằng 'NO_DATA:', hãy nói
+rõ với người dùng là bạn không có dữ liệu thời tiết
+cho thành phố đó, và đừng đoán số liệu thay thế."</pre>
+    </div>
+  </div>
+  <a class="foot-link" href="../wiki/concepts/instructions.md">Chi tiết: wiki/concepts/instructions.md</a>
+</div>
+</section>
+
+<!-- SECTION 4 — Quy trình -->
+<section id="sec-4" class="section-bg s-bg4">
+<div class="section-inner">
+  <div class="section-header">
+    <span class="tag">04 · Quy trình</span>
+    <h2>propose → gate → plan → build, và 4 lỗi thật gặp phải</h2>
+    <p class="lead">Toàn bộ do Claude Code thực hiện trong một phiên, gate qua <code>AskUserQuestion</code> thay vì orchestration đầy đủ vì đây là quyết định kiến trúc + code nền tảng đầu tiên của repo.</p>
+  </div>
+
+  <div class="diagram-box">
+    <svg viewBox="0 0 900 220" role="img">
+      <title>Bốn task thi hành theo PLAN, từ scaffold tới README</title>
+      <defs><marker id="arrow4" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#ff9500"/></marker></defs>
+      <rect x="20" y="80" width="190" height="60" rx="8" fill="rgba(255,255,255,.7)" stroke="#ff9500" stroke-width="2"/>
+      <text x="115" y="105" text-anchor="middle" font-size="10.5" font-weight="600" fill="#0f0f12">Task 1 — Scaffold</text>
+      <text x="115" y="121" text-anchor="middle" font-size="8.5" fill="#4a4a55">package + manifest</text>
+
+      <rect x="240" y="80" width="190" height="60" rx="8" fill="rgba(255,255,255,.7)" stroke="#ff9500" stroke-width="2"/>
+      <text x="335" y="105" text-anchor="middle" font-size="10.5" font-weight="600" fill="#0f0f12">Task 2 — agent.py</text>
+      <text x="335" y="121" text-anchor="middle" font-size="8.5" fill="#4a4a55">model + tools + instructions</text>
+
+      <rect x="460" y="80" width="190" height="60" rx="8" fill="rgba(255,255,255,.7)" stroke="#ff9500" stroke-width="2"/>
+      <text x="555" y="105" text-anchor="middle" font-size="10.5" font-weight="600" fill="#0f0f12">Task 3 — test_tool</text>
+      <text x="555" y="121" text-anchor="middle" font-size="8.5" fill="#4a4a55">unit test offline</text>
+
+      <rect x="680" y="80" width="190" height="60" rx="8" fill="rgba(255,149,0,.14)" stroke="#ff9500" stroke-width="2" class="pulse"/>
+      <text x="775" y="105" text-anchor="middle" font-size="10.5" font-weight="700" fill="#f08c00">Task 4 — README+CLI</text>
+      <text x="775" y="121" text-anchor="middle" font-size="8.5" fill="#4a4a55">run.py + test lỗi thiếu key</text>
+
+      <line x1="210" y1="110" x2="230" y2="110" stroke="#ff9500" stroke-width="2" stroke-dasharray="6 4" class="flow" marker-end="url(#arrow4)"/>
+      <line x1="430" y1="110" x2="450" y2="110" stroke="#ff9500" stroke-width="2" stroke-dasharray="6 4" class="flow" marker-end="url(#arrow4)"/>
+      <line x1="650" y1="110" x2="670" y2="110" stroke="#ff9500" stroke-width="2" stroke-dasharray="6 4" class="flow" marker-end="url(#arrow4)"/>
+    </svg>
+  </div>
+
+  <div class="content-grid">
+    <div class="card">
+      <h4>4 lỗi thật, không phải giả định trước</h4>
+      <ul>
+        <li><strong>Đụng tên package</strong> — thư mục <code>agents/</code> trùng tên import của SDK <code>openai-agents</code> → đổi thành <code>demo_agents/</code>.</li>
+        <li><strong>Python 3.9 thiếu union syntax</strong> <code>X | None</code> mà SDK dùng nội bộ → thêm <code>eval_type_backport</code>.</li>
+        <li><strong><code>.lower()</code> không bỏ dấu tiếng Việt</strong> — key dict phải giữ dấu để khớp input đã normalize.</li>
+        <li><strong><code>ModuleNotFoundError</code></strong> khi chạy script trực tiếp — Python không tự thêm repo root vào <code>sys.path</code> → chuyển sang <code>python -m demo_agents.weather_agent.run</code>.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Checklist quy trình đã hoàn tất</h4>
+      <ul class="checklist">
+        <li><input type="checkbox" id="c1" checked disabled><label for="c1">ingest — 13 trang wiki từ PDF</label></li>
+        <li><input type="checkbox" id="c2" checked disabled><label for="c2">propose — SPEC + sequence diagram</label></li>
+        <li><input type="checkbox" id="c3" checked disabled><label for="c3">gate — duyệt qua AskUserQuestion</label></li>
+        <li><input type="checkbox" id="c4" checked disabled><label for="c4">plan — 4 task TDD chi tiết</label></li>
+        <li><input type="checkbox" id="c5" checked disabled><label for="c5">build — code thật, 4/4 test pass</label></li>
+      </ul>
+    </div>
+  </div>
+  <a class="foot-link" href="../wiki/sources/draft/270726-first-agent-weather-PLAN.md">Chi tiết: wiki/sources/draft/270726-first-agent-weather-PLAN.md</a>
+</div>
+</section>
+
+<!-- SECTION 5 — Kết quả -->
+<section id="sec-5" class="section-bg s-bg5">
+<div class="section-inner">
+  <div class="section-header">
+    <span class="tag">05 · Kết quả</span>
+    <h2>Bằng chứng máy: 4/4 test pass</h2>
+    <p class="lead"><code>python3 -m pytest demo_agents/weather_agent/ -q</code> → <strong>4 passed</strong>. Chưa chạy live (gọi LLM thật) vì sandbox không có <code>OPENAI_API_KEY</code>.</p>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>File</th><th>Vai trò</th></tr></thead>
+      <tbody>
+        <tr><td><code>demo_agents/weather_agent/agent.py</code></td><td>Agent thật — model, tool, instructions</td></tr>
+        <tr><td><code>demo_agents/weather_agent/test_tool.py</code></td><td>3 test offline cho logic tool</td></tr>
+        <tr><td><code>demo_agents/weather_agent/run.py</code></td><td>CLI entrypoint, gọi <code>Runner.run_sync</code></td></tr>
+        <tr><td><code>demo_agents/weather_agent/test_run_cli.py</code></td><td>1 test cho nhánh thiếu <code>OPENAI_API_KEY</code></td></tr>
+        <tr><td><code>demo_agents/weather_agent/README.md</code></td><td>Hướng dẫn cài đặt, chạy, giới hạn đã biết</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="content-grid">
+    <div class="card">
+      <h4>Chạy thử</h4>
+      <pre class="code-block">pip install -r demo_agents/weather_agent/requirements.txt
+python3 -m pytest demo_agents/weather_agent/ -q
+# → 4 passed
+
+export OPENAI_API_KEY=sk-...
+python -m demo_agents.weather_agent.run "Thời tiết ở Hà Nội thế nào?"</pre>
+    </div>
+    <div class="card">
+      <h4>Giới hạn đã biết</h4>
+      <ul>
+        <li>Chưa chạy live thật (<code>Runner.run_sync</code> gọi LLM) — sandbox không có <code>OPENAI_API_KEY</code>.</li>
+        <li>Dữ liệu thời tiết là mock 4 thành phố, không gọi API thời tiết thật (ngoài phạm vi Non-goals của SPEC).</li>
+        <li>Không triển khai multi-agent hay guardrails nâng cao — MVP tập trung đúng 3 yếu tố nền tảng.</li>
+      </ul>
+    </div>
+  </div>
+  <a class="foot-link" href="../wiki/draft/orca/270726-first-agent-weather-build.md">Chi tiết: wiki/draft/orca/270726-first-agent-weather-build.md</a>
+</div>
+</section>
+
+</main>
+
+<footer>
+  Weather Agent MVP docs — sinh bởi <code>/docs-site-macos</code> · nguồn: <code>/Users/admin/orca/projects/AI-agent/llmwiki/html/010826-first-agent-weather-docs.html</code>
+</footer>
+
+<script>
+function initDraggableDiagrams() {
+  const NS = 'http://www.w3.org/2000/svg';
+  const nearest = (nodes, x, y) => {
+    let best = null, bd = 1e9;
+    nodes.forEach(n => {
+      const cx = Math.max(n.x, Math.min(x, n.x + n.w)), cy = Math.max(n.y, Math.min(y, n.y + n.h));
+      const d = Math.hypot(x - cx, y - cy);
+      if (d < bd) { bd = d; best = n; }
+    });
+    return bd <= 42 ? best : null;
+  };
+  document.querySelectorAll('.diagram-box').forEach(box => {
+    const svg = box.querySelector('svg');
+    if (!svg || box.dataset.draggable) return;
+    box.dataset.draggable = '1';
+    const vp = document.createElement('div'); vp.className = 'diagram-viewport';
+    box.insertBefore(vp, svg); vp.appendChild(svg);
+    const hint = document.createElement('div'); hint.className = 'diagram-hint';
+    hint.textContent = '✥ kéo từng ô · kéo nền để pan · cuộn để zoom · kéo mép dưới để mở rộng';
+    box.appendChild(hint);
+    const reset = document.createElement('button'); reset.className = 'diagram-reset'; reset.textContent = '⟲ reset';
+    box.appendChild(reset);
+
+    const allRects = [...svg.querySelectorAll('rect')];
+    const nodes = allRects.filter(r => (+r.getAttribute('width')) >= 70 && (+r.getAttribute('height')) >= 30)
+      .map(r => ({ rect: r, x: +r.getAttribute('x'), y: +r.getAttribute('y'),
+        w: +r.getAttribute('width'), h: +r.getAttribute('height'), els: [r], tx: 0, ty: 0 }));
+    const inNode = (px, py) => nodes.find(n => px >= n.x-1 && px <= n.x+n.w+1 && py >= n.y-1 && py <= n.y+n.h+1);
+    [...svg.querySelectorAll('text')].forEach(t => {
+      const x = parseFloat(t.getAttribute('x')), y = parseFloat(t.getAttribute('y'));
+      if (isNaN(x) || isNaN(y)) return; const n = inNode(x, y); if (n) n.els.push(t);
+    });
+    allRects.forEach(r => { if (nodes.some(n => n.rect === r)) return;
+      const x = +r.getAttribute('x'), y = +r.getAttribute('y'), w = +r.getAttribute('width')||0, h = +r.getAttribute('height')||0;
+      const n = inNode(x+w/2, y+h/2); if (n) n.els.push(r); });
+    nodes.forEach(n => { const g = document.createElementNS(NS, 'g'); g.setAttribute('class', 'dnode');
+      n.rect.parentNode.insertBefore(g, n.rect); n.els.forEach(el => g.appendChild(el)); n.g = g; });
+
+    const links = [...svg.querySelectorAll('line')].filter(l => l.hasAttribute('x1') && l.hasAttribute('x2'));
+    links.forEach(l => { l._x1=+l.getAttribute('x1'); l._y1=+l.getAttribute('y1'); l._x2=+l.getAttribute('x2'); l._y2=+l.getAttribute('y2');
+      l._n1 = nearest(nodes, l._x1, l._y1); l._n2 = nearest(nodes, l._x2, l._y2); });
+    const reroute = () => links.forEach(l => {
+      if (l._n1) { l.setAttribute('x1', l._x1+l._n1.tx); l.setAttribute('y1', l._y1+l._n1.ty); }
+      if (l._n2) { l.setAttribute('x2', l._x2+l._n2.tx); l.setAttribute('y2', l._y2+l._n2.ty); } });
+
+    const vbBase = (svg.getAttribute('viewBox') || '0 0 900 200').split(/\s+/).map(Number);
+    const fitViewBox = () => {
+      const pad = 16;
+      let minX = vbBase[0], minY = vbBase[1], maxX = vbBase[0]+vbBase[2], maxY = vbBase[1]+vbBase[3];
+      nodes.forEach(n => { minX = Math.min(minX, n.x+n.tx-pad); minY = Math.min(minY, n.y+n.ty-pad);
+        maxX = Math.max(maxX, n.x+n.w+n.tx+pad); maxY = Math.max(maxY, n.y+n.h+n.ty+pad); });
+      svg.setAttribute('viewBox', `${minX} ${minY} ${maxX-minX} ${maxY-minY}`);
+    };
+
+    let ptx=0, pty=0, scale=1;
+    const applyCanvas = () => { svg.style.transform = `translate(${ptx}px,${pty}px) scale(${scale})`; };
+    const toSvg = (cx, cy) => { const p = svg.createSVGPoint(); p.x=cx; p.y=cy; return p.matrixTransform(svg.getScreenCTM().inverse()); };
+    let mode=null, node=null, start=null, t0=null, p0=null;
+    vp.addEventListener('pointerdown', e => { vp.setPointerCapture(e.pointerId);
+      const g = e.target.closest && e.target.closest('g.dnode');
+      if (g) { mode='node'; node = nodes.find(n => n.g === g); start = toSvg(e.clientX, e.clientY); t0 = { x: node.tx, y: node.ty }; }
+      else { mode='pan'; p0 = { x: e.clientX-ptx, y: e.clientY-pty }; vp.classList.add('grabbing'); } });
+    vp.addEventListener('pointermove', e => {
+      if (mode==='node') { const c = toSvg(e.clientX, e.clientY); node.tx = t0.x+(c.x-start.x); node.ty = t0.y+(c.y-start.y);
+        node.g.setAttribute('transform', `translate(${node.tx},${node.ty})`); reroute(); }
+      else if (mode==='pan') { ptx = e.clientX-p0.x; pty = e.clientY-p0.y; applyCanvas(); } });
+    const end = () => { if (mode==='node') fitViewBox(); mode=null; node=null; vp.classList.remove('grabbing'); };
+    vp.addEventListener('pointerup', end); vp.addEventListener('pointercancel', end);
+    vp.addEventListener('wheel', e => { e.preventDefault();
+      const r = vp.getBoundingClientRect(), mx = e.clientX-r.left, my = e.clientY-r.top;
+      const ns = Math.min(4, Math.max(0.5, scale*(e.deltaY<0?1.1:0.9)));
+      ptx = mx-(mx-ptx)*(ns/scale); pty = my-(my-pty)*(ns/scale); scale = ns; applyCanvas(); }, { passive:false });
+    const doReset = () => { ptx=0; pty=0; scale=1; svg.style.transition='transform .3s cubic-bezier(.4,0,.2,1)'; applyCanvas();
+      setTimeout(() => { svg.style.transition=''; }, 320);
+      nodes.forEach(n => { n.tx=0; n.ty=0; n.g.setAttribute('transform', 'translate(0,0)'); }); reroute(); fitViewBox(); };
+    reset.addEventListener('click', doReset); vp.addEventListener('dblclick', doReset);
+  });
+}
+initDraggableDiagrams();
+
+function initCodeCopy() {
+  const COPY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+  const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
+  document.querySelectorAll('pre.code-block').forEach(pre => {
+    if (pre.dataset.copy) return; pre.dataset.copy = '1';
+    const code = pre.textContent;
+    const wrap = document.createElement('div'); wrap.className = 'code-wrap';
+    pre.parentNode.insertBefore(wrap, pre); wrap.appendChild(pre);
+    const btn = document.createElement('button'); btn.className = 'code-copy';
+    btn.setAttribute('aria-label', 'Copy'); btn.title = 'Copy'; btn.innerHTML = COPY;
+    wrap.appendChild(btn);
+    btn.addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(code); }
+      catch (e) { const ta = document.createElement('textarea'); ta.value = code;
+        document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); }
+      btn.innerHTML = CHECK; btn.classList.add('copied');
+      setTimeout(() => { btn.innerHTML = COPY; btn.classList.remove('copied'); }, 1500);
+    });
+  });
+}
+initCodeCopy();
+
+function initRipple() {
+  document.addEventListener('pointerdown', e => {
+    const el = e.target.closest('button, .nav-link, .collapse-toggle, .checklist label');
+    if (!el || el.dataset.noRipple) return;
+    const r = el.getBoundingClientRect();
+    const d = Math.max(r.width, r.height) * 1.2;
+    const s = document.createElement('span');
+    s.className = 'ripple';
+    s.style.cssText = `width:${d}px;height:${d}px;left:${e.clientX - r.left - d/2}px;top:${e.clientY - r.top - d/2}px`;
+    if (getComputedStyle(el).position === 'static') el.style.position = 'relative';
+    el.style.overflow = 'hidden';
+    el.appendChild(s);
+    s.addEventListener('animationend', () => s.remove());
+  });
+}
+initRipple();
+
+(function(){
+  var mm=document.querySelector('.mm');if(!mm)return;var NS='http://www.w3.org/2000/svg';
+  function colorOf(n){return n.classList.contains('b-0')?'#30b0c7':n.classList.contains('b-1')?'#5856d6':n.classList.contains('b-2')?'#ff9500':n.classList.contains('b-3')?'#34c759':n.classList.contains('b-4')?'#ff2d55':'#9aa4b2';}
+  function draw(){var canvas=mm.querySelector('.mm-canvas'),svg=mm.querySelector('.mm-links');if(!canvas||!svg)return;var w=canvas.offsetWidth,h=canvas.offsetHeight;svg.setAttribute('width',w);svg.setAttribute('height',h);svg.setAttribute('viewBox','0 0 '+w+' '+h);while(svg.firstChild)svg.removeChild(svg.firstChild);var cR=canvas.getBoundingClientRect();[].slice.call(canvas.querySelectorAll('.node.has-children')).forEach(function(p){var row=p.parentElement,kids=null,ch=row.children;for(var i=0;i<ch.length;i++){if(ch[i].classList.contains('children'))kids=ch[i];}if(!kids||kids.classList.contains('collapsed'))return;var pr=p.getBoundingClientRect(),px=pr.right-cR.left,py=pr.top+pr.height/2-cR.top;[].slice.call(kids.children).forEach(function(crow){var cn=crow.querySelector(':scope > .node');if(!cn)return;var rr=cn.getBoundingClientRect(),cx=rr.left-cR.left,cy=rr.top+rr.height/2-cR.top,dx=Math.max(22,(cx-px)*0.55);var pa=document.createElementNS(NS,'path');pa.setAttribute('d','M'+px+' '+py+' C'+(px+dx)+' '+py+' '+(cx-dx)+' '+cy+' '+cx+' '+cy);pa.setAttribute('stroke',colorOf(cn));svg.appendChild(pa);});});}
+  [].slice.call(mm.querySelectorAll('.node.has-children')).forEach(function(n){var row=n.parentElement,kids=null,c=row.children;for(var i=0;i<c.length;i++){if(c[i].classList.contains('children'))kids=c[i];}if(!kids)return;if(n.classList.contains('cat')){kids.classList.add('collapsed');n.classList.add('collapsed-parent');}n.addEventListener('click',function(e){e.stopPropagation();var open=kids.classList.toggle('collapsed');n.classList.toggle('collapsed-parent',open);draw();});});
+  draw();addEventListener('load',function(){setTimeout(draw,60);});addEventListener('resize',function(){clearTimeout(window.__mmt);window.__mmt=setTimeout(draw,120);},{passive:true});
+})();
+
+(function(){
+  const nav = document.querySelector('nav'); if (!nav) return;
+  const btn = document.createElement('button'); btn.className = 'nav-toggle'; btn.textContent = '☰';
+  document.body.appendChild(btn);
+  const close = document.createElement('button'); close.className = 'nav-close'; close.textContent = '✕';
+  nav.appendChild(close);
+  const apply = c => { document.body.classList.toggle('nav-collapsed', c);
+    try { localStorage.setItem('navCollapsed', c ? '1' : '0'); } catch(e){} };
+  btn.addEventListener('click', () => apply(false));
+  close.addEventListener('click', () => apply(true));
+  try { const s = localStorage.getItem('navCollapsed');
+    if (s === '1' || (s !== '0' && matchMedia('(max-width:640px)').matches)) apply(true);
+  } catch(e){}
+  function attach(el){
+    el.addEventListener('pointerdown', function(e){
+      const r = el.getBoundingClientRect();
+      const x = e.clientX - r.left, y = e.clientY - r.top;
+      const rad = Math.hypot(Math.max(x, r.width - x), Math.max(y, r.height - y));
+      const ink = document.createElement('span'); ink.className = 'ripple-ink';
+      ink.style.width = ink.style.height = rad * 2 + 'px';
+      ink.style.left = (x - rad) + 'px'; ink.style.top = (y - rad) + 'px';
+      el.appendChild(ink);
+      ink.addEventListener('animationend', () => ink.remove());
+    });
+  }
+  document.querySelectorAll('nav a, .nav-toggle, .nav-close').forEach(attach);
+})();
+
+(function(){
+  var K='weather-agent-docs-theme',d=document.documentElement,nav=document.querySelector('nav');if(!nav)return;
+  function isDark(){var t=d.getAttribute('data-theme');return t?t==='dark':matchMedia('(prefers-color-scheme: dark)').matches}
+  var sw=document.createElement('div');sw.className='theme-switch';sw.setAttribute('role','switch');sw.setAttribute('tabindex','0');
+  sw.innerHTML='<span class="track"><span class="knob"></span></span>';
+  var row=document.createElement('div');row.className='theme-row';
+  var lb=document.createElement('span');lb.className='lbl';lb.textContent='Giao diện';row.appendChild(lb);row.appendChild(sw);nav.appendChild(row);
+  function paint(){var dk=isDark();sw.classList.toggle('on',dk);sw.setAttribute('aria-checked',dk?'true':'false');
+    sw.setAttribute('aria-label',dk?'Nút gạt giao diện: đang tối — gạt sang sáng':'Nút gạt giao diện: đang sáng — gạt sang tối')}
+  function flip(){var n=isDark()?'light':'dark';d.setAttribute('data-theme',n);try{localStorage.setItem(K,n)}catch(e){}paint()}
+  sw.addEventListener('click',flip);sw.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();flip()}});paint()
+})();
+
+(function(){
+  const flash = (el) => { let t; return () => { el.classList.add('scrolling'); clearTimeout(t);
+    t = setTimeout(() => el.classList.remove('scrolling'), 900); }; };
+  const root = document.documentElement;
+  window.addEventListener('scroll', flash(root), { passive:true });
+  const nav = document.querySelector('nav');
+  if (nav) nav.addEventListener('scroll', flash(nav), { passive:true });
+})();
+
+(function(){
+  const links = [...document.querySelectorAll('nav a')];
+  const sections = [...document.querySelectorAll('section[id]')];
+  const observer = new IntersectionObserver(entries => {
+    let active = '';
+    for (const entry of entries) { if (entry.isIntersecting) active = entry.target.id; }
+    if (active) links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + active));
+  }, { rootMargin: '-40% 0px -55% 0px' });
+  sections.forEach(s => observer.observe(s));
+})();
+</script>
+</body>
+</html>

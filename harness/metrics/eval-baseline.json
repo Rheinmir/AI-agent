@@ -1,0 +1,38 @@
+{
+  "schema": "wikieval-baseline/v1",
+  "generated_by": "harness/scripts/wikieval.py",
+  "generated_at": "2026-08-01",
+  "evals_dir": "llmwiki/wiki/sources/evals",
+  "summary": {
+    "goldens": 3,
+    "decided": 3,
+    "passed": 3
+  },
+  "goldens": {
+    "weather-case-insensitive": {
+      "pass": true,
+      "score": 1.0,
+      "decided_by": "tier1-asserts",
+      "asserts": [
+        "contains:Hà Nội"
+      ]
+    },
+    "weather-known-city": {
+      "pass": true,
+      "score": 1.0,
+      "decided_by": "tier1-asserts",
+      "asserts": [
+        "contains:Hà Nội",
+        "contains:29°C"
+      ]
+    },
+    "weather-unknown-city": {
+      "pass": true,
+      "score": 1.0,
+      "decided_by": "tier1-asserts",
+      "asserts": [
+        "equals:NO_DATA:Atlantis"
+      ]
+    }
+  }
+}

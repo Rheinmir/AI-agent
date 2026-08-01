@@ -19,6 +19,8 @@
 | [270726-first-agent-weather](sources/draft/270726-first-agent-weather.md) | draft | 2026-07-27 |
 | [270726-first-agent-weather-PLAN](sources/draft/270726-first-agent-weather-PLAN.md) | draft | 2026-07-27 |
 | [270726-first-agent-weather-build](draft/orca/270726-first-agent-weather-build.md) | draft | 2026-07-27 |
+| [010826-weather-agent-docs](sources/draft/010826-weather-agent-docs.md) | draft | 2026-08-01 |
+| [010826-weather-agent-eval](draft/orca/010826-weather-agent-eval.md) | draft | 2026-08-01 |
 
 <!-- index:auto:start -->
 | [270726-session-provenance](sources/270726-session-provenance.md) | source | session-provenance bdb1a446 — auto-distill |

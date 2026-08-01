@@ -40,6 +40,18 @@
 - draft/orca/270726-first-agent-weather-build.md (created — output report, 4/4 test pass)
 - index.md (updated)
 
+## 2026-08-01 — docs-site-macos — weather-agent-docs
+- html/010826-first-agent-weather-docs.html (created — 6 section glass-style docs cho weather agent MVP)
+- sources/draft/010826-weather-agent-docs.md (created — output report)
+- index.md (updated)
+
+## 2026-08-01 — wikieval — weather-agent-eval
+- harness/scripts/wikieval.py, harness/wikieval.config.yaml (created — copy từ harness template global)
+- wiki/sources/evals/weather-known-city.md, weather-case-insensitive.md, weather-unknown-city.md (created)
+- harness/evals/weather-agent-outputs.json, harness/metrics/eval-baseline.json (created — 3/3 decided-passing)
+- draft/orca/010826-weather-agent-eval.md (created — output report)
+- index.md (updated)
+
 <!-- log:auto:start -->
 
 ### 🤖 Log tự-động (code-logger, không do agent ghi)
