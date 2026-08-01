@@ -58,16 +58,6 @@
 
 | Thời điểm | Event | Chi tiết |
 |---|---|---|
-| 2026-07-27 09:56:32 | `file.write` | llmwiki/wiki/sources/huong-dan-xay-dung-agent-thuc-te.md · tool=Write · session=bdb1a446 · actor=agent · prev=genesis ·  |
-| 2026-07-27 09:56:51 | `file.write` | llmwiki/wiki/concepts/agent.md · tool=Write · session=bdb1a446 · actor=agent · prev=593c055fed5f5fe0cd918b3a81474f6803db |
-| 2026-07-27 09:57:05 | `file.write` | llmwiki/wiki/concepts/workflow.md · tool=Write · session=bdb1a446 · actor=agent · prev=f31cd1fca2027ee599a6a3d23ed8c267e |
-| 2026-07-27 09:57:15 | `file.write` | llmwiki/wiki/concepts/model-selection.md · tool=Write · session=bdb1a446 · actor=agent · prev=2d35b8b7311371b0c37343e587 |
-| 2026-07-27 09:57:27 | `file.write` | llmwiki/wiki/concepts/tools.md · tool=Write · session=bdb1a446 · actor=agent · prev=369067fcc4b10223abc7ef09a56c26043a98 |
-| 2026-07-27 09:57:42 | `file.write` | llmwiki/wiki/concepts/instructions.md · tool=Write · session=bdb1a446 · actor=agent · prev=ce9717760c970705f359836fe4ba4 |
-| 2026-07-27 09:57:59 | `file.write` | llmwiki/wiki/concepts/orchestration.md · tool=Write · session=bdb1a446 · actor=agent · prev=0c916ff1ae9b30d2b40364270095 |
-| 2026-07-27 09:58:09 | `file.write` | llmwiki/wiki/concepts/manager-pattern.md · tool=Write · session=bdb1a446 · actor=agent · prev=7e4f597a6d1282508b5c41f905 |
-| 2026-07-27 09:58:20 | `file.write` | llmwiki/wiki/concepts/handoff-pattern.md · tool=Write · session=bdb1a446 · actor=agent · prev=dbd44dfbd9b196298cc92c1f20 |
-| 2026-07-27 09:58:39 | `file.write` | llmwiki/wiki/concepts/guardrails.md · tool=Write · session=bdb1a446 · actor=agent · prev=9467b390df4273e783599ee167b84f6 |
 | 2026-07-27 09:58:50 | `file.write` | llmwiki/wiki/concepts/human-in-the-loop.md · tool=Write · session=bdb1a446 · actor=agent · prev=5a20c359bbf66e3508448904 |
 | 2026-07-27 09:59:02 | `file.write` | llmwiki/wiki/entities/openai-agents-sdk.md · tool=Write · session=bdb1a446 · actor=agent · prev=715d12cf98cb3cbc5f1bce6a |
 | 2026-07-27 09:59:07 | `file.write` | llmwiki/wiki/entities/openai.md · tool=Write · session=bdb1a446 · actor=agent · prev=099033040c7312b44d4cd72de5098dee604 |
@@ -98,5 +88,15 @@
 | 2026-07-27 10:19:47 | `file.write` | llmwiki/wiki/log.md · tool=Edit · session=bdb1a446 · actor=agent · prev=9bc4a7800aeab365a16f2e9ec980db3d9cab3d2f4014e697 |
 | 2026-07-27 10:19:51 | `task.set` |  · task=T-260727-01 · state=dispatched · note=Claude Code tự thi hành 4 task trong phiên · actor=agent · prev=9fce4c64d2 |
 | 2026-07-27 10:19:51 | `task.set` |  · task=T-260727-01 · state=done · note=4/4 test pass, chưa commit — chờ user · actor=agent · prev=099efd3171d13ee45b470 |
+| 2026-08-01 13:40:30 | `file.write` | llmwiki/html/010826-first-agent-weather-docs.html · tool=Write · session=bdb1a446 · actor=agent · prev=03c5f2e9da4ce6d47 |
+| 2026-08-01 13:40:41 | `file.write` | llmwiki/wiki/sources/draft/010826-weather-agent-docs.md · tool=Write · session=bdb1a446 · actor=agent · prev=cf96931fec9 |
+| 2026-08-01 13:40:48 | `file.write` | llmwiki/wiki/index.md · tool=Edit · session=bdb1a446 · actor=agent · prev=1ef2cd13a7f309ad1f2a9885ac0596c43d88cc39d4037b |
+| 2026-08-01 13:40:52 | `file.write` | llmwiki/wiki/log.md · tool=Edit · session=bdb1a446 · actor=agent · prev=3142983effe60e4b9bef2a27fcc7b56a9a863821bf3383f5 |
+| 2026-08-01 13:41:58 | `file.write` | llmwiki/wiki/sources/evals/weather-known-city.md · tool=Write · session=bdb1a446 · actor=agent · prev=019a4d41cb31f85012 |
+| 2026-08-01 13:42:03 | `file.write` | llmwiki/wiki/sources/evals/weather-case-insensitive.md · tool=Write · session=bdb1a446 · actor=agent · prev=e6c2da95972a |
+| 2026-08-01 13:42:08 | `file.write` | llmwiki/wiki/sources/evals/weather-unknown-city.md · tool=Write · session=bdb1a446 · actor=agent · prev=57c4a2bd058279c6 |
+| 2026-08-01 13:42:36 | `file.write` | llmwiki/wiki/draft/orca/010826-weather-agent-eval.md · tool=Write · session=bdb1a446 · actor=agent · prev=85f22dd261cdcd |
+| 2026-08-01 13:42:39 | `file.write` | llmwiki/wiki/index.md · tool=Edit · session=bdb1a446 · actor=agent · prev=b77beb823a12256e681e2199db701f2c732b69962107c2 |
+| 2026-08-01 13:42:43 | `file.write` | llmwiki/wiki/log.md · tool=Edit · session=bdb1a446 · actor=agent · prev=40f6d39f84cf3e352516007cdd85beddadd2f30a32ef4d6a |
 
 <!-- log:auto:end -->
