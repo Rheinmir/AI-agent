@@ -1,0 +1,986 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DevOps Agent</title>
+<meta name="description" content="Chatbot agent thật — hỏi đáp kiến thức DevOps (Kubernetes, container health, pattern triển khai, CI/CD), nhớ hội thoại nhiều lượt.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23326CE5'/%3E%3Cg transform='translate(4,4)'%3E%3Cpath d='M9.828 9.172a4 4 0 1 0 0 5.656a10 10 0 0 0 2.172 -2.828a10 10 0 0 1 2.172 -2.828a4 4 0 1 1 0 5.656a10 10 0 0 1 -2.172 -2.828a10 10 0 0 0 -2.172 -2.828' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/g%3E%3C/svg%3E">
+<style>
+  /* Hallmark · macrostructure: App Shell (non-catalog — chat interface, không phải trang
+   * marketing nên không map vào 21 macrostructure) · genre: modern-minimal
+   * theme: custom (vibe: "ChatGPT-style, flat, single accent, không kính mờ/gradient")
+   * studied: no · design-system: demo_agents/devops_agent/web/design.md (KHOÁ — fork của
+   * demo_agents/weather_agent/web/design.md: layout/spacing/motion/a11y kế thừa nguyên văn từ file
+   * gốc; màu (--accent/--accent-2 = Kubernetes blue #326CE5, KHÔNG phải xanh lá của weather_agent)
+   * + icon (vòng vô cực, KHÔNG phải đám mây thời tiết) + nội dung + localStorage key là DELTA riêng
+   * đã khoá trong design.md này). Sửa màu/icon/copy phải qua design.md trước, không sửa tay ở đây
+   * rồi thôi.
+   */
+  :root{
+    --sidebar-bg:#f5f5f7; --sidebar-text:#0d0d0d; --sidebar-text-dim:#6e6e80; --sidebar-hover:#ececed;
+    --main-bg:#fbfefc; --text:#0d0d0d; --text-dim:#6e6e80;
+    --bubble-user:#f4f4f4; --border:#e5e5e5; --accent:#326CE5; --accent-2:#244da4;
+    --color-on-accent:#ffffff;
+    /* librarian = process RIÊNG (không phải tool nội bộ devops) — màu accent riêng để không lẫn
+       với màu agent chính (Kubernetes blue). Tím Obsidian (app note-taking, logo gradient tím) —
+       #8a5cf6 → #6d28d9, theo yêu cầu user dùng màu app Obsidian cho bubble librarian. */
+    --librarian-accent:#8a5cf6; --librarian-accent-2:#6d28d9;
+    --color-danger:#b3261e; --color-danger-bg:#fdecea; --color-danger-hover:#ff6b6b;
+    --color-avatar-user:#5a5a66;
+    --color-dim-2:#9a9aa5;
+    --color-hover-surface:#f7f7f8;
+    --color-disabled:#d9d9e3;
+    --color-border-2:#d0d0d5;
+    --icon-stroke:2;
+    --z-flyout:50; --z-overlay:500; --z-overlay-content:501;
+
+    /* Panel (2026-08-03 — xem design.md § Variants). .sidebar giờ phẳng tuyệt đối, không radius/
+       shadow riêng — .card ở index.html vẫn dùng --radius-panel (tấm nổi độc lập, không có sidebar
+       làm mốc nên cần biên riêng). --shadow-panel-light phục vụ .card. */
+    --radius-panel:16px;
+    --shadow-panel-light:0 8px 24px rgba(13,13,13,.10);
+    /* = --sidebar-bg, không phải xám trung tính riêng — đúng tinh thần neomorphism "đẩy": notch
+       góc-cắt của .chat-main lộ ra ĐÚNG màu mặt sidebar phía dưới, như thể content sheet trượt
+       đè lên trên bề mặt sidebar chứ không phải lộ ra 1 backdrop trung lập thứ 3. index.html CỐ Ý
+       không đổi theo (giữ trắng tuyệt đối — yêu cầu riêng trước đó, không có sidebar để "đẩy"). */
+    --app-base-bg:var(--sidebar-bg);
+    /* .chat-main giờ là "sheet" bị đẩy bởi sidebar — chỉ bo lớn 2 góc TRÁI (chỗ giáp sidebar),
+       2 góc phải vuông vì áp thẳng mép viewport (.app không còn padding/gap ngoài). Bo lớn hơn
+       (24px→36px) để bù lại contrast thấp hơn giữa --app-base-bg (giờ = --sidebar-bg) và
+       --main-bg — notch to hơn thì vẫn đọc rõ dù 2 màu gần nhau. */
+    --radius-sheet:36px;
+    /* --neo-pop-light/--neo-pop-dark (bevel bóng cho .chat-main) đã XOÁ ở bugfix-21 — sau 5 lần vá
+       liên tiếp (bugfix-15→20: che đường cong, vệt loang, lệch màu, lem sang sidebar, tách 2 vệt),
+       mọi biến thể của bevel offset đều tạo ra 1 đường kẻ THỨ HAI cạnh tranh với viền cong hình
+       học thật của border-radius — kể cả bản cuối chỉ 1 khai báo duy nhất vẫn đọc thành "2 đường".
+       Bỏ hẳn bevel, chỉ giữ border-radius+màu nền làm tín hiệu duy nhất — xem design.md § Notes. */
+
+    /* Overlay alpha dùng lặp lại nhiều nơi — gom về đây thay vì rgba() rời rạc mid-render
+       (cùng loại lỗi token discipline đã sửa trước đó, lần này quét thêm rgba() ngoài hex) */
+    --white-a55:rgba(255,255,255,.55);
+    --black-a06:rgba(0,0,0,.06);
+    --black-a08:rgba(0,0,0,.08);
+    --black-a3:rgba(0,0,0,.3);
+    --black-a4:rgba(0,0,0,.4);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  /* Một họ font duy nhất cho display lẫn body — có chủ đích, không phải mặc định quên cặp font.
+     Yêu cầu gốc là "copy theme của ChatGPT" (ChatGPT thật cũng chỉ dùng một họ font, Söhne —
+     không public/không load được qua CDN theo quy tắc self-contained của dự án); font hệ thống
+     là xấp xỉ hợp lệ gần nhất, không đổi để giữ đúng bản sắc đã chốt trước đó. */
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    color:var(--text); background:var(--app-base-bg); overflow:hidden;
+  }
+  /* Nền "bàn" trắng — 2 tấm panel (sidebar kính mờ tối + main sáng) nổi lên nhờ đổ bóng, không
+     cần nền tối phía sau (đổi theo yêu cầu — xem design.md § Variants). */
+  .app{display:flex;height:100vh}
+
+  /* focus ring + press feedback — dùng chung cho mọi control tương tác */
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:8px}
+  :focus:not(:focus-visible){outline:none}
+  button{font-family:inherit;transition:transform .12s ease,background .15s ease,color .15s ease,opacity .15s ease}
+  button:active{transform:scale(.96)}
+  @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.001ms!important;animation-duration:.001ms!important}}
+
+  /* ---- Sidebar — LÕM xuống bề mặt (neomorphism pressed-in), thu gọn được ---- */
+  .sidebar{
+    /* Phẳng tuyệt đối — không border-radius, không box-shadow, không margin ngoài — đúng sidebar
+       ChatGPT thật (ảnh tham chiếu app mobile): dán sát mép trái/trên/dưới, không đọc như panel
+       nổi/tách rời. Điểm phân tách duy nhất với .chat-main là góc bo lớn bên phía chat-main. */
+    position:relative;
+    width:260px;flex-shrink:0;color:var(--sidebar-text);
+    display:flex;flex-direction:column;padding:8px;overflow:hidden;white-space:nowrap;
+    background:var(--sidebar-bg);
+    transition:width .22s cubic-bezier(.4,0,.2,1),padding .22s cubic-bezier(.4,0,.2,1),opacity .16s ease;
+  }
+  .sidebar>*{position:relative}
+  .app.sidebar-collapsed .sidebar{width:0;padding-left:0;padding-right:0;opacity:0;pointer-events:none}
+  .sidebar-head{display:flex;align-items:stretch;gap:6px;margin-bottom:8px}
+  .sidebar-head .new-chat{margin-bottom:0}
+  .sidebar-close{
+    /* width:height cố định 38px = chiều cao thật của .new-chat (padding 11px*2 + line-height chữ
+       13.5px) trong cùng hàng — trước đó 30px làm 2 nút lệch nhịp dọc rõ khi đứng cạnh nhau */
+    flex-shrink:0;width:38px;height:38px;border-radius:8px;border:none;
+    background:transparent;color:var(--sidebar-text-dim);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  }
+  .sidebar-close:hover{background:var(--sidebar-hover);color:var(--sidebar-text)}
+  .sidebar-close svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:var(--icon-stroke);stroke-linecap:round}
+  .sidebar-open{
+    /* top/left 44px (không phải 12px) — 36px+8px, đủ tránh vùng cong notch góc trên-trái của
+       .chat-main khi sidebar đóng (chat-main lấp đầy x:0..). Nút vuông 34x34 nằm lọt trong vùng
+       36px radius sẽ tự "xoá" cảm giác bo góc, vì nó có riêng viền+bóng, cạnh sắc hơn hẳn cung
+       tròn lớn bên dưới — không phải lỗi CSS border-radius mất, mà bị nút che mất phần cong. */
+    position:fixed;top:44px;left:44px;z-index:var(--z-flyout);width:34px;height:34px;border-radius:9px;
+    border:1px solid var(--border);background:var(--main-bg);color:var(--text-dim);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px var(--black-a08);
+    opacity:0;pointer-events:none;transform:translateX(-6px);
+    transition:opacity .18s ease,transform .22s cubic-bezier(.4,0,.2,1);
+  }
+  .app.sidebar-collapsed .sidebar-open{opacity:1;pointer-events:auto;transform:translateX(0)}
+  .sidebar-open svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:var(--icon-stroke);stroke-linecap:round}
+  .sidebar-open:hover{color:var(--text);border-color:var(--color-border-2)}
+
+  .new-chat{
+    display:flex;align-items:center;gap:8px;width:100%;text-align:left;
+    padding:11px 12px;border-radius:10px;border:none;
+    background:transparent;color:var(--sidebar-text);font-size:13.5px;cursor:pointer;margin-bottom:8px;
+  }
+  .new-chat:hover{background:var(--sidebar-hover)}
+  .new-chat svg{width:16px;height:16px;flex-shrink:0;stroke-width:var(--icon-stroke)}
+  /* white-space:normal — .sidebar cha ép nowrap (giữ chữ khỏi vỡ dòng lúc animate collapse-width),
+     nhưng đoạn mô tả dài ở đây CẦN xuống dòng bình thường; kế thừa nowrap làm nó tràn ngang rồi bị
+     cắt bởi overflow:hidden của .sidebar — đúng bug "tràn text" người dùng báo. */
+  .sidebar-section{padding:10px 12px;font-size:12px;color:var(--sidebar-text-dim);line-height:1.6;white-space:normal}
+  .sidebar-section b{color:var(--sidebar-text);font-weight:600}
+
+  .session-list-label{padding:14px 12px 4px;font-size:11px;color:var(--sidebar-text-dim);font-weight:600}
+  /* gap 3px giữa các session-item — trước đó các item chạm sát nhau, không phân biệt được ranh giới */
+  .session-list{display:flex;flex-direction:column;gap:3px;overflow-y:auto;min-height:0;flex-shrink:1;scrollbar-width:none;-ms-overflow-style:none}
+  .session-list::-webkit-scrollbar{width:0;height:0;display:none}
+  .session-item{
+    /* padding ngang 12px khớp nhịp với new-chat/sidebar-section/session-list-label/sidebar-foot —
+       trước đó lệch 10px, làm text session-item không thẳng hàng với các khối xung quanh */
+    display:flex;align-items:center;gap:6px;padding:9px 12px;border-radius:9px;cursor:pointer;
+    font-size:12.5px;color:var(--sidebar-text-dim);position:relative;
+  }
+  .session-item:hover{background:var(--sidebar-hover);color:var(--sidebar-text)}
+  .session-item.active{background:var(--sidebar-hover);color:var(--sidebar-text)}
+  .session-item .stitle{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .session-item .sdel{
+    /* LUÔN display:flex — giữ nguyên chỗ trong hàng flex mọi lúc, chỉ ẩn/hiện bằng opacity.
+       Bản trước dùng display:none→flex lúc hover, làm width khả dụng của .stitle đổi đột ngột
+       ngay khi rê chuột vào → chữ tiêu đề bị nhảy/co lại (layout shift) — đúng lỗi "dãn cách
+       không hợp lý khi hovering" người dùng báo. */
+    flex-shrink:0;width:20px;height:20px;border-radius:6px;border:none;background:transparent;
+    color:var(--sidebar-text-dim);display:flex;align-items:center;justify-content:center;cursor:pointer;
+    opacity:0;pointer-events:none;transition:opacity .12s ease;
+  }
+  /* hiện khi hover CHUỘT lẫn khi bàn phím focus vào hàng hoặc vào chính nút xoá */
+  .session-item:hover .sdel,.session-item:focus-within .sdel{opacity:1;pointer-events:auto}
+  .session-item .sdel:hover{background:var(--color-danger-bg);color:var(--color-danger-hover)}
+  .session-item .sdel svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:var(--icon-stroke);stroke-linecap:round}
+  .session-empty{padding:8px 12px;font-size:11.5px;color:var(--sidebar-text-dim);opacity:.7}
+
+  .sidebar-spacer{flex:1}
+  .sidebar-foot{padding:10px 12px;font-size:11px;color:var(--sidebar-text-dim)}
+  /* min-width:0 là chỗ mấu chốt — mặc định flex item không co dưới content min-width, nên chuỗi
+     đường dẫn dài (39 ký tự) đẩy tràn khỏi 260px sidebar, đội luôn nút "?" ra ngoài overflow:hidden
+     của .sidebar → nút bị che khuất hoàn toàn. */
+  .sidebar-foot span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sidebar-foot .tour-help{flex-shrink:0}
+
+  /* ---- Main — NỔI khối lên khỏi bề mặt (đảo lại so với sidebar lõm) ---- */
+  .chat-main{
+    /* Chỉ bo góc lớn bên TRÁI (giáp sidebar) — 2 góc phải vuông vì áp thẳng mép viewport.
+       KHÔNG còn box-shadow/bevel riêng (bugfix-21) — sau 5 lần vá (bugfix-15→20), bevel offset
+       luôn tạo ra 1 đường kẻ THỨ HAI song song ngay sát mép cong thật (đường viền hình học giữa
+       --main-bg và backdrop lộ ra qua notch), đọc thành "2 đường" dù đã gộp 1 khai báo duy nhất.
+       Bỏ hẳn bevel — chỉ còn ĐÚNG 1 đường duy nhất: viền cong tự nhiên của border-radius, không có
+       gì vẽ chồng lên để cạnh tranh thị giác với nó nữa. */
+    flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden;
+    background:var(--main-bg);border-radius:var(--radius-sheet) 0 0 var(--radius-sheet);
+    transition:border-radius .22s cubic-bezier(.4,0,.2,1);
+  }
+  /* Sidebar đóng = không còn gì để "đẩy" — góc bo lớn + notch lộ màu sidebar chỉ có nghĩa khi
+     sidebar thật sự hiện diện cạnh nó. Đóng sidebar thì .chat-main về vuông tuyệt đối (full màn),
+     khớp đúng tinh thần "không cạnh" của layout flush — không để lại vệt notch mồ côi không giải
+     thích được khi không có sidebar để đối chiếu. */
+  .app.sidebar-collapsed .chat-main{border-radius:0}
+  .chat-scroll{flex:1;overflow-y:auto;padding:24px 0 8px}
+  .thread{max-width:720px;margin:0 auto;padding:0 20px;display:flex;flex-direction:column;gap:2px}
+
+  .row{display:flex;gap:14px;padding:18px 0}
+  .avatar{width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+  .avatar.assistant{background:linear-gradient(135deg,var(--accent),var(--accent-2))}
+  .avatar.assistant svg{width:17px;height:17px;stroke:var(--color-on-accent);fill:none;stroke-width:var(--icon-stroke);stroke-linecap:round;stroke-linejoin:round}
+  .avatar.user{background:var(--color-avatar-user);color:var(--color-on-accent);font-size:12.5px;font-weight:700}
+
+  .row.user{justify-content:flex-end}
+  .row.user .bubble{background:var(--bubble-user);border-radius:20px;padding:10px 16px;max-width:70%;font-size:14.5px;line-height:1.6}
+  .row.assistant .bubble{padding-top:4px;font-size:14.5px;line-height:1.7;max-width:calc(100% - 44px)}
+  .row.assistant .bubble strong{font-weight:700}
+  .row.assistant .bubble em{font-style:italic}
+  /* Đồng bộ nguyên văn với weather_agent/web/chat.html — xem comment renderMarkdownLite() bên dưới */
+  .row.assistant .bubble h1,.row.assistant .bubble h2,.row.assistant .bubble h3{
+    margin:14px 0 6px;font-weight:700;line-height:1.4;color:var(--text)}
+  .row.assistant .bubble h1{font-size:19px} .row.assistant .bubble h2{font-size:16.5px} .row.assistant .bubble h3{font-size:15px}
+  .row.assistant .bubble ul,.row.assistant .bubble ol{margin:4px 0;padding-left:22px}
+  .row.assistant .bubble li{margin:2px 0}
+  .row.assistant .bubble code{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;
+    background:var(--bubble-user);border-radius:4px;padding:1px 5px}
+  .row.assistant .bubble blockquote{
+    margin:6px 0;padding:2px 12px;border-left:2px solid var(--border);color:var(--text-dim)}
+  /* Bảng markdown (bugfix 10/08/2026, xem renderMarkdownLite) — ĐỒNG BỘ weather_agent/web/chat.html */
+  .row.assistant .bubble .table-wrap{overflow-x:auto;margin:8px 0;max-width:100%}
+  .row.assistant .bubble table{border-collapse:collapse;font-size:13.5px;width:100%}
+  .row.assistant .bubble th,.row.assistant .bubble td{
+    border:1px solid var(--border);padding:6px 10px;text-align:left;vertical-align:top}
+  .row.assistant .bubble th{background:var(--bubble-user);font-weight:700}
+
+  .row.error .bubble{color:var(--color-danger);background:var(--color-danger-bg);border-radius:12px;padding:10px 14px;font-size:13.5px}
+
+  .typing{display:inline-flex;gap:4px;padding-top:8px}
+  .typing span{width:6px;height:6px;border-radius:50%;background:var(--color-dim-2);animation:bounce 1.2s infinite ease-in-out}
+  .typing span:nth-child(2){animation-delay:.15s}
+  .typing span:nth-child(3){animation-delay:.3s}
+  @keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-4px);opacity:1}}
+
+  /* Step indicator — hiện TRONG lúc chờ, thay cho 3 chấm vô nghĩa, báo ĐÚNG bước agent đang chạy
+     (tool nào). step-librarian riêng (nền/viền accent) vì đây là gọi SANG 1 agent khác (librarian,
+     process riêng qua socket — xem demo_agents/librarian_agent/), không phải tool nội bộ. */
+  .step-indicator{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--text-dim);
+    padding:2px 0;animation:step-pulse 1.6s ease-in-out infinite}
+  .step-icon{font-size:15px;line-height:1}
+  /* librarian: avatar tròn CÙNG style logo agent (.avatar.assistant — nền gradient, icon SVG nét
+     trắng) NHƯNG màu RIÊNG (--librarian-accent) + NHỎ hơn hẳn avatar chính — bài học 10/08/2026
+     (Design Feedback thật, 3 lượt góp ý liên tiếp): (1) avatar librarian dóng thẳng cột với avatar
+     devops chính (margin-left:-44px, đúng width avatar 30px + gap 14px của .row, xem
+     .bubble's max-width:calc(100% - 44px)); (2) PHẢI nằm HẲN BÊN DƯỚI avatar chính, không đè lên —
+     margin-top:34px (= 30px avatar + 4px hở) đẩy xuống dưới mép avatar chính, KHÔNG dùng
+     align-items:center trên .row nữa (đã gỡ, chính là nguyên nhân đè lên nhau lần trước: center kéo
+     avatar chính xuống ngay vị trí avatar librarian khi row ngắn); (3) avatar+chữ nhỏ hơn (20px/
+     11.5px, font-weight thường) để rõ đây là vai trò PHỤ TRỢ (process gọi thêm), không phải agent
+     chính đang nói. */
+  .step-indicator.step-librarian{color:var(--librarian-accent);font-weight:500;font-size:11.5px;
+    align-items:center;gap:6px;margin-left:-44px;margin-top:34px}
+  .step-indicator.step-librarian .step-icon{width:20px;height:20px;border-radius:50%;flex-shrink:0;
+    background:linear-gradient(135deg,var(--librarian-accent),var(--librarian-accent-2));
+    display:flex;align-items:center;justify-content:center}
+  .step-indicator.step-librarian .step-icon svg{width:12px;height:12px;stroke:var(--color-on-accent);
+    fill:none;stroke-width:var(--icon-stroke);stroke-linecap:round;stroke-linejoin:round}
+  @keyframes step-pulse{0%,100%{opacity:.65}50%{opacity:1}}
+
+  .empty-state{max-width:520px;margin:12vh auto 0;text-align:center;padding:0 20px}
+  .empty-state .icon{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2));
+    display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+  .empty-state .icon svg{width:30px;height:30px;stroke:var(--color-on-accent);fill:none;stroke-width:var(--icon-stroke);stroke-linecap:round;stroke-linejoin:round}
+  .empty-state h2{font-size:21px;font-weight:600;letter-spacing:-.01em;margin:0 0 6px;text-wrap:balance}
+  .empty-state p{font-size:13.5px;color:var(--text-dim);line-height:1.6;margin:0 0 18px;text-wrap:pretty}
+  .suggestions{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+  .suggestions button{
+    font-size:12.5px;padding:8px 13px;border-radius:10px;border:1px solid var(--border);
+    background:var(--main-bg);color:var(--text);cursor:pointer;
+  }
+  .suggestions button:hover{background:var(--color-hover-surface)}
+
+  /* ---- Composer ---- */
+  .composer-wrap{padding:8px 20px 18px}
+  .composer{max-width:720px;margin:0 auto}
+  form{
+    /* Bỏ box-shadow riêng — .chat-main đã có bóng nổi bao ngoài cả panel, thêm bóng ở form tạo
+       cảm giác thừa/trùng gần đáy panel. */
+    display:flex;align-items:flex-end;gap:8px;border:1px solid var(--border);border-radius:26px;
+    padding:10px 10px 10px 18px;background:var(--main-bg);
+    transition:border-color .15s ease;
+  }
+  textarea{
+    flex:1;border:none;outline:none;resize:none;font-family:inherit;font-size:14.5px;line-height:1.5;
+    max-height:160px;padding:6px 0;background:transparent;color:var(--text);
+  }
+  /* :focus-visible toàn cục (dòng ~75) có specificity cao hơn `textarea{outline:none}` ở trên
+     (pseudo-class thắng element selector) nên outline xanh lá vẫn hiện dù đã set none — đè lại
+     tường minh cho riêng textarea. Composer đã có viền pill + con trỏ nhấp nháy làm tín hiệu focus
+     rồi, ô nhập duy nhất trong form nên không cần thêm outline hình chữ nhật chồng lên. */
+  textarea:focus-visible{outline:none}
+  .send-btn{
+    width:32px;height:32px;border-radius:50%;border:none;flex-shrink:0;cursor:pointer;
+    background:var(--text);color:var(--color-on-accent);display:flex;align-items:center;justify-content:center;
+    transition:background .15s;
+  }
+  .send-btn:disabled{background:var(--color-disabled);cursor:default}
+  .send-btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:var(--icon-stroke);stroke-linecap:round;stroke-linejoin:round}
+  .footnote{text-align:center;font-size:11px;color:var(--text-dim);margin-top:8px}
+
+  ::-webkit-scrollbar{width:8px}
+  ::-webkit-scrollbar-thumb{background:var(--color-disabled);border-radius:8px}
+  ::-webkit-scrollbar-track{background:transparent}
+
+  /* ---- Product tour (spotlight overlay, no library) ---- */
+  .tour-help{
+    width:24px;height:24px;border-radius:50%;flex-shrink:0;border:1px solid var(--color-border-2);
+    background:transparent;color:var(--sidebar-text-dim);font-size:11.5px;font-weight:700;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .tour-help:hover{color:var(--accent);border-color:var(--accent)}
+  .wiki-link{
+    width:24px;height:24px;border-radius:50%;flex-shrink:0;border:1px solid var(--color-border-2);
+    background:transparent;color:var(--sidebar-text-dim);cursor:pointer;text-decoration:none;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .wiki-link:hover{color:var(--accent);border-color:var(--accent)}
+  .wiki-link svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .sidebar-foot{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .tour-scrim{position:fixed;inset:0;z-index:var(--z-overlay);cursor:pointer;background:transparent}
+  .tour-svg{position:fixed;inset:0;z-index:var(--z-overlay);pointer-events:none}
+  .tour-ring{fill:none;stroke:var(--white-a55);stroke-width:1.5}
+  .tour-tip{
+    position:fixed;z-index:var(--z-overlay-content);pointer-events:none;max-width:240px;
+    background:var(--text);color:var(--color-on-accent);font-size:12.5px;font-weight:600;line-height:1.45;
+    padding:9px 13px;border-radius:11px;box-shadow:0 6px 20px var(--black-a3);opacity:0;
+    transition:opacity .15s ease;
+  }
+  .tour-tip.placed{opacity:1}
+  .tour-dismiss{
+    position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:var(--z-overlay-content);pointer-events:none;
+    background:var(--text);color:var(--color-on-accent);font-size:12px;font-weight:600;padding:9px 18px;border-radius:999px;
+    box-shadow:0 6px 20px var(--black-a3);white-space:nowrap;
+  }
+
+  /* ---- Responsive: sidebar chuyển thành overlay đè lên (không đẩy layout) dưới 768px ---- */
+  .sidebar-backdrop{display:none}
+  @media(max-width:768px){
+    /* Dán sát mép màn hình (top/left/bottom:0) — đúng dáng drawer ChatGPT app thật, không còn
+       inset panel nổi. Chỉ đổi position:fixed + transform để làm overlay đè lên nội dung. */
+    .sidebar{
+      position:fixed;top:0;left:0;bottom:0;z-index:var(--z-flyout);
+      width:260px;padding:8px;opacity:1;pointer-events:auto;
+      transform:translateX(0);
+    }
+    .app.sidebar-collapsed .sidebar{
+      width:260px;padding:8px;opacity:1;pointer-events:auto;
+      transform:translateX(-100%);
+    }
+    .sidebar-backdrop{
+      display:block;position:fixed;inset:0;z-index:calc(var(--z-flyout) - 1);
+      background:var(--black-a4);opacity:0;pointer-events:none;
+      transition:opacity .2s ease;
+    }
+    .app:not(.sidebar-collapsed) .sidebar-backdrop{opacity:1;pointer-events:auto}
+  }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <button class="sidebar-open" id="sidebarOpen" type="button" title="Mở sidebar" aria-label="Mở sidebar">
+    <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+  </button>
+  <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+  <aside class="sidebar">
+    <div class="sidebar-head">
+      <button class="new-chat" id="newChat" data-tour="new-chat">
+        <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+        Cuộc trò chuyện mới
+      </button>
+      <button class="sidebar-close" id="sidebarClose" type="button" title="Đóng sidebar" aria-label="Đóng sidebar">
+        <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="sidebar-section" data-tour="sidebar-info">
+      <b>DevOps Agent</b><br>
+      Model tự quyết định gọi tool, tự nhớ hội thoại (SQLiteSession).
+    </div>
+    <div class="session-list-label">Cuộc trò chuyện</div>
+    <div class="session-list" id="sessionList"><div class="session-empty">Chưa có cuộc trò chuyện nào.</div></div>
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-foot">
+      <span id="sidebarFootPath" title="demo_agents/devops_agent/chatdemo.py">demo_agents/devops_agent/chatdemo.py</span>
+      <a class="wiki-link" href="/wiki" target="_blank" rel="noopener" title="Xem wiki (cheatsheet đã thu thập sẵn)" aria-label="Xem wiki">
+        <svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+      </a>
+      <button class="tour-help" id="tourHelp" type="button" title="Xem lại hướng dẫn">?</button>
+    </div>
+  </aside>
+
+  <main class="chat-main">
+    <div class="chat-scroll" id="scroll">
+      <div class="thread" id="thread">
+        <div class="empty-state" id="emptyState">
+          <div class="icon"><svg viewBox="0 0 24 24"><path d="M9.828 9.172a4 4 0 1 0 0 5.656a10 10 0 0 0 2.172 -2.828a10 10 0 0 1 2.172 -2.828a4 4 0 1 1 0 5.656a10 10 0 0 1 -2.172 -2.828a10 10 0 0 0 -2.172 -2.828"/></svg></div>
+          <h2>DevOps Agent</h2>
+          <p>Agent thật hỏi đáp kiến thức DevOps (Kubernetes, container health, pattern triển khai, CI/CD), nhớ ngữ cảnh hội thoại. Chưa kết nối hệ thống thật.</p>
+          <div class="suggestions" data-tour="suggestions">
+            <button type="button" data-q="Sự khác nhau giữa liveness và readiness probe?">Sự khác nhau giữa liveness và readiness probe?</button>
+            <button type="button" data-q="Canary deployment là gì?">Canary deployment là gì?</button>
+            <button type="button" data-q="Restart giúp tôi pod nginx trên cluster production">Restart giúp tôi pod nginx trên cluster production</button>
+            <button type="button" data-q="Bạn làm được gì?">Bạn làm được gì?</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="composer-wrap">
+      <div class="composer" data-tour="composer">
+        <form id="f">
+          <textarea id="q" rows="1" placeholder="Hỏi về DevOps…" autofocus></textarea>
+          <button class="send-btn" id="btn" type="submit" disabled>
+            <svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+          </button>
+        </form>
+        <div class="footnote">Agent có thể trả lời sai — kiểm tra lại thông tin quan trọng.</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+const thread = document.getElementById('thread');
+const scrollEl = document.getElementById('scroll');
+const emptyState = document.getElementById('emptyState');
+const f = document.getElementById('f');
+const input = document.getElementById('q');
+const btn = document.getElementById('btn');
+const newChatBtn = document.getElementById('newChat');
+const sessionListEl = document.getElementById('sessionList');
+const appEl = document.getElementById('app');
+const sidebarClose = document.getElementById('sidebarClose');
+const sidebarOpen = document.getElementById('sidebarOpen');
+const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+
+// ---- Rút gọn đường dẫn dài trong sidebar-foot kiểu "đầu…cuối" — text-overflow:ellipsis mặc định
+// chỉ cắt CUỐI chuỗi, ở đây cần giữ cả tên package (đầu) lẫn tên file (cuối), chỉ gọn phần giữa.
+function middleEllipsis(text, maxLen) {
+  if (text.length <= maxLen) return text;
+  const keep = maxLen - 1; // trừ 1 ký tự cho dấu …
+  const head = Math.ceil(keep * 0.55);
+  const tail = keep - head;
+  return text.slice(0, head) + '…' + text.slice(text.length - tail);
+}
+(function shortenSidebarFootPath() {
+  const el = document.getElementById('sidebarFootPath');
+  if (!el) return;
+  const full = el.textContent;
+  el.textContent = middleEllipsis(full, 28);
+  el.title = full;
+})();
+
+// ---- Sidebar collapse (nhớ trạng thái qua localStorage) ----
+const SIDEBAR_KEY = 'devops-chat-sidebar-collapsed';
+function setSidebarCollapsed(collapsed) {
+  appEl.classList.toggle('sidebar-collapsed', collapsed);
+  try { localStorage.setItem(SIDEBAR_KEY, collapsed ? '1' : '0'); } catch (e) {}
+}
+try {
+  const stored = localStorage.getItem(SIDEBAR_KEY);
+  if (stored === '1') setSidebarCollapsed(true);
+  // Chưa có lựa chọn nào lưu VÀ màn hình hẹp (≤768px) → mặc định đóng, tránh sidebar 260px
+  // nuốt gần hết viewport ở lần mở đầu tiên trên mobile (không có breakpoint nào trước đây).
+  else if (stored === null && window.innerWidth <= 768) setSidebarCollapsed(true);
+} catch (e) {}
+sidebarClose.addEventListener('click', () => setSidebarCollapsed(true));
+sidebarOpen.addEventListener('click', () => setSidebarCollapsed(false));
+sidebarBackdrop.addEventListener('click', () => setSidebarCollapsed(true));
+
+const SID_KEY = 'devops-chat-session-id';
+function getSessionId() {
+  let sid = localStorage.getItem(SID_KEY);
+  if (!sid) {
+    sid = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2));
+    localStorage.setItem(SID_KEY, sid);
+  }
+  return sid;
+}
+let sessionId = getSessionId();
+
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+// Đồng bộ NGUYÊN VĂN với demo_agents/weather_agent/web/chat.html (bugfix "## lộ nguyên văn" —
+// xem web/design.md của agent này § kế thừa layout — đây KHÔNG phải delta riêng của devops_agent,
+// sửa ở bản gốc rồi propagate y hệt sang đây, không tự sửa khác đi).
+function renderInline(s) {
+  s = s.replace(/`([^`]+?)`/g, '<code>$1</code>');
+  s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  return s;
+}
+function renderMarkdownLite(s) {
+  // Bugfix 10/08/2026 — ĐỒNG BỘ NGUYÊN VĂN với weather_agent/web/chat.html (đọc comment đầy đủ ở
+  // đó): thêm nhận diện bảng GFM ("| a | b |" + separator row "|---|---|") → render <table> thật
+  // thay vì in nguyên văn ký tự "|" (bug thật: Design Feedback screenshot bảng liveness/readiness
+  // probe hiện thành text thô, không phải bảng).
+  const lines = escapeHtml(s).split('\n');
+  const out = [];
+  let listType = null;
+  function closeList() {
+    if (listType) { out.push('</' + listType + '>'); listType = null; }
+  }
+  function splitTableRow(line) {
+    return line.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map(c => c.trim());
+  }
+  function isSeparatorRow(line) {
+    if (!line || line.indexOf('|') === -1) return false;
+    const cells = splitTableRow(line);
+    return cells.length > 0 && cells.every(c => /^:?-+:?$/.test(c));
+  }
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    if (line.indexOf('|') !== -1 && i + 1 < lines.length && isSeparatorRow(lines[i + 1])) {
+      closeList();
+      const headerCells = splitTableRow(line);
+      out.push('<div class="table-wrap"><table><thead><tr>' +
+        headerCells.map(c => '<th>' + renderInline(c) + '</th>').join('') + '</tr></thead><tbody>');
+      i += 2;
+      while (i < lines.length && lines[i].indexOf('|') !== -1 && lines[i].trim() !== '') {
+        const rowCells = splitTableRow(lines[i]);
+        out.push('<tr>' + rowCells.map(c => '<td>' + renderInline(c) + '</td>').join('') + '</tr>');
+        i++;
+      }
+      out.push('</tbody></table></div>');
+      continue;
+    }
+    const h = line.match(/^(#{1,3})\s+(.*)$/);
+    const ul = line.match(/^[-*]\s+(.*)$/);
+    const ol = line.match(/^\d+\.\s+(.*)$/);
+    const bq = line.match(/^&gt;\s?(.*)$/);
+    if (h) {
+      closeList();
+      const level = h[1].length;
+      out.push('<h' + level + '>' + renderInline(h[2]) + '</h' + level + '>');
+    } else if (ul) {
+      if (listType !== 'ul') { closeList(); out.push('<ul>'); listType = 'ul'; }
+      out.push('<li>' + renderInline(ul[1]) + '</li>');
+    } else if (ol) {
+      if (listType !== 'ol') { closeList(); out.push('<ol>'); listType = 'ol'; }
+      out.push('<li>' + renderInline(ol[1]) + '</li>');
+    } else if (bq) {
+      closeList();
+      out.push('<blockquote>' + renderInline(bq[1]) + '</blockquote>');
+    } else if (line.trim() === '') {
+      closeList();
+      out.push('<br>');
+    } else {
+      closeList();
+      out.push(renderInline(line) + '<br>');
+    }
+    i++;
+  }
+  closeList();
+  return out.join('');
+}
+
+function addRow(kind, text) {
+  emptyState.style.display = 'none';
+  const row = document.createElement('div');
+  row.className = 'row ' + kind;
+  if (kind === 'assistant') {
+    row.innerHTML =
+      '<div class="avatar assistant"><svg viewBox="0 0 24 24"><path d="M9.828 9.172a4 4 0 1 0 0 5.656a10 10 0 0 0 2.172 -2.828a10 10 0 0 1 2.172 -2.828a4 4 0 1 1 0 5.656a10 10 0 0 1 -2.172 -2.828a10 10 0 0 0 -2.172 -2.828"/></svg></div>' +
+      '<div class="bubble">' + renderMarkdownLite(text) + '</div>';
+  } else if (kind === 'user') {
+    row.innerHTML = '<div class="bubble"></div>';
+    row.querySelector('.bubble').textContent = text;
+  } else {
+    row.innerHTML = '<div class="bubble"></div>';
+    row.querySelector('.bubble').textContent = text;
+  }
+  thread.appendChild(row);
+  scrollEl.scrollTop = scrollEl.scrollHeight;
+  return row;
+}
+
+function addTypingRow() {
+  emptyState.style.display = 'none';
+  const row = document.createElement('div');
+  row.className = 'row assistant';
+  row.innerHTML =
+    '<div class="avatar assistant"><svg viewBox="0 0 24 24"><path d="M9.828 9.172a4 4 0 1 0 0 5.656a10 10 0 0 0 2.172 -2.828a10 10 0 0 1 2.172 -2.828a4 4 0 1 1 0 5.656a10 10 0 0 1 -2.172 -2.828a10 10 0 0 0 -2.172 -2.828"/></svg></div>' +
+    '<div class="bubble"><span class="typing"><span></span><span></span><span></span></span></div>';
+  thread.appendChild(row);
+  scrollEl.scrollTop = scrollEl.scrollHeight;
+  return row;
+}
+
+function clearThreadUI() {
+  thread.innerHTML = '';
+  thread.appendChild(emptyState);
+  emptyState.style.display = '';
+}
+
+function renderSessionList(sessions) {
+  sessionListEl.innerHTML = '';
+  if (!sessions.length) {
+    sessionListEl.innerHTML = '<div class="session-empty">Chưa có cuộc trò chuyện nào.</div>';
+    return;
+  }
+  sessions.forEach((s) => {
+    // Không dùng <button> cho hàng ngoài vì nó CHỨA một <button> xoá bên trong — button-trong-button
+    // là HTML không hợp lệ. Dùng role="button" + tabindex + keydown Enter/Space thay thế, để vẫn
+    // thao tác được bằng bàn phím/screen reader (trước đó là <div> click-only, không Tab tới được).
+    const item = document.createElement('div');
+    item.className = 'session-item' + (s.session_id === sessionId ? ' active' : '');
+    item.setAttribute('role', 'button');
+    item.setAttribute('tabindex', '0');
+    item.setAttribute('aria-current', s.session_id === sessionId ? 'true' : 'false');
+    item.innerHTML =
+      '<span class="stitle"></span>' +
+      '<button class="sdel" type="button" title="Xoá cuộc trò chuyện" aria-label="Xoá cuộc trò chuyện">' +
+      '<svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2m2 0v13a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V7h12z"/></svg></button>';
+    item.querySelector('.stitle').textContent = s.title || s.session_id;
+    item.addEventListener('click', () => switchToSession(s.session_id));
+    item.addEventListener('keydown', (e) => {
+      if (e.target.closest('.sdel')) return; // nút xoá tự xử lý Enter/Space qua click event chuẩn
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        switchToSession(s.session_id);
+      }
+    });
+    item.querySelector('.sdel').addEventListener('click', async (e) => {
+      e.stopPropagation();
+      try {
+        await fetch('/api/reset', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ session_id: s.session_id }),
+        });
+      } catch (err) {}
+      if (s.session_id === sessionId) startNewSession();
+      loadSessionList();
+    });
+    sessionListEl.appendChild(item);
+  });
+}
+
+async function loadSessionList() {
+  try {
+    const res = await fetch('/api/sessions');
+    const data = await res.json();
+    renderSessionList(data.sessions || []);
+  } catch (err) {}
+}
+
+async function renderHistory(sid) {
+  clearThreadUI();
+  try {
+    const res = await fetch('/api/history?session_id=' + encodeURIComponent(sid));
+    const data = await res.json();
+    (data.messages || []).forEach((m) => addRow(m.role === 'user' ? 'user' : 'assistant', m.text));
+  } catch (err) {}
+}
+
+function startNewSession() {
+  sessionId = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2));
+  localStorage.setItem(SID_KEY, sessionId);
+  clearThreadUI();
+  input.focus();
+}
+
+async function switchToSession(sid) {
+  sessionId = sid;
+  localStorage.setItem(SID_KEY, sessionId);
+  await renderHistory(sid);
+  loadSessionList();
+}
+
+function autoResize() {
+  input.style.height = 'auto';
+  input.style.height = Math.min(input.scrollHeight, 160) + 'px';
+}
+input.addEventListener('input', () => {
+  autoResize();
+  btn.disabled = !input.value.trim();
+});
+
+// Gõ tiếng Việt (Telex/VNI qua IME hệ điều hành) có thể phát sinh sự kiện Enter TRONG LÚC đang
+// ghép dấu (composition) — nếu không lọc, form bị submit sớm với nội dung dở dang, rồi submit lần
+// nữa khi gõ xong thật, ra "duplicate" hai tin nhắn cho một câu. e.isComposing (+ keyCode 229 dự
+// phòng cho Safari cũ) là cách chuẩn để bỏ qua Enter trong lúc IME còn đang xử lý.
+let composing = false;
+input.addEventListener('compositionstart', () => { composing = true; });
+input.addEventListener('compositionend', () => { composing = false; });
+input.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey && !composing && e.keyCode !== 229) {
+    e.preventDefault();
+    f.requestSubmit();
+  }
+});
+
+let sending = false; // chặn double-submit nếu request trước chưa xong (bấm Enter/click liên tiếp)
+
+// Nhãn bước hiện TRONG bubble trong lúc chờ — key khớp ĐÚNG tên tool @function_tool trong agent.py.
+// ask_librarian tách riêng (step-librarian, xem CSS) vì đây là gọi SANG 1 agent KHÁC (librarian,
+// process riêng qua socket), không phải tool nội bộ như các tool còn lại.
+const TOOL_STEPS = {
+  // get_cheatsheet đã bị bỏ hẳn khỏi agent.py (chỉ ask_librarian được đọc wiki/cheatsheet) —
+  // không còn key này nữa.
+  // Icon librarian = SVG line-art (quả cầu + kính) trong badge tròn, CÙNG style .avatar.assistant
+  // (logo agent) — không dùng emoji 📚/🌐 nữa (không đồng bộ ngôn ngữ icon của trang, xem CSS
+  // .step-indicator.step-librarian .step-icon).
+  ask_librarian: {
+    icon: '<svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="6"/><path d="M6 9h12"/>'
+      + '<path d="M12 3a8 8 0 0 1 0 12"/><path d="M12 3a8 8 0 0 0 0 12"/>'
+      + '<circle cx="7.5" cy="19" r="2.3"/><circle cx="16.5" cy="19" r="2.3"/>'
+      + '<path d="M9.8 19h4.4"/><path d="M5.2 19h-1.4"/><path d="M18.8 19h1.4"/></svg>',
+    label: 'Librarian đang tìm tài liệu…',
+  },
+  github_search: { icon: '🐙', label: 'Đang tìm trên GitHub…' },
+  youtube_transcript: { icon: '▶️', label: 'Đang lấy phụ đề YouTube…' },
+  rss_feed: { icon: '📡', label: 'Đang đọc RSS feed…' },
+};
+
+function renderStepIndicator(toolName) {
+  const step = TOOL_STEPS[toolName] || { icon: '⚙️', label: 'Đang xử lý…' };
+  const cls = toolName === 'ask_librarian' ? ' step-librarian' : '';
+  return '<div class="step-indicator' + cls + '"><span class="step-icon">' + step.icon + '</span>' +
+    escapeHtml(step.label) + '</div>';
+}
+
+// Gom nhiều text_delta đến trong CÙNG 1 frame rồi mới parse markdown + gán innerHTML 1 lần/frame
+// (requestAnimationFrame) — thay vì gán lại DOM mỗi token (có thể chục lần/giây, gây giật hình).
+// Đây là chỗ sửa trực tiếp yêu cầu "hiển thị dạng chunking chứ không phải xồ ra bất ngờ gây freeze
+// cả frame" — text vẫn "chảy" mượt vì buffer cập nhật liên tục, chỉ DOM write bị dồn theo frame.
+function makeThrottledRenderer(bubbleEl, scrollEl) {
+  let buffer = '';
+  let scheduled = false;
+  function flush() {
+    scheduled = false;
+    bubbleEl.innerHTML = renderMarkdownLite(buffer);
+    scrollEl.scrollTop = scrollEl.scrollHeight;
+  }
+  return {
+    push(delta) {
+      buffer += delta;
+      if (!scheduled) {
+        scheduled = true;
+        requestAnimationFrame(flush);
+      }
+    },
+  };
+}
+
+async function sendQuestion(question) {
+  if (sending) return;
+  sending = true;
+  addRow('user', question);
+  input.value = '';
+  autoResize();
+  btn.disabled = true;
+  const pending = addTypingRow();
+  const bubble = pending.querySelector('.bubble');
+  let renderer = null;
+  let finished = false;
+  let sawError = false;
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question, session_id: sessionId }),
+    });
+    if (!res.ok || !res.body) throw new Error('HTTP ' + res.status);
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      let idx;
+      while ((idx = buf.indexOf('\n')) >= 0) {
+        const line = buf.slice(0, idx);
+        buf = buf.slice(idx + 1);
+        if (!line.trim()) continue;
+        let evt;
+        try { evt = JSON.parse(line); } catch (e) { continue; }
+        if (evt.type === 'tool_start') {
+          bubble.innerHTML = renderStepIndicator(evt.value);
+          renderer = null; // tool tiếp theo (nếu có) thay hẳn step indicator, không nối chồng
+          scrollEl.scrollTop = scrollEl.scrollHeight;
+        } else if (evt.type === 'text_delta') {
+          if (evt.value) {
+            if (!renderer) renderer = makeThrottledRenderer(bubble, scrollEl);
+            renderer.push(evt.value);
+          }
+        } else if (evt.type === 'done') {
+          finished = true;
+          bubble.innerHTML = renderMarkdownLite(evt.value || '');
+          scrollEl.scrollTop = scrollEl.scrollHeight;
+        } else if (evt.type === 'error') {
+          sawError = true;
+          pending.remove();
+          addRow('error', evt.message || 'Lỗi không rõ.');
+        }
+      }
+    }
+    if (!finished && !sawError) {
+      pending.remove();
+      addRow('error', 'Kết nối bị ngắt trước khi có câu trả lời đầy đủ.');
+    }
+    loadSessionList(); // cập nhật tiêu đề / thứ tự sau khi có tin nhắn mới
+  } catch (err) {
+    pending.remove();
+    addRow('error', 'Lỗi gọi API: ' + err.message);
+  } finally {
+    sending = false;
+    btn.disabled = !input.value.trim();
+    input.focus();
+  }
+}
+
+f.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const question = input.value.trim();
+  if (!question || sending) return;
+  sendQuestion(question);
+});
+
+document.querySelectorAll('.suggestions button').forEach((b) => {
+  b.addEventListener('click', () => sendQuestion(b.dataset.q));
+});
+
+newChatBtn.addEventListener('click', () => {
+  // KHÔNG xoá session cũ — chỉ chuyển sang một cuộc trò chuyện mới, trống. Session cũ vẫn còn
+  // nguyên trong danh sách bên trái để quay lại sau (xoá thật thì bấm nút 🗑 trên từng mục).
+  startNewSession();
+  loadSessionList();
+});
+
+(async function initSessions() {
+  await loadSessionList();
+  await renderHistory(sessionId);
+  loadSessionList();
+})();
+
+// ---- Product tour: spotlight overlay đánh dấu 4 chức năng chính, không thư viện ngoài ----
+const TOUR_KEY = 'devops-chat-tour-seen';
+// Thứ tự khớp vị trí trên màn hình (trên → dưới) — collision-avoidance bên dưới xử lý tuần tự
+// theo thứ tự này, đảo ngược sẽ đẩy tooltip của spot Ở TRÊN xuống DƯỚI tooltip của spot ở dưới,
+// nhìn tách rời khỏi mục tiêu thật của nó.
+const TOUR_SPOTS = [
+  { selector: '[data-tour="new-chat"]', side: 'right',
+    label: 'Bắt đầu cuộc trò chuyện mới — xoá ngữ cảnh cũ, agent quên hội thoại trước đó.' },
+  { selector: '[data-tour="sidebar-info"]', side: 'right',
+    label: 'Đây là agent thật — model tự quyết định gọi tool và tự nhớ ngữ cảnh hội thoại.' },
+  { selector: '[data-tour="suggestions"]', side: 'top',
+    label: 'Câu hỏi mẫu: thử 1 câu DevOps hợp lệ, thử câu yêu cầu thực thi hành động thật (restart pod...) để xem guardrail chặn, hoặc hỏi "Bạn làm được gì?" để agent tự khai báo năng lực.' },
+  { selector: '[data-tour="composer"]', side: 'top',
+    label: 'Gõ câu hỏi tự nhiên ở đây — Enter để gửi, Shift+Enter xuống dòng.' },
+];
+
+function measureTourSpots() {
+  return TOUR_SPOTS.map((s) => {
+    const el = document.querySelector(s.selector);
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    if (r.width === 0 && r.height === 0) return null;
+    return Object.assign({ top: r.top, left: r.left, width: r.width, height: r.height }, s);
+  }).filter(Boolean);
+}
+
+let tourOpen = false;
+let tourResizeHandler = null;
+
+function showTour() {
+  const rects = measureTourSpots();
+  if (!rects.length) return;
+  tourOpen = true;
+  const PAD = 8;
+  const svgNS = 'http://www.w3.org/2000/svg';
+
+  const scrim = document.createElement('div');
+  scrim.className = 'tour-scrim';
+  // clip-path khoét lỗ đúng vùng đang spotlight — không có lỗ này thì scrim phủ TOÀN màn hình
+  // (kể cả phần đang sáng), khiến bấm vào nút thật đang được tô sáng chỉ đóng tour thay vì bấm
+  // được nút, phải bấm 2 lần mới ăn. Có lỗ: click trong vùng sáng lọt thẳng xuống phần tử thật
+  // bên dưới (trình duyệt loại phần bị clip ra khỏi hit-test), không qua scrim.
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const holePath = rects.map((r) => {
+    const x0 = r.left - PAD, y0 = r.top - PAD, x1 = r.left + r.width + PAD, y1 = r.top + r.height + PAD;
+    return `M${x0},${y0} L${x1},${y0} L${x1},${y1} L${x0},${y1} Z`;
+  }).join(' ');
+  scrim.style.clipPath = `path(evenodd, "M0,0 L${vw},0 L${vw},${vh} L0,${vh} Z ${holePath}")`;
+
+  const svg = document.createElementNS(svgNS, 'svg');
+  svg.setAttribute('class', 'tour-svg');
+  const maskId = 'tourMask' + Math.random().toString(36).slice(2, 8);
+  svg.innerHTML =
+    '<defs><mask id="' + maskId + '">' +
+      '<rect width="100%" height="100%" fill="white"/>' +
+      rects.map((r) => `<rect x="${r.left - PAD}" y="${r.top - PAD}" width="${r.width + PAD * 2}" height="${r.height + PAD * 2}" rx="14" fill="black"/>`).join('') +
+    '</mask></defs>' +
+    `<rect width="100%" height="100%" fill="rgba(13,13,13,.65)" mask="url(#${maskId})"/>` +
+    rects.map((r) => `<rect class="tour-ring" x="${r.left - PAD}" y="${r.top - PAD}" width="${r.width + PAD * 2}" height="${r.height + PAD * 2}" rx="14"/>`).join('');
+
+  document.body.appendChild(scrim);
+  document.body.appendChild(svg);
+
+  // Tạo trước, đo+đặt vị trí SAU trong CÙNG một requestAnimationFrame — cần đo hết rồi mới xử lý
+  // chồng lấn giữa các tooltip với nhau, không thể tính độc lập từng cái như bản trước (2 spot
+  // liền kề nhau theo chiều dọc, cùng side:'right', tooltip cao hơn khoảng cách giữa 2 spot →
+  // chồng đè lên nhau, chữ không đọc nổi — đúng bug người dùng chụp lại).
+  const tips = rects.map((r) => {
+    const tip = document.createElement('div');
+    tip.className = 'tour-tip';
+    tip.textContent = r.label;
+    document.body.appendChild(tip);
+    return tip;
+  });
+  requestAnimationFrame(() => {
+    // 8px cũ đúng về toán (tooltip đẩy xuống có khoảng cách) nhưng 2 khối đen sát cạnh nhau chỉ
+    // 8px vẫn ĐỌC như dính liền — không đủ khoảng thở thị giác. Tăng lên 20px.
+    const GAP = 20;
+    const placed = [];
+    rects.forEach((r, i) => {
+      const tip = tips[i];
+      const tw = tip.offsetWidth, th = tip.offsetHeight;
+      let top, left;
+      if (r.side === 'right') {
+        top = r.top + r.height / 2 - th / 2;
+        left = r.left + r.width + PAD + 12;
+      } else if (r.side === 'top') {
+        top = r.top - PAD - th - 10;
+        left = Math.max(8, Math.min(r.left + r.width / 2 - tw / 2, window.innerWidth - tw - 8));
+      } else {
+        top = r.top + r.height + PAD + 10;
+        left = Math.max(8, Math.min(r.left + r.width / 2 - tw / 2, window.innerWidth - tw - 8));
+      }
+      top = Math.max(8, top);
+      // Chồng lấn cả 2 trục với tooltip đã đặt trước đó → đẩy xuống dưới tooltip đó.
+      for (const p of placed) {
+        const overlapX = left < p.left + p.width && left + tw > p.left;
+        const overlapY = top < p.top + p.height + GAP && top + th + GAP > p.top;
+        if (overlapX && overlapY) top = p.top + p.height + GAP;
+      }
+      top = Math.min(top, window.innerHeight - th - 8);
+      tip.style.top = top + 'px';
+      tip.style.left = left + 'px';
+      tip.classList.add('placed');
+      placed.push({ top, left, width: tw, height: th });
+    });
+  });
+
+  const dismiss = document.createElement('div');
+  dismiss.className = 'tour-dismiss';
+  dismiss.textContent = 'Bấm vào đâu cũng được để đóng';
+  document.body.appendChild(dismiss);
+
+  document.body.style.overflow = 'hidden';
+
+  // Đóng tour khi bấm đúng phần tử thật đang spotlight (click lọt qua lỗ clip-path) — gắn
+  // TRỰC TIẾP vào từng phần tử đó, KHÔNG bắt ở document. Bản trước dùng
+  // `document.addEventListener('click', ..., true)` ở capture phase trên TOÀN TRANG — bắt cả
+  // những click chẳng liên quan gì tới tour (vd công cụ inspect/feedback bên ngoài click vào để
+  // chọn phần tử), remove DOM ngay giữa chừng khiến node bị tách khỏi tài liệu (bounding rect
+  // 0x0) trước khi công cụ ngoài kịp đọc — đúng lỗi "event bubbling" quá rộng bị phát hiện ra.
+  const spotEls = rects.map((r) => document.querySelector(r.selector)).filter(Boolean);
+
+  function close() {
+    if (!tourOpen) return;
+    tourOpen = false;
+    scrim.remove();
+    svg.remove();
+    dismiss.remove();
+    tips.forEach((t) => t.remove());
+    document.body.style.overflow = '';
+    if (tourResizeHandler) { window.removeEventListener('resize', tourResizeHandler); tourResizeHandler = null; }
+    spotEls.forEach((el) => el.removeEventListener('click', close));
+    try { localStorage.setItem(TOUR_KEY, '1'); } catch (e) {}
+  }
+  scrim.addEventListener('click', close);
+  spotEls.forEach((el) => el.addEventListener('click', close, { once: true }));
+  tourResizeHandler = () => { close(); showTour(); };
+  window.addEventListener('resize', tourResizeHandler);
+}
+
+document.getElementById('tourHelp').addEventListener('click', () => { if (!tourOpen) showTour(); });
+
+try {
+  if (!localStorage.getItem(TOUR_KEY)) {
+    setTimeout(showTour, 600);
+  }
+} catch (e) {}
+</script>
+</body>
+</html>

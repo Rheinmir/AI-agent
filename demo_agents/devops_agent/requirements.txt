@@ -1,0 +1,9 @@
+openai-agents==0.8.4
+openai==2.19.0  # ghim — openai>=2.40 đổi InputTokensDetails (thêm field cache_write_tokens bắt buộc)
+                # mà openai-agents 0.8.4 chưa set, gây pydantic.ValidationError lúc Runner.run_sync
+pytest
+mcp  # client MCP thật (agents.mcp.server.MCPServerStdio) — YÊU CẦU Python 3.10+ (mọi bản mcp trên
+     # PyPI đều pin requires-python >=3.10, lý do project migrate baseline runtime lên 3.10+ ngày
+     # 2026-08-04, xem wiki/log.md "python-3.10-migration-for-mcp")
+requests  # mcp_tools/channels.py::rss_read_impl (fetch RSS content, tránh urllib SSL issue của feedparser)
+feedparser  # mcp_tools/channels.py::rss_read_impl
