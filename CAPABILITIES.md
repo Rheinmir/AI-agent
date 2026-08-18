@@ -1,0 +1,118 @@
+<!-- SINH BẰNG CODE: build-capabilities.py — ĐỪNG sửa tay; chạy lại để cập nhật. -->
+# CAPABILITIES — toàn bộ đồ nghề (luôn-mới, đếm từ đĩa)
+
+**84 skill · 18 rule** khả dụng Ở DỰ ÁN NÀY (skill là global `~/.claude/skills`; rule do harness đã cài ở đây gác). Agent: đây là đồ nghề bạn CÓ — đừng làm lại thứ đã tồn tại. Tìm nhanh: `find-skills "<việc>"`. (Đồ nghề DEV framework — fdk-gate, build-capabilities… — chỉ có trong repo framework.)
+
+## Skills (gọi bằng `/<tên>`)
+
+### utils (84)
+- **`/agent-reach`** — MUST USE when user wants to research/search/look up/find anything on the internet
+- **`/brandkit`** — Premium brand-kit image generation skill for creating high-end brand-guidelines boards, lo…
+- **`/build-now-adapt-later`** — When a task is blocked by missing or unverified information (an undocumented protocol, an …
+- **`/cavecrew`** — Decision guide for delegating to caveman-style subagents
+- **`/caveman`** — Ultra-compressed communication mode
+- **`/caveman-commit`** — Ultra-compressed commit message generator
+- **`/caveman-compress`** — Compress natural language memory files (CLAUDE.md, todos, preferences) into caveman format…
+- **`/caveman-help`** — Quick-reference card for all caveman modes, skills, and commands
+- **`/caveman-review`** — Ultra-compressed code review comments
+- **`/caveman-stats`** — Show real token usage and estimated savings for the current session
+- **`/check-approve`** — Sinh sẵn 1-liner để trace 1 lệnh approve/return/reject của DMS trên log BE (docker) + FE p…
+- **`/computer-use`** — Use Orca's computer-use CLI to inspect and operate local desktop app windows through acces…
+- **`/council`** — Run a Karpathy-style LLM council (3-stage multi-agent evaluation) on top of the existing o…
+- **`/cursor-animated-sites`** — Build an interactive "cursor-animated walkthrough" page on top of the /docs-site-macos gla…
+- **`/design-taste-frontend`** — Anti-slop frontend skill for landing pages, portfolios, and redesigns
+- **`/design-taste-frontend-v1`** — The original v1 taste-skill, preserved for projects depending on its exact behavior
+- **`/docs-curate`** — Sắp xếp gọn kho tài liệu LOCAL (llmwiki/html/ + wiki/sources/draft/) khi phình to
+- **`/docs-site-macos`** — Build a beautiful macOS-inspired documentation site (single HTML file) with a liquid-glass…
+- **`/extract-site`** — Extract and convert a website or docs site into clean markdown
+- **`/fable5`** — Reasoning protocol distilled from Claude Fable 5
+- **`/failure-flywheel`** — Capture each agent failure, bucket and count it deterministically, and when a failure clas…
+- **`/fdk`** — Front-door on-demand cho phát triển framework HOẶC distill/author một skill
+- **`/fdk-uat`** — UAT THẬT cho một bản framework sắp phát hành
+- **`/find-skills`** — Helps users discover and install agent skills when they ask questions like "how do I do X"…
+- **`/frontier-scan`** — Quét biên giới agent-framework 30 ngày qua và đối chiếu overstack theo 8 trục (frontier-ga…
+- **`/full-output-enforcement`** — Overrides default LLM truncation behavior
+- **`/gpt-taste`** — Elite UX/UI & Advanced GSAP Motion Engineer
+- **`/hallmark`** — SÀN design mặc định của overstack (anti-AI-slop)
+- **`/harness-tour`** — Tour
+- **`/harness-update`** — TỰ BẢO TRÌ framework overstack trên máy user (self-maintain)
+- **`/health-check`** — Kiểm tra sức khỏe "pattern chuẩn" của template
+- **`/high-end-visual-design`** — Teaches the AI to design like a high-end agency
+- **`/i-have-adhd`** — Shape output for a reader with ADHD
+- **`/image-to-code`** — Elite website image-to-code skill for Codex
+- **`/imagegen-frontend-mobile`** — Elite mobile app image-generation skill for creating premium, app-native screen concepts a…
+- **`/imagegen-frontend-web`** — Elite frontend image-direction skill for generating premium, conversion-aware website desi…
+- **`/impact-check`** — Map all callers and dependents of a symbol before modifying shared code
+- **`/industrial-brutalist-ui`** — Raw mechanical interfaces fusing Swiss typographic print with military terminal aesthetics
+- **`/ingest`** — Process new file in llmwiki/raw/ and distill into wiki pages
+- **`/jenkins-agent-l3-deploy`** — Deploy a docker-compose app via a Jenkins INBOUND AGENT running on the target server (no S…
+- **`/join-project`** — Orient nhanh vào dự án đang chạy đã có llmwiki
+- **`/last30days`** — Research what people actually say about any topic in the last 30 days
+- **`/lint`** — Periodic wiki health check
+- **`/loop-runner`** — Deterministic guardrailed agent-loop driver
+- **`/md-to-html`** — Render Markdown thành standalone HTML
+- **`/medic`** — Cổng sức khoẻ tổng / tuyến phòng thủ cuối của framework overstack
+- **`/minimalist-ui`** — Clean editorial-style interfaces
+- **`/new-project-setup`** — Deploy llmwiki từ đầu vào project mới
+- **`/new-skill`** — Scaffold a new skill into both publish trees at once
+- **`/onboard-codebase`** — Deep codebase analysis
+- **`/orca-cli`** — Use the public `orca` CLI to operate Orca-managed worktrees/workspaces, terminals, repos, …
+- **`/orca-dispatch-reference`** — Reference for Antigravity/OpenCode dispatch, skill installation, AgentMemory, RTK token pr…
+- **`/orca-eval`** — Quét N session Claude Code gần nhất, distill best practices thành report md + đề xuất acti…
+- **`/orca-handover`** — Sinh MỘT file .md bàn giao đủ dày để một phiên KHÁC (người hoặc agent, không có context nà…
+- **`/orca-issue`** — Vòng xử lý SỰ CỐ first-class
+- **`/orca-onboard`** — Parallel codebase onboarding
+- **`/orca-sec-scans`** — Quét bảo mật mã nguồn bằng Trivy
+- **`/orca-workflow`** — Daily propose → gate → dispatch workflow with Orca
+- **`/orchestration`** — Use Orca orchestration for structured multi-agent coordination: threaded messages, blockin…
+- **`/ovs-notes`** — Viewer release-notes overstack TỨC THÌ (kiểu /release-notes của Claude CLI)
+- **`/plan`** — Mở rộng một draft SPEC ĐÃ ĐƯỢC DUYỆT thành kế hoạch thi hành được
+- **`/propose`** — Plan a feature before coding
+- **`/qc-code`** — Review code phong cách SENIOR 10 năm
+- **`/query`** — Synthesize answer from wiki; persist new insights as wiki entries
+- **`/raise-issue`** — Raise một ISSUE đầy đủ bối cảnh vào ledger local (draft) để dev khác pull về xử lý ở BẤT K…
+- **`/record-episode`** — Ghi một SESSION EPISODE có cấu trúc (tầng nhớ episodic) vào memory store để phiên sau truy…
+- **`/redesign-existing-projects`** — Upgrades existing websites and apps to premium quality
+- **`/safe-change`** — Modify shared code without breaking existing callers
+- **`/ship`** — Workflow chốt PUSH/RELEASE/PR/MR
+- **`/skill-provenance`** — Ghi và kiểm provenance (nguồn + sha256 checksum) cho skill
+- **`/snapshot-push`** — Push bonbon-ai outer repo as full snapshot, including be/ and fe/ content
+- **`/stitch-design-taste`** — Semantic Design System Skill for Google Stitch
+- **`/sync-template`** — Sync structural improvements between project and master template repo
+- **`/teach-me`** — Giải thích MỘT thứ (một file, hàm, tính năng, hay hệ thống) theo cấu trúc cố định: cách ch…
+- **`/tour-guide`** — Thêm một in-app product tour (spotlight onboarding overlay) tự viết, KHÔNG cần thư viện (k…
+- **`/tour-guide-supademo`** — Style thiết kế Supademo cho in-app product tour (dùng kèm skill tour-guide
+- **`/trace-grader`** — Score the PATH an agent took (tool choice, ordering, retries, repeatability, grounding)
+- **`/uat-nonit-testcase`** — Tạo bộ test case / checklist UAT cho người dùng nghiệp vụ NON-IT (C&B, kế toán, vận hành)
+- **`/verify-before-commit`** — Gate every commit
+- **`/wayfinder`** — Lập bản đồ cho một chunk việc QUÁ LỚN với một phiên agent và còn MÙ MỜ
+- **`/web-clone`** — Clone a website
+- **`/web-crawl`** — Crawl/scrape a website or single page into clean LLM-ready MARKDOWN
+- **`/wiki-room`** — Mở room (subagent 1 tầng) nạp chi tiết wiki khi context phiên chính đã rot
+- **`/wikieval`** — Turn wiki golden pages into a CI-blocking eval suite with a cheap→expensive assertion casc…
+
+## Harness rules (gác tự động — vi phạm bị chặn)
+- **R1** — no-write-raw
+- **R2** — origin-required
+- **R3** — index-sync
+- **R4** — audit-log
+- **R5** — folder-structure
+- **R6** — verify-before-commit
+- **R7** — proposal-complete
+- **R8** — session-health
+- **R9** — okf-frontmatter
+- **R10** — docs-gate
+- **R11** — seq-html-glass-style
+- **R12** — pull-before-change
+- **R13** — decision-to-adr
+- **R14** — patterns-protected
+- **R15** — no-ai-attribution
+- **R16** — report-show-path
+- **R17** — problem-tree-flush
+- **R18** — plan-executable
+
+## Đồ nghề dev-framework
+- Chỉ có trong repo framework (dự án này chỉ CÀI framework, không phát triển nó). Cần sửa chính skill/rule/validator → làm ở repo framework với `/fdk`.
+
+## Origin
+- Sinh bằng `build-capabilities.py` (deploy cạnh hooks) từ global skills + policy.yaml đã cài. KHÔNG hardcode.

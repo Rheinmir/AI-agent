@@ -1,0 +1,40 @@
+
+# flywheel failure-flywheel raw history (local)
+harness/metrics/failures.jsonl
+
+# code-logger raw event history (local)
+harness/metrics/events.jsonl
+harness/metrics/cost-by-session.json
+
+# mem-rank local memory store
+harness/metrics/memory.jsonl
+harness/metrics/tasks.json
+
+# per-machine harness runtime state (not source)
+harness/metrics/.stop-debounce.json
+harness/metrics/provenance-log.jsonl
+harness/metrics/scratch-log.jsonl
+
+# wiki lint lock files (per-machine, transient)
+demo_agents/*/wiki/.stale.lock
+
+# local secrets — never commit real API keys
+.env
+*/.env
+**/.env
+
+# chat demo runtime state (per-machine conversation memory, not source)
+demo_agents/weather_agent/chat_sessions.sqlite3*
+demo_agents/weather_agent/long_term_memory.sqlite3*
+demo_agents/weather_agent/monitoring.sqlite3*
+demo_agents/devops_agent/chat_sessions.sqlite3*
+demo_agents/devops_agent/monitoring.sqlite3*
+
+# Python virtualenvs — machine-local, never commit
+.venv/
+mcp_tools/servers-venv/
+__pycache__/
+*.pyc
+
+# editor/tool backup files
+*.bak
