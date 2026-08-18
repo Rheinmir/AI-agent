@@ -28,6 +28,10 @@ một lượt, bộ phân loại cảm xúc) **không phải** là agent.
 Ở dạng nền tảng nhất, một agent gồm: [[model-selection|model]] (năng lực suy luận/ra quyết định),
 [[tools]] (hàm/API để hành động), và [[instructions]] (hướng dẫn + guardrail xác định cách hành xử).
 
+Góc nhìn hạ tầng/vận hành mở rộng 3 thành phần này thành [[agent-7-layers|7 layer]] phải cân bằng cùng
+một ngân sách latency: Model Hosting, Tools, Memory, Context/Instruction, Data Collector, Harness,
+Evaluation.
+
 ## Khi nào nên xây dựng agent
 
 Agent phù hợp nhất với các workflow từng khó tự động hóa bằng cách tiếp cận tất định/rule-based:

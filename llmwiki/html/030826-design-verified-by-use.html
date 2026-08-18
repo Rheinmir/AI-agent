@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Design system phải kiểm chứng bằng dùng thật</title>
+<meta name="description" content="Retro: khoá design system qua Hallmark rồi 8 lỗi thật chỉ lộ ra khi dùng thật trên trang chạy, audit tĩnh không bắt được.">
+<meta name="theme-color" content="#eaf2fd">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2310a37f'/%3E%3C/svg%3E">
+<style>
+:root{
+  --glass-1: rgba(255,255,255,.55); --glass-2: rgba(255,255,255,.7); --glass-3: rgba(255,255,255,.88);
+  --blur-1: 24px; --blur-2: 8px; --blur-3: 4px;
+  --edge-hi: inset 0 1px 0 rgba(255,255,255,.85); --border: rgba(30,90,170,.14);
+  --font-text: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', 'Roboto', 'Segoe UI', sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', 'Roboto', 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', ui-monospace, 'SFMono-Regular', Menlo, 'Roboto Mono', Consolas, monospace;
+  --ink: #0f0f12; --ink2: #4a4a55;
+}
+*{box-sizing:border-box}
+html{background:#e9f0fb;scrollbar-width:thin;scrollbar-color:transparent transparent;scroll-behavior:smooth}
+html.scrolling{scrollbar-color:rgba(10,132,255,.32) transparent}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;font-family:var(--font-text);color:var(--ink);
+  background:radial-gradient(900px 500px at 12% -10%, rgba(10,132,255,.10), transparent 60%),
+    radial-gradient(700px 420px at 95% 15%, rgba(90,162,232,.08), transparent 55%),
+    linear-gradient(180deg,#f7fbff 0%,#eaf2fd 100%);}
+body::before{content:'';position:fixed;inset:-10%;z-index:-1;pointer-events:none;
+  background:radial-gradient(640px 440px at 10% 14%,rgba(10,132,255,.22),transparent 65%),
+    radial-gradient(380px 460px at 4% 52%,rgba(48,176,199,.18),transparent 65%),
+    radial-gradient(540px 400px at 88% 10%,rgba(88,86,214,.13),transparent 60%),
+    radial-gradient(720px 500px at 74% 76%,rgba(48,176,199,.13),transparent 65%),
+    radial-gradient(480px 380px at 16% 86%,rgba(255,149,0,.12),transparent 60%);
+  animation:orbDrift 46s ease-in-out infinite alternate}
+@keyframes orbDrift{100%{transform:translate(2.2%,1.6%) scale(1.045)}}
+body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background-image:radial-gradient(rgba(30,90,170,.11) 1px,transparent 1.3px);background-size:22px 22px;
+  mask-image:linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,.22))}
+h1,h2,h3,.logo{font-family:var(--font-display);letter-spacing:-.02em}
+p{font-size:13px;line-height:1.65;color:var(--ink2);text-wrap:pretty}
+:focus-visible{outline:2px solid #0a84ff;outline-offset:2px;border-radius:8px}
+:focus:not(:focus-visible){outline:none}
+.skip-link{position:fixed;top:8px;left:8px;z-index:200;padding:8px 14px;border-radius:10px;
+  background:var(--glass-1);backdrop-filter:blur(var(--blur-1));border:1px solid var(--border);
+  transform:translateY(-150%);transition:transform .2s}
+.skip-link:focus-visible{transform:translateY(0)}
+section[id]{scroll-margin-top:24px}
+table,.diagram-box text{font-variant-numeric:tabular-nums}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}}
+
+::-webkit-scrollbar{width:11px;height:11px;background:transparent}
+::-webkit-scrollbar-track,::-webkit-scrollbar-track-piece,::-webkit-scrollbar-corner,::-webkit-scrollbar-button{background:transparent;border:0;box-shadow:none}
+::-webkit-scrollbar-thumb{background:transparent;border-radius:8px;border:3px solid transparent;background-clip:content-box;transition:background-color .25s ease}
+html.scrolling::-webkit-scrollbar-thumb,nav.scrolling::-webkit-scrollbar-thumb,::-webkit-scrollbar-thumb:hover{background-color:rgba(10,132,255,.32)}
+::-webkit-scrollbar-thumb:active{background-color:rgba(10,132,255,.6)}
+
+nav{position:fixed;top:0;left:0;bottom:0;width:200px;z-index:100;
+  display:flex;flex-direction:column;align-items:stretch;gap:2px;padding:18px 12px;
+  background:linear-gradient(165deg,rgba(255,255,255,.46) 0%,rgba(255,255,255,.22) 48%,rgba(240,248,255,.34) 100%);
+  backdrop-filter:blur(var(--blur-1)) saturate(1.7) brightness(1.04);
+  -webkit-backdrop-filter:blur(var(--blur-1)) saturate(1.7) brightness(1.04);
+  border-right:1px solid rgba(255,255,255,.55);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 1px 0 0 rgba(255,255,255,.5),
+    inset -1px 0 0 rgba(30,90,170,.10),4px 0 24px rgba(30,90,170,.08);
+  overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none;
+  transition:transform .28s cubic-bezier(.4,0,.2,1)}
+nav::-webkit-scrollbar{width:0;height:0;display:none}
+nav>*{position:relative;flex-shrink:0}
+nav::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(220px 160px at 18% 4%,rgba(255,255,255,.55),transparent 70%),
+  linear-gradient(115deg,rgba(255,255,255,.28) 0%,transparent 28%,transparent 72%,rgba(255,255,255,.14) 100%)}
+nav .logo{margin:0 0 12px;padding:6px 10px;font-weight:700;font-size:13px;
+  background:linear-gradient(135deg,#0a84ff,#64b5f7);-webkit-background-clip:text;background-clip:text;color:transparent}
+nav a{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:10px;font-size:11.5px;position:relative;overflow:hidden;text-decoration:none;color:var(--ink2)}
+nav a.active{color:#0a84ff;background:rgba(10,132,255,.08);font-weight:600}
+nav a .ic{width:21px;height:21px;border-radius:7px;display:grid;place-items:center;flex-shrink:0}
+nav a .ic svg{width:12px;height:12px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ic.c0{background:linear-gradient(135deg,#0a84ff,#5aa2e8)} .ic.c1{background:linear-gradient(135deg,#30b0c7,#5ecbdd)}
+.ic.c2{background:linear-gradient(135deg,#5856d6,#8482e8)} .ic.c3{background:linear-gradient(135deg,#34c759,#5fdc7e)}
+.ic.c4{background:linear-gradient(135deg,#ff9500,#ffb04d)} .ic.c5{background:linear-gradient(135deg,#ff2d55,#ff6f8f)}
+.ic.c6{background:linear-gradient(135deg,#0a84ff,#5aa2e8)} .ic.c7{background:linear-gradient(135deg,#30b0c7,#5ecbdd)}
+body{padding-left:200px;transition:padding-left .28s cubic-bezier(.4,0,.2,1)}
+@media(max-width:640px){body{padding-left:0}nav{box-shadow:0 8px 30px rgba(0,0,0,.14)}}
+body.nav-collapsed nav{transform:translateX(-100%)}
+body.nav-collapsed{padding-left:0}
+
+.ripple-ink{position:absolute;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.70) 0%,rgba(255,255,255,.28) 38%,rgba(10,132,255,.20) 72%,transparent 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 0 -10px 20px rgba(10,132,255,.12),0 0 14px rgba(10,132,255,.10);
+  backdrop-filter:blur(2px) saturate(1.25);-webkit-backdrop-filter:blur(2px) saturate(1.25);
+  transform:scale(0);opacity:1;animation:rippleGrow .6s cubic-bezier(.25,.46,.45,.94) forwards}
+@keyframes rippleGrow{55%{transform:scale(1);opacity:.75}100%{transform:scale(1.04);opacity:0}}
+.nav-toggle{position:fixed;top:12px;left:12px;z-index:120;width:32px;height:32px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;font-size:14px;color:#4a4a55;cursor:pointer;
+  background:linear-gradient(165deg,rgba(255,255,255,.5),rgba(255,255,255,.24));
+  backdrop-filter:blur(var(--blur-1)) saturate(1.7) brightness(1.04);-webkit-backdrop-filter:blur(var(--blur-1)) saturate(1.7) brightness(1.04);
+  border:1px solid transparent;overflow:hidden;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.75),0 0 0 1px rgba(30,90,170,.08),0 2px 10px rgba(30,90,170,.12);
+  transition:opacity .2s,transform .28s cubic-bezier(.4,0,.2,1)}
+.nav-toggle:hover{color:#0a84ff}
+body:not(.nav-collapsed) .nav-toggle{opacity:0;pointer-events:none;transform:translateX(-6px)}
+.nav-close{position:absolute;top:10px;right:10px;width:24px;height:24px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;font-size:12px;color:#4a4a55;cursor:pointer;
+  background:rgba(0,0,0,.04);border:none;overflow:hidden}
+.nav-close:hover{color:#0a84ff;background:rgba(10,132,255,.10)}
+
+.hero{max-width:1052px;margin:0 auto;padding:56px 24px 20px}
+.eyebrow{display:inline-block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#0a84ff;background:rgba(10,132,255,.1);padding:4px 10px;border-radius:999px;font-weight:600;margin-bottom:14px}
+h1.title{font-size:clamp(24px,3.6vw,36px);line-height:1.15;margin:0 0 12px;text-wrap:balance;
+  background:linear-gradient(135deg,#0a84ff,#5aa2e8,#cfe3fb);-webkit-background-clip:text;background-clip:text;color:transparent}
+p.lead{font-size:14px;color:var(--ink2);max-width:66ch;margin:0;text-wrap:pretty}
+.meta-row{display:flex;flex-wrap:wrap;gap:6px 22px;font-size:11.5px;color:var(--ink2);margin-top:16px}
+.meta-row b{color:var(--ink)}
+
+.mm{overflow-x:auto;padding:14px 4px 6px;max-width:1052px;margin:0 auto}
+.mm-canvas{position:relative;width:max-content}
+.mm-links{position:absolute;top:0;left:0;pointer-events:none;overflow:visible;z-index:0}
+.mm-links path{fill:none;stroke-width:2.2;opacity:.55;stroke-linecap:round}
+.mm .tree{position:relative;z-index:1}
+.mm .tree,.mm .children{display:flex;flex-direction:column;gap:9px;justify-content:center}
+.mm .row{display:flex;align-items:center;gap:44px;position:relative}
+.mm .children{position:relative}.mm .children.collapsed{display:none}
+.mm .node{position:relative;display:inline-flex;flex-direction:column;gap:1px;padding:7px 13px;border-radius:13px;cursor:default;white-space:nowrap;background:rgba(255,255,255,.72);backdrop-filter:blur(7px) saturate(1.1);border:1px solid var(--border);box-shadow:inset 0 1px 0 rgba(255,255,255,.85),0 3px 14px rgba(20,40,90,.07)}
+.mm .node.has-children{cursor:pointer}.mm .node:hover{transform:translateY(-1px)}
+.mm .node .nm{font-size:12.5px;font-weight:700;letter-spacing:-.01em}.mm .node .ds{font-size:10px;color:var(--ink2)}
+.mm .node .ct{font-size:9.5px;color:#fff;font-weight:700;padding:1px 7px;border-radius:999px;position:absolute;top:-8px;right:-8px;background:#0a84ff}
+.mm .node.has-children::after{content:'';position:absolute;right:-7px;top:50%;width:6px;height:6px;border-right:2px solid var(--ink2);border-bottom:2px solid var(--ink2);transform:translateY(-50%) rotate(-45deg);opacity:.5}
+.mm .node.collapsed-parent::after{transform:translateY(-50%) rotate(45deg)}
+.mm .node.root{background:linear-gradient(135deg,rgba(10,132,255,.16),rgba(88,86,214,.14));border-color:rgba(10,132,255,.4)}
+.mm .node.b-0{border-color:rgba(255,45,85,.4)} .mm .node.b-0 .ct{background:#ff2d55}
+.mm .node.b-1{border-color:rgba(255,149,0,.4)} .mm .node.b-1 .ct{background:#ff9500}
+.mm .node.b-2{border-color:rgba(52,199,89,.4)} .mm .node.b-2 .ct{background:#34c759}
+
+.section-bg{position:relative;overflow:visible}
+.section-bg::before{content:'';position:absolute;top:0;bottom:0;left:50%;width:100vw;transform:translateX(-50%);pointer-events:none}
+.s-bg0::before{background:linear-gradient(180deg,rgba(10,132,255,.05) 0%,transparent 60%)}
+.s-bg1::before{background:linear-gradient(180deg,rgba(48,176,199,.05) 0%,transparent 60%)}
+.s-bg2::before{background:linear-gradient(180deg,rgba(88,86,214,.05) 0%,transparent 60%)}
+.s-bg3::before{background:linear-gradient(180deg,rgba(52,199,89,.05) 0%,transparent 60%)}
+.s-bg4::before{background:linear-gradient(180deg,rgba(255,149,0,.06) 0%,transparent 60%)}
+.s-bg5::before{background:linear-gradient(180deg,rgba(255,45,85,.05) 0%,transparent 60%)}
+.s-bg6::before{background:linear-gradient(180deg,rgba(138,144,150,.06) 0%,transparent 60%)}
+.s-bg7::before{background:linear-gradient(180deg,rgba(48,176,199,.05) 0%,transparent 60%)}
+
+section{padding:44px 24px 52px;max-width:1052px;margin:0 auto}
+.section-header{margin-bottom:18px}
+.section-header .tag{display:inline-block;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;padding:3px 10px;border-radius:999px;margin-bottom:10px}
+.section-header h2{font-size:20px;margin:0 0 8px;color:#1d1d1f;text-wrap:balance}
+.section-header p{font-size:13px;color:var(--ink2);margin:0;max-width:70ch}
+
+#sec-0 .tag{background:rgba(10,132,255,.1);color:#0a84ff} #sec-0 .card h4,#sec-0 .card li::before{color:#0a84ff}
+#sec-1 .tag{background:rgba(255,45,85,.1);color:#e0264b} #sec-1 .card h4,#sec-1 .card li::before{color:#e0264b}
+#sec-2 .tag{background:rgba(255,149,0,.12);color:#f08c00} #sec-2 .card h4,#sec-2 .card li::before{color:#f08c00}
+#sec-3 .tag{background:rgba(52,199,89,.1);color:#28a745} #sec-3 .card h4,#sec-3 .card li::before{color:#28a745}
+#sec-4 .tag{background:rgba(88,86,214,.1);color:#5856d6} #sec-4 .card h4,#sec-4 .card li::before{color:#5856d6}
+#sec-5 .tag{background:rgba(48,176,199,.1);color:#30b0c7} #sec-5 .card h4,#sec-5 .card li::before{color:#30b0c7}
+#sec-6 .tag{background:rgba(255,45,85,.1);color:#e0264b} #sec-6 .card h4,#sec-6 .card li::before{color:#e0264b}
+#sec-7 .tag{background:rgba(10,132,255,.1);color:#0a84ff} #sec-7 .card h4,#sec-7 .card li::before{color:#0a84ff}
+
+.card{background:var(--glass-2);backdrop-filter:blur(var(--blur-2)) saturate(1.1);border:1px solid var(--border);border-radius:16px;box-shadow:var(--edge-hi),0 4px 20px rgba(20,40,90,.08);padding:18px 20px}
+.card h4{margin:0 0 6px;font-size:13.5px}
+.card p{margin:0;font-size:12.5px;color:var(--ink2)}
+.card ul{margin:8px 0 0;padding:0;list-style:none}
+.card li{padding-left:14px;position:relative;font-size:12.5px;color:var(--ink2);margin-bottom:5px}
+.card li::before{content:'›';position:absolute;left:0;font-weight:700}
+.content-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+@media(max-width:700px){.content-grid{grid-template-columns:1fr}}
+
+.bug-card{background:rgba(184,69,63,.06);border:1px solid rgba(184,69,63,.22);border-radius:14px;padding:14px 18px;margin:16px 0}
+.bug-card .eb{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:#b8453f;font-weight:700;margin-bottom:6px;display:block}
+.bug-card p{margin:0;font-size:12.5px;color:var(--ink)}
+.fix-card{background:rgba(52,199,89,.07);border:1px solid rgba(52,199,89,.25);border-radius:14px;padding:14px 18px;margin:16px 0}
+.fix-card .eb{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:#1f8f45;font-weight:700;margin-bottom:6px;display:block}
+.fix-card p{margin:0;font-size:12.5px;color:var(--ink)}
+
+pre.code-block{font-family:var(--font-mono);font-size:11.5px;line-height:1.6;background:#12141c;color:#dbe4f3;border-radius:12px;padding:14px 16px;overflow-x:auto;margin:12px 0}
+.code-wrap{position:relative}
+.code-copy{position:absolute;top:7px;right:7px;z-index:2;width:28px;height:26px;display:inline-flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,.1);color:#cbd5e1;border:1px solid rgba(255,255,255,.15);border-radius:7px;cursor:pointer;opacity:0;transition:opacity .15s,background .15s,color .15s}
+.code-copy svg{width:14px;height:14px;display:block}
+.code-wrap:hover .code-copy{opacity:1}
+.code-copy:hover{background:rgba(255,255,255,.2);color:#fff}
+.code-copy.copied{background:rgba(16,185,129,.25);color:#6ee7b7;border-color:rgba(16,185,129,.45);opacity:1}
+@media(max-width:640px){.code-copy{opacity:1}}
+
+.timeline{display:flex;flex-direction:column;gap:0;margin-top:16px}
+.tl-item{display:flex;gap:14px;padding:10px 0;border-left:2px solid var(--border);margin-left:9px;padding-left:20px;position:relative}
+.tl-item::before{content:'';position:absolute;left:-7px;top:14px;width:12px;height:12px;border-radius:50%;background:#fff;border:2px solid #0a84ff}
+.tl-item b{font-size:12.5px;color:var(--ink)}
+.tl-item p{margin:2px 0 0;font-size:12px}
+
+.table-wrap{overflow-x:auto;margin-top:16px}
+table{width:100%;border-collapse:collapse;background:var(--glass-3);backdrop-filter:blur(var(--blur-3));border:1px solid var(--border);border-radius:12px;overflow:hidden;font-size:12px}
+th,td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);vertical-align:top}
+th{font-weight:700;color:#1d1d1f;background:rgba(255,255,255,.4);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em}
+tr:last-child td{border-bottom:none}
+.pill{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px}
+.pill-critical{background:rgba(184,69,63,.16);color:#b8453f}
+.pill-major{background:rgba(255,149,0,.16);color:#c76e00}
+.pill-minor{background:rgba(138,144,150,.16);color:#5b6167}
+code{font-family:var(--font-mono);font-size:11px;background:rgba(10,132,255,.08);padding:1px 5px;border-radius:5px}
+
+footer{max-width:1052px;margin:0 auto;padding:20px 24px 60px;font-size:11px;color:var(--ink2)}
+.ripple{position:absolute;border-radius:50%;pointer-events:none;transform:scale(0);opacity:.9;
+  background:radial-gradient(circle,rgba(255,255,255,.6) 0%,rgba(10,132,255,.22) 35%,transparent 70%);
+  box-shadow:0 0 0 1px rgba(255,255,255,.45);animation:rippleWave .65s cubic-bezier(.2,.6,.3,1) forwards}
+@keyframes rippleWave{to{transform:scale(2.8);opacity:0}}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<nav>
+  <div class="logo" id="top">🪞 Design × Dùng thật</div>
+  <a href="#sec-0" class="nav-link"><span class="ic c0"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="9"/></svg></span>Luận điểm</a>
+  <a href="#sec-1" class="nav-link"><span class="ic c1"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>Khoá hệ</a>
+  <a href="#sec-2" class="nav-link"><span class="ic c2"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg></span>Tour che nút</a>
+  <a href="#sec-3" class="nav-link"><span class="ic c3"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><line x1="9" y1="2" x2="9" y2="4"/><line x1="15" y1="2" x2="15" y2="4"/></svg></span>Spacing</a>
+  <a href="#sec-4" class="nav-link"><span class="ic c4"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h13"/></svg></span>Đường dẫn dài</a>
+  <a href="#sec-5" class="nav-link"><span class="ic c5"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg></span>Event bubbling</a>
+  <a href="#sec-6" class="nav-link"><span class="ic c6"><svg viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="5"/></svg></span>Mica → chìm hẳn</a>
+  <a href="#sec-7" class="nav-link"><span class="ic c7"><svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><path d="M9 9h6v6H9z"/></svg></span>Bài học</a>
+</nav>
+
+<main id="main">
+<div class="hero">
+  <div class="eyebrow">Retro · 2026-08-03</div>
+  <h1 class="title">Design system phải kiểm chứng bằng dùng thật, không chỉ audit tĩnh</h1>
+  <p class="lead">Sau khi <code>hallmark audit</code> tìm 10 lỗi và khoá <code>design.md</code> cho
+    <code>demo_agents/weather_agent/web/</code>, 8 lỗi thật KHÁC lộ ra — không phải qua audit lại,
+    mà qua từng lượt bấm thật trên trang đang chạy. Đây là bằng chứng cụ thể cho việc đó.</p>
+  <div class="meta-row">
+    <span><b>Phạm vi:</b> demo_agents/weather_agent/web/ (chat.html, index.html)</span>
+    <span><b>Công cụ:</b> Hallmark audit + lock, feedback trực tiếp trên trang chạy</span>
+    <span><b>Kết quả:</b> 18 lỗi tổng cộng đã sửa, ghi thành quy tắc trong design.md</span>
+  </div>
+</div>
+
+<div class="mm" role="img" aria-label="Sơ đồ tóm tắt: khoá hệ rồi 6 vòng sửa bug thật">
+  <div class="mm-canvas"><svg class="mm-links"></svg><div class="tree">
+    <div class="row">
+      <div class="node root has-children"><span class="nm">Retro UI/UX</span><span class="ds">khoá hệ → dùng thật</span><span class="ct">3</span></div>
+      <div class="children">
+        <div class="row">
+          <div class="node b-0 cat has-children"><span class="nm">Audit tĩnh</span><span class="ds">hallmark audit — 10 lỗi</span><span class="ct">3</span></div>
+          <div class="children">
+            <div class="row"><div class="node b-0 leaf"><span class="nm">Token discipline</span><span class="ds">19 raw hex → var()</span></div></div>
+            <div class="row"><div class="node b-0 leaf"><span class="nm">Không responsive</span><span class="ds">0 breakpoint mobile</span></div></div>
+            <div class="row"><div class="node b-0 leaf"><span class="nm">A11y bàn phím</span><span class="ds">session-item không tab được</span></div></div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="node b-1 cat has-children"><span class="nm">Bug chỉ lộ khi dùng thật</span><span class="ds">audit tĩnh không bắt được</span><span class="ct">8</span></div>
+          <div class="children">
+            <div class="row"><div class="node b-1 leaf"><span class="nm">Tour che nút thật</span><span class="ds">clip-path khoét lỗ</span></div></div>
+            <div class="row"><div class="node b-1 leaf"><span class="nm">Spacing lệch nhịp</span><span class="ds">10px vs 12px, hover shift</span></div></div>
+            <div class="row"><div class="node b-1 leaf"><span class="nm">Nút bị che khuất</span><span class="ds">min-width:0 thiếu</span></div></div>
+            <div class="row"><div class="node b-1 leaf"><span class="nm">Event bubbling</span><span class="ds">document-capture quá rộng</span></div></div>
+            <div class="row"><div class="node b-1 leaf"><span class="nm">Mica → chìm hẳn</span><span class="ds">2 vòng chỉnh mới đúng ý</span></div></div>
+            <div class="row"><div class="node b-1 leaf"><span class="nm">white-space kế thừa</span><span class="ds">nowrap tràn xuống con</span></div></div>
+            <div class="row"><div class="node b-1 leaf"><span class="nm">Tooltip chồng lấn</span><span class="ds">tính độc lập, không tránh nhau</span></div></div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="node b-2 cat has-children"><span class="nm">Kết quả</span><span class="ds">quy tắc mới trong design.md</span><span class="ct">2</span></div>
+          <div class="children">
+            <div class="row"><div class="node b-2 leaf"><span class="nm">7+ quy tắc mới</span><span class="ds">§ Notes, § Variants</span></div></div>
+            <div class="row"><div class="node b-2 leaf"><span class="nm">12/12 test vẫn xanh</span><span class="ds">mọi vòng sửa</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div></div>
+</div>
+
+<section id="sec-0" class="section-bg s-bg0">
+<div class="section-inner">
+  <div class="section-header">
+    <span class="tag">00 · Luận điểm</span>
+    <h2>Audit tĩnh tìm được cấu trúc sai — không tìm được tương tác sai</h2>
+    <p><code>hallmark audit</code> đọc code, chấm điểm theo danh sách anti-pattern, trả về punch
+      list rất chính xác cho những gì NHÌN THẤY ĐƯỢC trong code tĩnh: màu không qua token, thiếu
+      breakpoint, thiếu <code>role</code>/<code>tabindex</code>. Nhưng 8/18 lỗi trong đợt này chỉ
+      lộ ra khi có người thật bấm thật, đúng thứ tự thao tác thật — loại lỗi mà đọc code không thấy
+      được vì nó nằm ở CHỖ GIAO giữa nhiều đoạn code đúng riêng lẻ.</p>
+  </div>
+  <div class="content-grid">
+    <div class="card">
+      <h4>Audit tĩnh bắt được</h4>
+      <ul>
+        <li>Giá trị màu không qua token (<code>#fff</code> thay <code>var(--main-bg)</code>)</li>
+        <li>Thiếu breakpoint mobile hoàn toàn</li>
+        <li>Thiếu <code>role</code>/<code>tabindex</code> cho phần tử click-được</li>
+        <li>Icon stroke-width không đồng nhất</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Chỉ dùng thật mới lộ ra</h4>
+      <ul>
+        <li>Overlay che đúng phần tử nó đang muốn chỉ (chỉ thấy khi bấm)</li>
+        <li>2 tooltip chồng lấn khi 2 spot ở gần nhau (chỉ thấy khi tour hiện đủ dữ liệu dài)</li>
+        <li><code>white-space</code> kế thừa sai (chỉ thấy khi text đủ dài để tràn)</li>
+        <li>Ý định "chìm vào nền" hiểu sai ở lần sửa đầu — chỉ rõ ra khi nhìn ảnh chụp thật</li>
+      </ul>
+    </div>
+  </div>
+</div>
+</section>
+
+<section id="sec-1" class="section-bg s-bg1">
+<div class="section-inner">
+  <div class="section-header">
+    <span class="tag">01 · Khoá hệ</span>
+    <h2>hallmark audit → 10 lỗi → sửa hết → khoá design.md</h2>
+    <p>Điểm khởi đầu: audit <code>chat.html</code>, được 3 critical · 3 major · 4 minor. Sửa hết cả
+      10 rồi mới khoá <code>design.md</code> cho toàn bộ <code>demo_agents/weather_agent/web/</code>
+      — đúng thứ tự người dùng yêu cầu: "sửa hết 10 lỗi trước rồi mới khoá design.md".</p>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Mức</th><th>Lỗi</th><th>Sửa</th></tr></thead>
+      <tbody>
+        <tr><td><span class="pill pill-critical">critical</span></td><td>19 raw hex ngoài token block</td><td>Gộp về <code>:root</code>, tham chiếu <code>var()</code></td></tr>
+        <tr><td><span class="pill pill-critical">critical</span></td><td>0 breakpoint mobile</td><td>Thêm <code>@media(max-width:768px)</code>, sidebar → overlay</td></tr>
+        <tr><td><span class="pill pill-critical">critical</span></td><td><code>session-item</code> không tab được</td><td><code>role="button" tabindex="0"</code> + Enter/Space</td></tr>
+        <tr><td><span class="pill pill-major">major</span></td><td>Nút xoá chỉ hiện khi hover</td><td>Thêm <code>:focus-within</code></td></tr>
+        <tr><td><span class="pill pill-major">major</span></td><td>Icon stroke-width 1.8/2/2.4</td><td>Gộp về <code>--icon-stroke</code></td></tr>
+        <tr><td><span class="pill pill-minor">minor</span></td><td><code>main-bg</code> trắng tuyệt đối</td><td>Tint nhẹ <code>#fbfefc</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+</section>
+
+<section id="sec-2" class="section-bg s-bg2">
+<div class="section-inner">
+  <div class="section-header">
+    <span class="tag">02 · Bug #1</span>
+    <h2>Tour che luôn nút thật nó đang chỉ vào</h2>
+    <p>Overlay dạng spotlight phủ toàn màn hình kể cả vùng đang sáng — bấm vào nút "Cuộc trò
+      chuyện mới" lúc tour đang mở chỉ ĐÓNG TOUR chứ không bấm được nút, phải bấm 2 lần.</p>
+  </div>
+  <div class="bug-card"><span class="eb">Chỉ lộ ra khi</span><p>Người dùng thật bấm vào đúng nút đang được spotlight, kỳ vọng nó chạy hành động thật.</p></div>
+  <div class="fix-card"><span class="eb">Fix</span><p>Dùng <code>clip-path</code> khoét lỗ đúng vùng spotlight — click trong lỗ lọt thẳng xuống phần tử thật, trình duyệt tự loại vùng bị clip khỏi hit-test.</p></div>
+  <pre class="code-block">scrim.style.clipPath =
+  `path(evenodd, "M0,0 L${vw},0 L${vw},${vh} L0,${vh} Z ${holePath}")`;</pre>
+</div>
+</section>
+
+<section id="sec-3" class="section-bg s-bg3">
+<div class="section-inner">
+  <div class="section-header">
+    <span class="tag">03 · Bug #2</span>
+    <h2>Spacing lệch nhịp — tĩnh lẫn hover</h2>
+    <p><code>.session-item</code> dùng padding ngang 10px trong khi mọi phần tử khác trong sidebar
+      dùng 12px — lệch 2px không thấy được nếu không nhìn cạnh nhau. Nút xoá toggle
+      <code>display:none→flex</code> lúc hover làm chữ tiêu đề bị đẩy/co đột ngột.</p>
+  </div>
+  <div class="content-grid">
+    <div class="card"><h4>Lỗi tĩnh</h4><p>Padding 10px vs 12px — chỉ lộ khi so đo pixel-perfect giữa các hàng, code review thường bỏ qua.</p></div>
+    <div class="card"><h4>Lỗi hover</h4><p><code>display:none→flex</code> đổi layout tham gia flow → dịch chuyển phần tử lân cận. Chỉ thấy khi rê chuột thật, không thấy khi đọc CSS.</p></div>
+  </div>
+  <div class="fix-card"><span class="eb">Quy tắc mới</span><p>Phần tử hiện/ẩn theo hover/focus giữ <code>display</code> cố định, chỉ đổi <code>opacity</code>+<code>pointer-events</code>.</p></div>
+</div>
+</section>
+
+<section id="sec-4" class="section-bg s-bg4">
+<div class="section-inner">
+  <div class="section-header">
+    <span class="tag">04 · Bug #3</span>
+    <h2>Đường dẫn dài đội nút "?" tràn ra ngoài — mất hẳn khả năng bấm</h2>
+    <p>Không phải chỉ tràn nhìn xấu — nút bị đội ra ngoài <code>overflow:hidden</code> của sidebar
+      nghĩa là KHÔNG THỂ BẤM được nữa. Nguyên nhân: flex item mặc định <code>min-width:auto</code>,
+      không co dưới độ rộng nội dung dù đã có <code>flex-shrink</code>.</p>
+  </div>
+  <pre class="code-block">.sidebar-foot span{flex:1;min-width:0;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}</pre>
+  <div class="fix-card"><span class="eb">Fix thêm</span><p>Rút gọn kiểu "đầu…cuối" (<code>middleEllipsis()</code>) thay vì chỉ cắt cuối — giữ được cả tên package lẫn tên file.</p></div>
+</div>
+</section>
+
+<section id="sec-5" class="section-bg s-bg5">
+<div class="section-inner">
+  <div class="section-header">
+    <span class="tag">05 · Bug #4</span>
+    <h2>Listener toàn trang bắt nhầm cả click không liên quan</h2>
+    <p><code>document.addEventListener('click', ..., true)</code> ở capture phase để bắt click lọt
+      qua lỗ clip-path — nhưng bắt luôn MỌI click trên trang, kể cả công cụ inspect/feedback bên
+      ngoài, remove DOM giữa chừng khiến node bị tách khỏi tài liệu.</p>
+  </div>
+  <div class="bug-card"><span class="eb">Triệu chứng</span><p>Công cụ feedback bên ngoài inspect phần tử, trả về <code>Bounds: 0x0</code> — phần tử đã bị gỡ khỏi DOM trước khi công cụ kịp đọc.</p></div>
+  <div class="fix-card"><span class="eb">Quy tắc mới</span><p>Không gắn listener đóng ở <code>document</code>/<code>window</code> cho overlay chỉ cần đóng khi tương tác với MỘT TẬP phần tử cụ thể — gắn trực tiếp vào từng phần tử đó, phạm vi hẹp nhất có thể.</p></div>
+</div>
+</section>
+
+<section id="sec-6" class="section-bg s-bg6">
+<div class="section-inner">
+  <div class="section-header">
+    <span class="tag">06 · Bug #5-7</span>
+    <h2>"Chìm như 1 với background" mất 2 vòng mới đúng ý</h2>
+    <p>Yêu cầu "bỏ hết viền đi để nó chìm như 1 với background" — lần đầu chỉ bỏ <code>border</code>,
+      giữ <code>border-radius</code>+<code>box-shadow</code>. Vẫn còn thấy bo góc/shadow → phải hỏi
+      lại mới hiểu đúng: bỏ HẾT, không chỉ viền.</p>
+  </div>
+  <div class="timeline">
+    <div class="tl-item"><b>Lần 1</b><p>Bỏ <code>border</code>, giữ radius+shadow — nghĩ "nổi nhẹ" là đủ "chìm"</p></div>
+    <div class="tl-item"><b>Phản hồi thật</b><p>"vẫn còn bo góc và shadow này chưa reload lại à" — ảnh chụp cho thấy rõ vẫn còn khung</p></div>
+    <div class="tl-item"><b>Lần 2</b><p>Bỏ nốt <code>border-radius</code>+<code>box-shadow</code> — panel hoà hẳn vào nền</p></div>
+    <div class="tl-item"><b>Song song</b><p><code>.sidebar{white-space:nowrap}</code> (cho animate collapse) kế thừa xuống <code>.sidebar-section</code>, làm mô tả tràn ngang bị cắt</p></div>
+    <div class="tl-item"><b>Song song</b><p>2 tooltip tour kề nhau tính vị trí độc lập → chồng đè, chữ không đọc nổi</p></div>
+  </div>
+  <div class="fix-card"><span class="eb">Bài học</span><p>Một câu yêu cầu ngắn ("chìm như 1") có thể hiểu nhiều mức độ khác nhau — ảnh chụp thật từ người dùng giải quyết mơ hồ nhanh hơn nhiều so với đoán rồi sửa lại.</p></div>
+</div>
+</section>
+
+<section id="sec-7" class="section-bg s-bg7">
+<div class="section-inner">
+  <div class="section-header">
+    <span class="tag">07 · Bài học</span>
+    <h2>7+ quy tắc mới, giờ nằm trong design.md — không chỉ trong đầu</h2>
+    <p>Mỗi lỗi tìm được đều được ghi thành quy tắc tường minh trong
+      <code>demo_agents/weather_agent/web/design.md</code> (mục Notes + Variants), không chỉ sửa
+      xong rồi thôi — lần sau audit hoặc build trang mới trong cùng thư mục sẽ đọc thấy các quy
+      tắc này trước khi lặp lại lỗi cũ.</p>
+  </div>
+  <div class="content-grid">
+    <div class="card">
+      <h4>Quy tắc kỹ thuật</h4>
+      <ul>
+        <li>Spotlight overlay phải khoét lỗ <code>clip-path</code>, không phủ kín</li>
+        <li>Hover-toggle không đổi <code>display</code>, chỉ đổi <code>opacity</code></li>
+        <li>Text dài cạnh phần tử cố định trong flex row cần <code>min-width:0</code></li>
+        <li>Listener overlay gắn vào phần tử cụ thể, không bắt ở <code>document</code></li>
+        <li><code>white-space:nowrap</code> ở cha phải đi kèm <code>normal</code> tường minh ở con cần wrap</li>
+        <li>Nhiều tooltip trong 1 overlay phải tính vị trí theo lô, tránh chồng lấn nhau</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Quy tắc quy trình</h4>
+      <ul>
+        <li>Audit tĩnh trước — bắt được phần lớn lỗi cấu trúc rẻ để sửa</li>
+        <li>Rồi PHẢI dùng thật — click thật, gõ thật, xem ảnh chụp thật</li>
+        <li>Mỗi lỗi tìm được ghi ngay vào <code>design.md</code>, không chỉ sửa code</li>
+        <li>12/12 test offline chạy lại sau MỖI vòng sửa, kể cả sửa CSS thuần</li>
+      </ul>
+    </div>
+  </div>
+  <a class="foot-link" href="../../demo_agents/weather_agent/web/design.md" style="display:inline-block;margin-top:16px;font-size:12px;color:#0a84ff;text-decoration:none;font-family:var(--font-mono)">Chi tiết: demo_agents/weather_agent/web/design.md</a>
+</div>
+</section>
+
+</main>
+
+<footer>Retro UI/UX — sinh bởi <code>/docs-site-macos</code> · nguồn: <code>/Users/admin/orca/projects/AI-agent/llmwiki/html/030826-design-verified-by-use.html</code></footer>
+
+<script>
+function initCodeCopy() {
+  const COPY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+  const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
+  document.querySelectorAll('pre.code-block').forEach(pre => {
+    if (pre.dataset.copy) return; pre.dataset.copy = '1';
+    const code = pre.textContent;
+    const wrap = document.createElement('div'); wrap.className = 'code-wrap';
+    pre.parentNode.insertBefore(wrap, pre); wrap.appendChild(pre);
+    const btn = document.createElement('button'); btn.className = 'code-copy';
+    btn.setAttribute('aria-label', 'Copy'); btn.title = 'Copy'; btn.innerHTML = COPY;
+    wrap.appendChild(btn);
+    btn.addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(code); }
+      catch (e) { const ta = document.createElement('textarea'); ta.value = code;
+        document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); }
+      btn.innerHTML = CHECK; btn.classList.add('copied');
+      setTimeout(() => { btn.innerHTML = COPY; btn.classList.remove('copied'); }, 1500);
+    });
+  });
+}
+initCodeCopy();
+
+function initRipple() {
+  document.addEventListener('pointerdown', e => {
+    const el = e.target.closest('button, .nav-link, .collapse-toggle');
+    if (!el || el.dataset.noRipple) return;
+    const r = el.getBoundingClientRect();
+    const d = Math.max(r.width, r.height) * 1.2;
+    const s = document.createElement('span');
+    s.className = 'ripple';
+    s.style.cssText = `width:${d}px;height:${d}px;left:${e.clientX - r.left - d/2}px;top:${e.clientY - r.top - d/2}px`;
+    if (getComputedStyle(el).position === 'static') el.style.position = 'relative';
+    el.style.overflow = 'hidden';
+    el.appendChild(s);
+    s.addEventListener('animationend', () => s.remove());
+  });
+}
+initRipple();
+
+(function(){
+  var mm=document.querySelector('.mm');if(!mm)return;var NS='http://www.w3.org/2000/svg';
+  function colorOf(n){return n.classList.contains('b-0')?'#ff2d55':n.classList.contains('b-1')?'#ff9500':n.classList.contains('b-2')?'#34c759':'#9aa4b2';}
+  function draw(){var canvas=mm.querySelector('.mm-canvas'),svg=mm.querySelector('.mm-links');if(!canvas||!svg)return;var w=canvas.offsetWidth,h=canvas.offsetHeight;svg.setAttribute('width',w);svg.setAttribute('height',h);svg.setAttribute('viewBox','0 0 '+w+' '+h);while(svg.firstChild)svg.removeChild(svg.firstChild);var cR=canvas.getBoundingClientRect();[].slice.call(canvas.querySelectorAll('.node.has-children')).forEach(function(p){var row=p.parentElement,kids=null,ch=row.children;for(var i=0;i<ch.length;i++){if(ch[i].classList.contains('children'))kids=ch[i];}if(!kids||kids.classList.contains('collapsed'))return;var pr=p.getBoundingClientRect(),px=pr.right-cR.left,py=pr.top+pr.height/2-cR.top;[].slice.call(kids.children).forEach(function(crow){var cn=crow.querySelector(':scope > .node');if(!cn)return;var rr=cn.getBoundingClientRect(),cx=rr.left-cR.left,cy=rr.top+rr.height/2-cR.top,dx=Math.max(22,(cx-px)*0.55);var pa=document.createElementNS(NS,'path');pa.setAttribute('d','M'+px+' '+py+' C'+(px+dx)+' '+py+' '+(cx-dx)+' '+cy+' '+cx+' '+cy);pa.setAttribute('stroke',colorOf(cn));svg.appendChild(pa);});});}
+  [].slice.call(mm.querySelectorAll('.node.has-children')).forEach(function(n){var row=n.parentElement,kids=null,c=row.children;for(var i=0;i<c.length;i++){if(c[i].classList.contains('children'))kids=c[i];}if(!kids)return;if(n.classList.contains('cat')){kids.classList.add('collapsed');n.classList.add('collapsed-parent');}n.addEventListener('click',function(e){e.stopPropagation();var open=kids.classList.toggle('collapsed');n.classList.toggle('collapsed-parent',open);draw();});});
+  draw();addEventListener('load',function(){setTimeout(draw,60);});addEventListener('resize',function(){clearTimeout(window.__mmt);window.__mmt=setTimeout(draw,120);},{passive:true});
+})();
+
+(function(){
+  const nav = document.querySelector('nav'); if (!nav) return;
+  const btn = document.createElement('button'); btn.className = 'nav-toggle'; btn.textContent = '☰';
+  document.body.appendChild(btn);
+  const close = document.createElement('button'); close.className = 'nav-close'; close.textContent = '✕';
+  nav.appendChild(close);
+  const apply = c => { document.body.classList.toggle('nav-collapsed', c);
+    try { localStorage.setItem('navCollapsed', c ? '1' : '0'); } catch(e){} };
+  btn.addEventListener('click', () => apply(false));
+  close.addEventListener('click', () => apply(true));
+  try { const s = localStorage.getItem('navCollapsed');
+    if (s === '1' || (s !== '0' && matchMedia('(max-width:640px)').matches)) apply(true);
+  } catch(e){}
+  function attach(el){
+    el.addEventListener('pointerdown', function(e){
+      const r = el.getBoundingClientRect();
+      const x = e.clientX - r.left, y = e.clientY - r.top;
+      const rad = Math.hypot(Math.max(x, r.width - x), Math.max(y, r.height - y));
+      const ink = document.createElement('span'); ink.className = 'ripple-ink';
+      ink.style.width = ink.style.height = rad * 2 + 'px';
+      ink.style.left = (x - rad) + 'px'; ink.style.top = (y - rad) + 'px';
+      el.appendChild(ink);
+      ink.addEventListener('animationend', () => ink.remove());
+    });
+  }
+  document.querySelectorAll('nav a, .nav-toggle, .nav-close').forEach(attach);
+})();
+
+(function(){
+  const flash = (el) => { let t; return () => { el.classList.add('scrolling'); clearTimeout(t);
+    t = setTimeout(() => el.classList.remove('scrolling'), 900); }; };
+  const root = document.documentElement;
+  window.addEventListener('scroll', flash(root), { passive:true });
+  const nav = document.querySelector('nav');
+  if (nav) nav.addEventListener('scroll', flash(nav), { passive:true });
+})();
+
+(function(){
+  const links = [...document.querySelectorAll('nav a')];
+  const sections = [...document.querySelectorAll('section[id]')];
+  const observer = new IntersectionObserver(entries => {
+    let active = '';
+    for (const entry of entries) { if (entry.isIntersecting) active = entry.target.id; }
+    if (active) links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + active));
+  }, { rootMargin: '-40% 0px -55% 0px' });
+  sections.forEach(s => observer.observe(s));
+})();
+</script>
+</body>
+</html>

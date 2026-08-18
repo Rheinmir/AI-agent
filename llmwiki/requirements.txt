@@ -1,0 +1,2 @@
+markdown  # wiki_browser.py — render llmwiki/wiki/*.md thành HTML đọc được
+pyyaml  # wiki_browser.py — parse YAML frontmatter (type/title/tags/timestamp)

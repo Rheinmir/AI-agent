@@ -27,5 +27,8 @@ tránh giới hạn năng lực agent quá sớm, và giúp chẩn đoán chính
 2. Tập trung đạt mục tiêu độ chính xác bằng các model tốt nhất hiện có.
 3. Tối ưu chi phí và độ trễ bằng cách thay model lớn bằng model nhỏ hơn khi có thể.
 
+Đây là góc nhìn chọn model theo TÁC VỤ. Góc nhìn chọn model theo HẠ TẦNG (KV cache, VRAM còn lại, so
+sánh vendor theo margin) là một bài toán khác — xem [[model-hosting]].
+
 ## Origin
 - **Source:** [[huong-dan-xay-dung-agent-thuc-te]]

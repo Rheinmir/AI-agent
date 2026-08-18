@@ -1,0 +1,1411 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kiến trúc Agent: 7 layer & Model Hosting</title>
+<meta name="description" content="7 layer cần cân bằng để có 1 agent usable: Data Collector, Memory, Context, Tools, Harness, Evaluation, và Model Hosting.">
+<meta name="theme-color" content="#eaf2fd">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230a84ff'/%3E%3C/svg%3E">
+<style>
+:root{
+  --glass-1: rgba(255,255,255,.55);
+  --glass-2: rgba(255,255,255,.7);
+  --glass-3: rgba(255,255,255,.88);
+  --blur-1: 24px; --blur-2: 8px; --blur-3: 4px;
+  --edge-hi: inset 0 1px 0 rgba(255,255,255,.85);
+  --border: rgba(30,90,170,.14);
+  --ink: #0f0f12; --ink2: #4a4a55;
+  --font-text: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', 'Roboto', 'Segoe UI', sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', 'Roboto', 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', ui-monospace, 'SFMono-Regular', Menlo, 'Roboto Mono', Consolas, monospace;
+}
+*{box-sizing:border-box}
+html{background:#e9f0fb;scrollbar-width:thin;scrollbar-color:transparent transparent;scroll-behavior:smooth}
+html.scrolling{scrollbar-color:rgba(10,132,255,.32) transparent}
+body{margin:0;font-family:var(--font-text);color:var(--ink);font-size:13.5px;line-height:1.65;-webkit-font-smoothing:antialiased;padding-left:200px;transition:padding-left .28s cubic-bezier(.4,0,.2,1)}
+body.nav-collapsed{padding-left:0}
+h1,h2,h3,.logo{font-family:var(--font-display);letter-spacing:-.02em}
+body{
+  background:
+    radial-gradient(900px 500px at 12% -10%, rgba(10,132,255,.10), transparent 60%),
+    radial-gradient(700px 420px at 95% 15%, rgba(90,162,232,.08), transparent 55%),
+    linear-gradient(180deg, #f7fbff 0%, #eaf2fd 100%);
+}
+body::before{content:'';position:fixed;inset:-10%;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(640px 440px at 10% 14%,rgba(10,132,255,.22),transparent 65%),
+    radial-gradient(380px 460px at 4% 52%,rgba(48,176,199,.18),transparent 65%),
+    radial-gradient(540px 400px at 88% 10%,rgba(88,86,214,.13),transparent 60%),
+    radial-gradient(720px 500px at 74% 76%,rgba(48,176,199,.13),transparent 65%),
+    radial-gradient(480px 380px at 16% 86%,rgba(255,149,0,.12),transparent 60%);
+  animation:orbDrift 46s ease-in-out infinite alternate}
+@keyframes orbDrift{100%{transform:translate(2.2%,1.6%) scale(1.045)}}
+body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background-image:radial-gradient(rgba(30,90,170,.11) 1px,transparent 1.3px);
+  background-size:22px 22px;
+  mask-image:linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,.22))}
+
+/* dark theme */
+@media (prefers-color-scheme: dark){
+  html:not([data-theme=light]){ --glass-1: rgba(30,32,38,.55); --glass-2: rgba(30,32,38,.66); --glass-3: rgba(24,26,30,.9);
+    --border: rgba(120,160,220,.16); --edge-hi: inset 0 1px 0 rgba(255,255,255,.08); --ink:#eceef0; --ink2:#a2a8b0; background:#0c0f16 }
+  html:not([data-theme=light]) body{ background:
+    radial-gradient(900px 500px at 12% -10%, rgba(10,132,255,.16), transparent 60%),
+    radial-gradient(700px 420px at 95% 15%, rgba(90,162,232,.10), transparent 55%),
+    linear-gradient(180deg,#0c0f16 0%,#111420 100%); }
+}
+html[data-theme=dark]{ --glass-1: rgba(30,32,38,.55); --glass-2: rgba(30,32,38,.66); --glass-3: rgba(24,26,30,.9);
+  --border: rgba(120,160,220,.16); --edge-hi: inset 0 1px 0 rgba(255,255,255,.08); --ink:#eceef0; --ink2:#a2a8b0; background:#0c0f16 }
+html[data-theme=dark] body{ background:
+  radial-gradient(900px 500px at 12% -10%, rgba(10,132,255,.16), transparent 60%),
+  radial-gradient(700px 420px at 95% 15%, rgba(90,162,232,.10), transparent 55%),
+  linear-gradient(180deg,#0c0f16 0%,#111420 100%); }
+
+/* scrollbar */
+::-webkit-scrollbar{width:11px;height:11px;background:transparent}
+::-webkit-scrollbar-track,::-webkit-scrollbar-track-piece,::-webkit-scrollbar-corner,::-webkit-scrollbar-button{background:transparent;border:0;box-shadow:none}
+::-webkit-scrollbar-thumb{background:transparent;border-radius:8px;border:3px solid transparent;background-clip:content-box;transition:background-color .25s ease}
+html.scrolling::-webkit-scrollbar-thumb,nav.scrolling::-webkit-scrollbar-thumb,::-webkit-scrollbar-thumb:hover{background-color:rgba(10,132,255,.32)}
+::-webkit-scrollbar-thumb:active{background-color:rgba(10,132,255,.6)}
+
+/* accessibility */
+:focus-visible{outline:2px solid #0a84ff;outline-offset:2px;border-radius:8px}
+:focus:not(:focus-visible){outline:none}
+.skip-link{position:fixed;top:8px;left:8px;z-index:200;padding:8px 14px;border-radius:10px;background:var(--glass-1);backdrop-filter:blur(var(--blur-1));border:1px solid var(--border);transform:translateY(-150%);transition:transform .2s}
+.skip-link:focus-visible{transform:translateY(0)}
+section[id]{scroll-margin-top:24px}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}}
+table,.diagram-box text,.mm .node .ct{font-variant-numeric:tabular-nums}
+h1,h2,p.lead{text-wrap:balance}
+
+/* nav */
+nav{position:fixed;top:0;left:0;bottom:0;width:200px;z-index:100;
+  display:flex;flex-direction:column;align-items:stretch;gap:2px;padding:18px 12px;
+  background:linear-gradient(165deg,rgba(255,255,255,.46) 0%,rgba(255,255,255,.22) 48%,rgba(240,248,255,.34) 100%);
+  backdrop-filter:blur(var(--blur-1)) saturate(1.7) brightness(1.04);
+  -webkit-backdrop-filter:blur(var(--blur-1)) saturate(1.7) brightness(1.04);
+  border-right:1px solid rgba(255,255,255,.55);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 1px 0 0 rgba(255,255,255,.5),inset -1px 0 0 rgba(30,90,170,.10),4px 0 24px rgba(30,90,170,.08);
+  overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none;
+  transition:transform .28s cubic-bezier(.4,0,.2,1)}
+nav::-webkit-scrollbar{width:0;height:0;display:none}
+nav::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(220px 160px at 18% 4%,rgba(255,255,255,.55),transparent 70%),
+  linear-gradient(115deg,rgba(255,255,255,.28) 0%,transparent 28%,transparent 72%,rgba(255,255,255,.14) 100%)}
+nav>*{position:relative;flex-shrink:0}
+nav .logo{margin:0 0 12px;padding:6px 10px;font-weight:700;font-size:13px;
+  background:linear-gradient(135deg,#0a84ff,#64b5f7);-webkit-background-clip:text;background-clip:text;color:transparent}
+nav a{display:flex;align-items:center;gap:9px;padding:6px 10px;border-radius:10px;font-size:11.5px;position:relative;overflow:hidden;text-decoration:none;color:var(--ink2)}
+nav a.active{color:#0a84ff;background:rgba(10,132,255,.08);font-weight:600}
+nav a .ic{width:21px;height:21px;border-radius:7px;display:grid;place-items:center;flex-shrink:0}
+nav a .ic svg{width:12px;height:12px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ic.c0{background:linear-gradient(135deg,#0a84ff,#5aa2e8)}
+.ic.c1{background:linear-gradient(135deg,#30b0c7,#5ecbdd)}
+.ic.c2{background:linear-gradient(135deg,#5856d6,#8482e8)}
+.ic.c3{background:linear-gradient(135deg,#34c759,#5fdc7e)}
+.ic.c4{background:linear-gradient(135deg,#ff9500,#ffb04d)}
+.ic.c5{background:linear-gradient(135deg,#ff2d55,#ff6f8f)}
+.ic.c6{background:linear-gradient(135deg,#0a84ff,#5aa2e8)}
+.ic.c7{background:linear-gradient(135deg,#30b0c7,#5ecbdd)}
+body{padding-left:200px}
+@media(max-width:640px){body{padding-left:0}nav{box-shadow:0 8px 30px rgba(0,0,0,.14)}}
+body.nav-collapsed nav{transform:translateX(-100%)}
+body.nav-collapsed{padding-left:0}
+
+.ripple-ink{position:absolute;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.70) 0%,rgba(255,255,255,.28) 38%,rgba(10,132,255,.20) 72%,transparent 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 0 -10px 20px rgba(10,132,255,.12),0 0 14px rgba(10,132,255,.10);
+  backdrop-filter:blur(2px) saturate(1.25);-webkit-backdrop-filter:blur(2px) saturate(1.25);
+  transform:scale(0);opacity:1;animation:rippleGrow .6s cubic-bezier(.25,.46,.45,.94) forwards}
+@keyframes rippleGrow{55%{transform:scale(1);opacity:.75}100%{transform:scale(1.04);opacity:0}}
+
+.nav-toggle{position:fixed;top:12px;left:12px;z-index:120;width:32px;height:32px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;font-size:14px;color:#4a4a55;cursor:pointer;
+  background:linear-gradient(165deg,rgba(255,255,255,.5),rgba(255,255,255,.24));
+  backdrop-filter:blur(var(--blur-1)) saturate(1.7) brightness(1.04);-webkit-backdrop-filter:blur(var(--blur-1)) saturate(1.7) brightness(1.04);
+  border:1px solid transparent;overflow:hidden;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.75),0 0 0 1px rgba(30,90,170,.08),0 2px 10px rgba(30,90,170,.12);
+  transition:opacity .2s,transform .28s cubic-bezier(.4,0,.2,1)}
+.nav-toggle:hover{color:#0a84ff}
+body:not(.nav-collapsed) .nav-toggle{opacity:0;pointer-events:none;transform:translateX(-6px)}
+.nav-close{position:absolute;top:10px;right:10px;width:24px;height:24px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;font-size:12px;color:#4a4a55;cursor:pointer;
+  background:rgba(0,0,0,.04);border:none;overflow:hidden}
+.nav-close:hover{color:#0a84ff;background:rgba(10,132,255,.10)}
+
+.theme-row{position:sticky;bottom:0;margin-top:auto;display:flex;align-items:center;justify-content:space-between;
+  padding:11px 10px;border-top:1px solid rgba(30,90,170,.14);background:linear-gradient(180deg,transparent,rgba(255,255,255,.4));backdrop-filter:blur(14px)}
+.theme-row .lbl{font-size:11.5px;color:var(--ink2)}
+.theme-switch{cursor:pointer}
+.theme-switch .track{position:relative;width:46px;height:24px;border-radius:999px;background:rgba(0,0,0,.08);transition:background .2s;display:block}
+.theme-switch .track::before{content:'☀️';position:absolute;left:5px;top:50%;transform:translateY(-50%);font-size:9px}
+.theme-switch .track::after{content:'🌙';position:absolute;right:5px;top:50%;transform:translateY(-50%);font-size:9px}
+.theme-switch .knob{position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .18s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.theme-switch.on .knob{left:24px}
+.theme-switch.on .track{background:#0a84ff44}
+
+/* main + hero */
+main{display:block}
+.hero{max-width:1052px;margin:0 auto;padding:56px 24px 20px}
+.eyebrow{display:inline-block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#0a84ff;background:rgba(10,132,255,.1);padding:4px 10px;border-radius:999px;font-weight:600;margin-bottom:14px}
+h1.title{font-size:clamp(24px,3.6vw,36px);line-height:1.15;margin:0 0 12px;background:linear-gradient(135deg,#0a84ff,#5aa2e8,#cfe3fb);-webkit-background-clip:text;background-clip:text;color:transparent}
+p.lead{font-size:14px;color:var(--ink2);max-width:66ch;margin:0}
+.meta-row{display:flex;flex-wrap:wrap;gap:6px 22px;font-size:11.5px;color:var(--ink2);margin-top:16px}
+.meta-row b{color:var(--ink)}
+
+/* mind map */
+.mm{overflow-x:auto;padding:14px 4px 6px;max-width:1052px;margin:0 auto}
+.mm-canvas{position:relative;width:max-content}
+.mm-links{position:absolute;top:0;left:0;pointer-events:none;overflow:visible;z-index:0}
+.mm-links path{fill:none;stroke-width:2.2;opacity:.55;stroke-linecap:round}
+.mm .tree{position:relative;z-index:1}
+.mm .tree,.mm .children{display:flex;flex-direction:column;gap:9px;justify-content:center}
+.mm .row{display:flex;align-items:center;gap:44px;position:relative}
+.mm .children{position:relative}
+.mm .children.collapsed{display:none}
+.mm .node{position:relative;display:inline-flex;flex-direction:column;gap:1px;padding:7px 13px;border-radius:13px;cursor:default;white-space:nowrap;background:rgba(255,255,255,.72);backdrop-filter:blur(7px) saturate(1.1);border:1px solid var(--border);box-shadow:inset 0 1px 0 rgba(255,255,255,.85),0 3px 14px rgba(20,40,90,.07)}
+.mm .node.has-children{cursor:pointer}
+.mm .node:hover{transform:translateY(-1px)}
+.mm .node .nm{font-size:12.5px;font-weight:700;letter-spacing:-.01em}
+.mm .node .ds{font-size:10px;color:var(--ink2)}
+.mm .node .ct{font-size:9.5px;color:#fff;font-weight:700;padding:1px 7px;border-radius:999px;position:absolute;top:-8px;right:-8px;background:#0a84ff}
+.mm .node.has-children::after{content:'';position:absolute;right:-7px;top:50%;width:6px;height:6px;border-right:2px solid var(--ink2);border-bottom:2px solid var(--ink2);transform:translateY(-50%) rotate(-45deg);opacity:.5}
+.mm .node.collapsed-parent::after{transform:translateY(-50%) rotate(45deg)}
+.mm .node.root{background:linear-gradient(135deg,rgba(10,132,255,.16),rgba(88,86,214,.14));border-color:rgba(10,132,255,.4)}
+.mm .node.b-0{border-color:rgba(10,132,255,.35)} .mm .node.b-0 .ct{background:#0a84ff}
+.mm .node.b-1{border-color:rgba(48,176,199,.4)} .mm .node.b-1 .ct{background:#30b0c7}
+.mm .node.b-2{border-color:rgba(88,86,214,.4)} .mm .node.b-2 .ct{background:#5856d6}
+.mm .node.b-3{border-color:rgba(52,199,89,.4)} .mm .node.b-3 .ct{background:#34c759}
+.mm .node.b-4{border-color:rgba(255,149,0,.4)} .mm .node.b-4 .ct{background:#ff9500}
+.mm .node.b-5{border-color:rgba(255,45,85,.4)} .mm .node.b-5 .ct{background:#ff2d55}
+.mm .node.b-6{border-color:rgba(138,144,150,.4)} .mm .node.b-6 .ct{background:#8a9096}
+
+/* section-bg pattern */
+.section-bg{position:relative;overflow:visible}
+.section-bg::before{content:'';position:absolute;top:0;bottom:0;left:50%;width:100vw;transform:translateX(-50%);pointer-events:none}
+.s-bg0::before{background:linear-gradient(180deg,rgba(10,132,255,.05) 0%,transparent 60%)}
+.s-bg1::before{background:linear-gradient(180deg,rgba(48,176,199,.05) 0%,transparent 60%)}
+.s-bg2::before{background:linear-gradient(180deg,rgba(88,86,214,.05) 0%,transparent 60%)}
+.s-bg3::before{background:linear-gradient(180deg,rgba(52,199,89,.05) 0%,transparent 60%)}
+.s-bg4::before{background:linear-gradient(180deg,rgba(255,149,0,.06) 0%,transparent 60%)}
+.s-bg5::before{background:linear-gradient(180deg,rgba(255,45,85,.05) 0%,transparent 60%)}
+.s-bg6::before{background:linear-gradient(180deg,rgba(138,144,150,.06) 0%,transparent 60%)}
+.s-bg7::before{background:linear-gradient(180deg,rgba(48,176,199,.05) 0%,transparent 60%)}
+
+section{padding:44px 24px 52px;max-width:1052px;margin:0 auto}
+.section-header{margin-bottom:18px}
+.section-header .tag{display:inline-block;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;padding:3px 10px;border-radius:999px;margin-bottom:10px}
+.section-header h2{font-size:20px;margin:0 0 8px;color:#1d1d1f}
+.section-header p{font-size:13px;color:var(--ink2);margin:0;max-width:70ch}
+
+#sec-0 .tag{background:rgba(10,132,255,.1);color:#0a84ff}
+#sec-0 .card h4,#sec-0 .card li::before{color:#0a84ff}
+#sec-1 .tag{background:rgba(48,176,199,.1);color:#30b0c7}
+#sec-1 .card h4,#sec-1 .card li::before{color:#30b0c7}
+#sec-2 .tag{background:rgba(88,86,214,.1);color:#5856d6}
+#sec-2 .card h4,#sec-2 .card li::before{color:#5856d6}
+#sec-3 .tag{background:rgba(52,199,89,.1);color:#28a745}
+#sec-3 .card h4,#sec-3 .card li::before{color:#28a745}
+#sec-4 .tag{background:rgba(255,149,0,.12);color:#f08c00}
+#sec-4 .card h4,#sec-4 .card li::before{color:#f08c00}
+#sec-5 .tag{background:rgba(255,45,85,.1);color:#e0264b}
+#sec-5 .card h4,#sec-5 .card li::before{color:#e0264b}
+#sec-6 .tag{background:rgba(138,144,150,.14);color:#5b6167}
+#sec-6 .card h4,#sec-6 .card li::before{color:#5b6167}
+#sec-7 .tag{background:rgba(48,176,199,.1);color:#30b0c7}
+#sec-7 .card h4,#sec-7 .card li::before{color:#30b0c7}
+.pill-tight{background:rgba(255,45,85,.14);color:#e0264b}
+.pill-bad{background:rgba(184,69,63,.16);color:#b8453f}
+.pill-good{background:rgba(52,199,89,.15);color:#1f8f45}
+
+.card{background:var(--glass-2);backdrop-filter:blur(var(--blur-2)) saturate(1.1);border:1px solid var(--border);border-radius:16px;box-shadow:var(--edge-hi),0 4px 20px rgba(20,40,90,.08);padding:18px 20px}
+.card h4{margin:0 0 6px;font-size:13.5px}
+.card p{margin:0;font-size:12.5px;color:var(--ink2)}
+.card ul{margin:8px 0 0;padding:0;list-style:none}
+.card li{padding-left:14px;position:relative;font-size:12.5px;color:var(--ink2);margin-bottom:5px}
+.card li::before{content:'›';position:absolute;left:0;font-weight:700}
+.content-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+@media(max-width:700px){.content-grid{grid-template-columns:1fr}}
+
+/* layer example / infra cost */
+.example-card{background:rgba(184,69,63,.06);border:1px solid rgba(184,69,63,.22);border-radius:14px;padding:14px 18px;margin:16px 0}
+.example-card .eb{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:#b8453f;font-weight:700;margin-bottom:6px;display:block}
+.example-card p{margin:0;font-size:12.5px;color:var(--ink)}
+.infra-note{font-size:11.5px;color:var(--ink2);margin-top:10px}
+.infra-note b{color:var(--ink)}
+
+/* scope ring diagram + toggle game */
+.scope-wrap{display:flex;flex-direction:column;gap:18px}
+.ring-legend.scope-legend-row{display:grid;grid-template-columns:1fr 1fr;gap:2px}
+@media(max-width:640px){.ring-legend.scope-legend-row{grid-template-columns:1fr}}
+.scope-svg{width:100%;height:auto;display:block}
+.ring-off{opacity:.16;filter:grayscale(1);transition:opacity .25s ease,filter .25s ease}
+@keyframes nodePulse{0%,100%{opacity:.35;r:2.4}50%{opacity:1;r:3.4}}
+@keyframes corePulse{0%,100%{opacity:.35;transform:scale(1)}50%{opacity:.7;transform:scale(1.12)}}
+.scope-node{animation:nodePulse 2.6s ease-in-out infinite}
+.scope-core-glow{animation:corePulse 2.6s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+.ring-legend{display:flex;flex-direction:column;gap:2px;margin:0;padding:0;list-style:none}
+.ring-legend li{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border-radius:10px;cursor:pointer}
+.ring-legend li:hover{background:rgba(10,132,255,.05)}
+.ring-legend input[type=checkbox]{margin-top:3px;width:15px;height:15px;border-radius:4px;border:1.5px solid #9fb3c8;appearance:none;-webkit-appearance:none;cursor:pointer;flex-shrink:0;background:rgba(255,255,255,.8);transition:all .15s}
+.ring-legend input[type=checkbox]:checked{background:#0a84ff;border-color:#0a84ff;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M13 4L6.5 11 3 7.5' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-size:contain;background-repeat:no-repeat;background-position:center}
+.ring-legend .dot{width:11px;height:11px;border-radius:50%;flex-shrink:0;margin-top:3px}
+.ring-legend .nm{font-weight:700;font-size:12.5px;display:block;color:var(--ink)}
+.ring-legend .ds{font-size:11px;color:var(--ink2)}
+.consequence-combined{margin-top:10px;padding:10px 14px;border-radius:10px;background:rgba(184,69,63,.08);border-left:3px solid #b8453f;font-size:12px;color:var(--ink2);transition:background .2s,border-color .2s}
+.consequence-combined.ok{background:rgba(52,199,89,.08);border-left-color:#1f8f45}
+.layer-game-summary{font-size:13px;font-weight:700;padding:10px 14px;border-radius:10px;margin:14px 0}
+.layer-game-summary.ok{background:rgba(52,199,89,.13);color:#1f8f45}
+.layer-game-summary.warn{background:rgba(184,69,63,.13);color:#b8453f}
+
+/* latency budget */
+.latency-formula{background:rgba(0,0,0,.04);padding:10px 14px;border-radius:8px;font-size:11.5px;font-family:var(--font-mono);margin:10px 0;overflow-x:auto;white-space:nowrap}
+.excel-note{background:rgba(255,149,0,.08);border:1px solid rgba(255,149,0,.25);border-radius:14px;padding:14px 18px;margin:16px 0}
+.excel-note .eb{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:#c76e00;font-weight:700;margin-bottom:6px;display:block}
+.excel-note p{margin:0;font-size:12.5px;color:var(--ink)}
+
+/* details condense (native, no JS needed) */
+details.condense{background:var(--glass-2);backdrop-filter:blur(var(--blur-2)) saturate(1.1);border:1px solid var(--border);border-radius:16px;box-shadow:var(--edge-hi),0 4px 20px rgba(20,40,90,.08);margin:14px 0;overflow:hidden}
+details.condense summary{cursor:pointer;padding:14px 18px;font-weight:700;font-size:13px;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px}
+details.condense summary::-webkit-details-marker{display:none}
+details.condense summary::after{content:'▾';transition:transform .2s;color:var(--ink2);font-weight:400;flex-shrink:0}
+details.condense[open] summary::after{transform:rotate(180deg)}
+details.condense summary:hover{background:rgba(10,132,255,.05)}
+details.condense .condense-body{padding:2px 18px 18px}
+
+/* bar charts (dataviz) */
+.chart-box{background:var(--glass-2);backdrop-filter:blur(var(--blur-2)) saturate(1.1);border:1px solid var(--border);border-radius:16px;box-shadow:var(--edge-hi),0 4px 20px rgba(20,40,90,.08);padding:20px 22px;margin:18px 0}
+.chart-box h4{margin:0 0 4px;font-size:13.5px}
+.chart-box .chart-note{font-size:11.5px;color:var(--ink2);margin:0 0 12px}
+.chart-svg text{font-family:var(--font-text)}
+.chart-legend{display:flex;gap:16px;margin-top:10px;font-size:11px;color:var(--ink2)}
+.chart-legend .swatch{width:9px;height:9px;border-radius:2px;display:inline-block;margin-right:5px;vertical-align:middle}
+
+/* diagram box (draggable node graph) */
+.diagram-box{background:var(--glass-2);backdrop-filter:blur(var(--blur-2)) saturate(1.1);border:1px solid var(--border);border-radius:16px;box-shadow:var(--edge-hi),0 4px 20px rgba(20,40,90,.08);padding:22px;margin:20px 0;position:relative;overflow:hidden;display:flex;flex-direction:column;resize:vertical;min-height:150px;transition:box-shadow .2s ease}
+.diagram-box:hover{box-shadow:var(--edge-hi),0 6px 28px rgba(20,40,90,.14)}
+.diagram-viewport{position:relative;flex:1 1 auto;width:100%;overflow:hidden;cursor:grab;touch-action:none}
+.diagram-viewport.grabbing{cursor:grabbing}
+.diagram-viewport svg{width:100%;height:auto;display:block;overflow:visible;transform-origin:0 0;will-change:transform;user-select:none;-webkit-user-select:none}
+.dnode{cursor:move}
+.dnode>rect{transition:filter .15s ease}
+.dnode:hover>rect:first-of-type{filter:drop-shadow(0 3px 8px rgba(0,0,0,.18))}
+.diagram-hint{position:absolute;top:8px;right:12px;z-index:5;font-size:9.5px;color:#4a4a55;background:rgba(255,255,255,.75);border:1px solid rgba(0,0,0,.05);border-radius:20px;padding:3px 10px;white-space:nowrap;opacity:0;transition:opacity .2s;pointer-events:none}
+.diagram-box:hover .diagram-hint{opacity:.9}
+.diagram-reset{position:absolute;bottom:8px;right:10px;z-index:5;font-size:10.5px;background:rgba(255,255,255,.85);border:1px solid rgba(0,0,0,.08);border-radius:8px;padding:3px 9px;cursor:pointer;color:#4a4a55;opacity:0;transition:opacity .2s}
+.diagram-box:hover .diagram-reset{opacity:1}
+.diagram-reset:hover{background:#fff;color:#0f0f12}
+.diagram-box::after{content:'';position:absolute;right:5px;bottom:5px;width:16px;height:16px;pointer-events:none;opacity:0;transition:opacity .25s ease;clip-path:polygon(100% 0,100% 100%,0 100%);background:repeating-linear-gradient(135deg,transparent 0 3.5px,rgba(10,132,255,.45) 3.5px 5px)}
+.diagram-box:hover::after{opacity:.85}
+.diagram-box::-webkit-resizer{display:none}
+@keyframes flowArrow{0%{stroke-dashoffset:20}100%{stroke-dashoffset:0}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.flow{stroke-dasharray:6 4;animation:flowArrow 1s linear infinite}
+.pulse{animation:pulse 2.2s ease-in-out infinite}
+
+/* bars */
+.bench{margin:20px 0}
+.bench-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.bench-name{font-weight:700;font-size:13px}
+.bench-total{font-size:11.5px;color:var(--ink2);font-family:var(--font-mono)}
+.bar{display:flex;height:28px;border-radius:7px;overflow:hidden;border:1px solid var(--border)}
+.bar-seg{display:flex;align-items:center;padding:0 10px;font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden}
+.bar-weight{background:linear-gradient(135deg,#0a84ff,#5aa2e8);color:#fff}
+.bar-kv{background:rgba(52,199,89,.18);color:#1f8f45}
+.bench-legend{display:flex;gap:18px;margin-top:8px;font-size:11px;color:var(--ink2)}
+.swatch{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:middle}
+
+/* table (tier 3) */
+.table-wrap{overflow-x:auto;border-radius:14px}
+table{width:100%;border-collapse:collapse;font-size:12.5px;background:var(--glass-3);backdrop-filter:blur(var(--blur-3));border:1px solid var(--border);border-radius:14px;box-shadow:var(--edge-hi)}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+th{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink2);font-weight:700}
+td.num{font-family:var(--font-mono)}
+.pill{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:999px}
+
+/* verdict card */
+.verdict{display:flex;gap:14px;align-items:flex-start}
+.verdict .mark{font-family:Georgia,serif;font-size:26px;color:#28a745;line-height:1}
+
+/* checklist */
+.checklist{list-style:none;display:flex;flex-direction:column;gap:8px;margin:0;padding:0}
+.checklist li{display:flex;align-items:flex-start;gap:10px;font-size:12.5px;color:var(--ink2);cursor:pointer}
+.checklist input[type=checkbox]{width:16px;height:16px;border-radius:4px;border:1.5px solid #9fb3c8;appearance:none;-webkit-appearance:none;cursor:pointer;flex-shrink:0;background:rgba(255,255,255,.8);margin-top:2px;transition:all .15s}
+.checklist input[type=checkbox]:checked{background:#0a84ff;border-color:#0a84ff;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M13 4L6.5 11 3 7.5' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-size:contain}
+.checklist label{cursor:pointer;line-height:1.5}
+.checklist label b{display:block;color:var(--ink);font-size:13px}
+.checklist input[type=checkbox]:checked+label{text-decoration:line-through;color:#94a3b8}
+
+/* water ripple (global interactive controls) */
+.ripple{position:absolute;border-radius:50%;pointer-events:none;transform:scale(0);opacity:.9;background:radial-gradient(circle,rgba(255,255,255,.6) 0%,rgba(10,132,255,.22) 35%,transparent 70%);box-shadow:0 0 0 1px rgba(255,255,255,.45);animation:rippleWave .65s cubic-bezier(.2,.6,.3,1) forwards}
+@keyframes rippleWave{to{transform:scale(2.8);opacity:0}}
+
+footer{max-width:1052px;margin:0 auto;padding:20px 24px 60px;font-size:11px;color:var(--ink2)}
+</style>
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<nav>
+  <div class="logo" id="top">🧩 Kiến trúc Agent</div>
+  <a href="#sec-0" class="nav-link"><span class="ic c0"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="9"/></svg></span>Kiến trúc</a>
+  <a href="#sec-1" class="nav-link"><span class="ic c1"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><line x1="9" y1="2" x2="9" y2="4"/><line x1="15" y1="2" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="22"/><line x1="15" y1="20" x2="15" y2="22"/></svg></span>Model Hosting</a>
+  <a href="#sec-2" class="nav-link"><span class="ic c2"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0-1.4 0l-6 6a1 1 0 0 0 0 1.4l3 3a1 1 0 0 0 1.4 0l6-6a1 1 0 0 0 0-1.4z"/><path d="M17 5l2 2"/></svg></span>Tools</a>
+  <a href="#sec-3" class="nav-link"><span class="ic c3"><svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12" rx="2"/><line x1="4" y1="10" x2="20" y2="10"/></svg></span>Memory</a>
+  <a href="#sec-4" class="nav-link"><span class="ic c4"><svg viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="14" y2="12"/><line x1="4" y1="18" x2="17" y2="18"/></svg></span>Context</a>
+  <a href="#sec-5" class="nav-link"><span class="ic c5"><svg viewBox="0 0 24 24"><path d="M4 4h7v7H4z"/><circle cx="17" cy="7" r="3.5"/><path d="M6 20l3-6 3 6"/></svg></span>Data Collector</a>
+  <a href="#sec-6" class="nav-link"><span class="ic c6"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/><circle cx="12" cy="11" r="2.4"/></svg></span>Harness</a>
+  <a href="#sec-7" class="nav-link"><span class="ic c7"><svg viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="5"/></svg></span>Evaluation</a>
+</nav>
+
+<main id="main">
+
+  <div class="hero">
+    <div class="eyebrow">Ghi chú kỹ thuật · 29/07/2026</div>
+    <h1 class="title">Chạy được model chỉ là 1/7 việc — 7 layer để có 1 agent usable</h1>
+    <p class="lead">Model Hosting (KV cache, VRAM, chọn model) là layer đã phân tích kỹ. Nhưng một agent thật cần thêm 6 layer nữa — tất cả phải cân bằng trong một ngân sách LATENCY chấp nhận được, không thì "usable trên giấy" vẫn thành "chậm khi chạy thật".</p>
+    <div class="meta-row">
+      <span><b>7 layer:</b> Model Hosting · Tools · Memory · Context · Data Collector · Harness · Evaluation</span>
+      <span><b>Ràng buộc chung:</b> ngân sách latency end-to-end</span>
+    </div>
+  </div>
+
+  <div class="mm" role="img" aria-label="Sơ đồ 7 layer của một agent: Model Hosting, Tools, Memory, Context, Data Collector, Harness, Evaluation">
+    <div class="mm-canvas">
+      <svg class="mm-links"></svg>
+      <div class="tree">
+        <div class="row">
+          <div class="node root has-children"><span class="nm">Agent Usable</span><span class="ds">7 layer cân bằng latency</span><span class="ct">7</span></div>
+          <div class="children">
+
+            <div class="row">
+              <div class="node b-0 cat has-children"><span class="nm">Model Hosting</span><span class="ds">lõi — đã phân tích</span><span class="ct">7</span></div>
+              <div class="children">
+                <div class="row"><div class="node b-0 leaf"><span class="nm">KV Cache & Ngân sách</span><span class="ds">1024GB, weight vs cache</span></div></div>
+                <div class="row"><div class="node b-0 leaf"><span class="nm">So sánh & Khuyến nghị</span><span class="ds">Qwen3-235B-A22B + 3 lựa chọn</span></div></div>
+                <div class="row"><div class="node b-0 leaf"><span class="nm">Checklist công thức</span><span class="ds">6 mục, tính tay được</span></div></div>
+                <div class="row"><div class="node b-0 leaf"><span class="nm">So sánh 13 vendor</span><span class="ds">4 tier margin</span></div></div>
+                <div class="row"><div class="node b-0 leaf"><span class="nm">4 biểu đồ</span><span class="ds">VRAM, tok/s, active param, benchmark</span></div></div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="node b-1 cat has-children"><span class="nm">Tools</span><span class="ds">tay chân của agent</span><span class="ct">2</span></div>
+              <div class="children">
+                <div class="row"><div class="node b-1 leaf"><span class="nm">Thực thi hành động</span><span class="ds">gọi API, chạy code</span></div></div>
+                <div class="row"><div class="node b-1 leaf"><span class="nm">Không có = chỉ nói suông</span><span class="ds">ranh giới chatbot vs agent</span></div></div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="node b-2 cat has-children"><span class="nm">Memory</span><span class="ds">trí nhớ ngắn/dài hạn</span><span class="ct">2</span></div>
+              <div class="children">
+                <div class="row"><div class="node b-2 leaf"><span class="nm">Session + long-term</span><span class="ds">lịch sử, fact, preference</span></div></div>
+                <div class="row"><div class="node b-2 leaf"><span class="nm">Không có = mất trí mỗi lượt</span><span class="ds">quên ngay câu vừa nói</span></div></div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="node b-3 cat has-children"><span class="nm">Context/Instruction</span><span class="ds">lắp ráp prompt</span><span class="ct">2</span></div>
+              <div class="children">
+                <div class="row"><div class="node b-3 leaf"><span class="nm">Assembly layer</span><span class="ds">system + memory + tool schema</span></div></div>
+                <div class="row"><div class="node b-3 leaf"><span class="nm">Lắp sai = model "ngu" oan</span><span class="ds">bug thật ở đây, không phải model</span></div></div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="node b-4 cat has-children"><span class="nm">Data Collector</span><span class="ds">nạp dữ liệu ngoài</span><span class="ct">2</span></div>
+              <div class="children">
+                <div class="row"><div class="node b-4 leaf"><span class="nm">Ingest + index</span><span class="ds">tài liệu, web, API → vector DB</span></div></div>
+                <div class="row"><div class="node b-4 leaf"><span class="nm">Không có = agent không biết gì riêng</span><span class="ds">bịa hoặc trả lời chung chung</span></div></div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="node b-5 cat has-children"><span class="nm">Harness</span><span class="ds">vòng lặp điều phối</span><span class="ct">2</span></div>
+              <div class="children">
+                <div class="row"><div class="node b-5 leaf"><span class="nm">Think → act → observe</span><span class="ds">quyết định gọi gì, khi nào dừng</span></div></div>
+                <div class="row"><div class="node b-5 leaf"><span class="nm">Không có = lặp vô hạn hoặc bỏ cuộc sớm</span><span class="ds">"não" của agent</span></div></div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="node b-6 cat has-children"><span class="nm">Evaluation</span><span class="ds">cảm biến sức khoẻ, ngoài luồng</span><span class="ct">2</span></div>
+              <div class="children">
+                <div class="row"><div class="node b-6 leaf"><span class="nm">Đo chất lượng liên tục</span><span class="ds">batch/song song, không chặn latency</span></div></div>
+                <div class="row"><div class="node b-6 leaf"><span class="nm">Không có = mù cho tới khi user complain</span><span class="ds">regression âm thầm</span></div></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section id="sec-0" class="section-bg s-bg0">
+    <div class="section-header">
+      <span class="tag">00 · Kiến trúc Agent</span>
+      <h2>Luồng dữ liệu qua 7 layer, đọc trái sang phải như một quy trình</h2>
+      <p>Dữ liệu chảy: Data Collector → Memory → Context → Model Hosting → Tools, rồi Harness (khung nét đứt) lặp lại vòng này tới khi xong việc. Evaluation đứng riêng bên dưới, nối bằng dây nét đứt, vì nó chỉ quan sát chứ không nằm trong luồng xử lý. Tắt thử một layer bên dưới để xem quy trình "thọt" ở đâu.</p>
+    </div>
+
+    <div class="card scope-wrap">
+      <svg class="scope-svg" viewBox="0 0 860 360" role="img" xmlns="http://www.w3.org/2000/svg">
+        <title>Sơ đồ luồng agent: dữ liệu chảy từ trái sang phải qua Data Collector, Memory, Context, Model Hosting, Tools; Harness bao quanh vòng lặp; Evaluation quan sát từ ngoài</title>
+        <defs>
+          <marker id="flowArrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="currentColor" opacity="0.55"/></marker>
+        </defs>
+
+        <!-- Harness = khung bao quanh vòng lặp Memory..Tools -->
+        <g data-ring="harness">
+          <rect x="165" y="95" width="648" height="140" rx="18" fill="rgba(255,45,85,.04)" stroke="#ff2d55" stroke-width="2.5" stroke-dasharray="8 5"/>
+          <text x="185" y="118" font-size="12.5" font-weight="700" fill="#ff2d55">🧠 Harness — điều phối vòng lặp</text>
+          <path d="M736,210 C736,258 242,258 242,210" fill="none" stroke="#ff2d55" stroke-width="2.5" marker-end="url(#flowArrow)" style="color:#ff2d55"/>
+          <text x="489" y="278" text-anchor="middle" font-size="10.5" fill="#ff2d55" opacity="0.8">lặp lại tới khi đủ bước</text>
+        </g>
+
+        <!-- mũi tên luồng chính -->
+        <g stroke="currentColor" opacity="0.55" style="color:#4a4a55">
+          <line x1="146" y1="165" x2="178" y2="165" stroke-width="2" marker-end="url(#flowArrow)"/>
+          <line x1="304" y1="165" x2="334" y2="165" stroke-width="2" marker-end="url(#flowArrow)"/>
+          <line x1="460" y1="165" x2="490" y2="165" stroke-width="2" marker-end="url(#flowArrow)"/>
+          <line x1="642" y1="165" x2="672" y2="165" stroke-width="2" marker-end="url(#flowArrow)"/>
+        </g>
+
+        <!-- Data Collector -->
+        <g data-ring="datacollector">
+          <rect x="16" y="120" width="130" height="90" rx="14" fill="rgba(255,149,0,.08)" stroke="#ff9500" stroke-width="3"/>
+          <text x="81" y="160" text-anchor="middle" font-size="28">👀</text>
+          <text x="81" y="182" text-anchor="middle" font-size="11.5" font-weight="700" fill="#c76e00">Data Collector</text>
+          <text x="81" y="196" text-anchor="middle" font-size="9" fill="#c76e00" opacity="0.8">nạp dữ liệu ngoài</text>
+        </g>
+
+        <!-- Memory -->
+        <g data-ring="memory">
+          <rect x="180" y="120" width="124" height="90" rx="14" fill="rgba(88,86,214,.08)" stroke="#5856d6" stroke-width="3"/>
+          <text x="242" y="160" text-anchor="middle" font-size="28">💾</text>
+          <text x="242" y="182" text-anchor="middle" font-size="11.5" font-weight="700" fill="#5856d6">Memory</text>
+          <text x="242" y="196" text-anchor="middle" font-size="9" fill="#5856d6" opacity="0.8">nhớ ngắn/dài hạn</text>
+        </g>
+
+        <!-- Context/Instruction -->
+        <g data-ring="context">
+          <rect x="336" y="120" width="124" height="90" rx="14" fill="rgba(52,199,89,.08)" stroke="#34c759" stroke-width="3"/>
+          <text x="398" y="160" text-anchor="middle" font-size="28">📝</text>
+          <text x="398" y="182" text-anchor="middle" font-size="11.5" font-weight="700" fill="#28a745">Context</text>
+          <text x="398" y="196" text-anchor="middle" font-size="9" fill="#28a745" opacity="0.8">lắp ráp prompt</text>
+        </g>
+
+        <!-- Model Hosting -->
+        <g data-ring="hosting">
+          <rect x="492" y="120" width="150" height="90" rx="14" fill="rgba(10,132,255,.08)" stroke="#0a84ff" stroke-width="3"/>
+          <circle class="scope-core-glow" cx="567" cy="156" r="22" fill="url(#coreGlow)"/>
+          <text x="567" y="163" text-anchor="middle" font-size="28">🖥️</text>
+          <text x="567" y="182" text-anchor="middle" font-size="11.5" font-weight="700" fill="#0a84ff">Model Hosting</text>
+          <text x="567" y="196" text-anchor="middle" font-size="9" fill="#0a84ff" opacity="0.8">chạy model (mục 01)</text>
+        </g>
+
+        <!-- Tools -->
+        <g data-ring="tools">
+          <rect x="674" y="120" width="124" height="90" rx="14" fill="rgba(48,176,199,.08)" stroke="#30b0c7" stroke-width="3"/>
+          <text x="736" y="160" text-anchor="middle" font-size="28">🛠️</text>
+          <text x="736" y="182" text-anchor="middle" font-size="11.5" font-weight="700" fill="#218a99">Tools</text>
+          <text x="736" y="196" text-anchor="middle" font-size="9" fill="#218a99" opacity="0.8">thực thi hành động</text>
+        </g>
+
+        <!-- Evaluation = quan sát ngoài luồng, tách riêng -->
+        <g data-ring="evaluation">
+          <line x1="489" y1="235" x2="489" y2="288" stroke="#8a9096" stroke-width="2" stroke-dasharray="5 4"/>
+          <rect x="389" y="288" width="200" height="58" rx="14" fill="rgba(138,144,150,.06)" stroke="#8a9096" stroke-width="2.5" stroke-dasharray="7 5"/>
+          <text x="425" y="324" text-anchor="middle" font-size="24">🩺</text>
+          <text x="500" y="313" text-anchor="middle" font-size="11.5" font-weight="700" fill="#5b6167">Evaluation</text>
+          <text x="500" y="328" text-anchor="middle" font-size="9" fill="#5b6167" opacity="0.85">quan sát ngoài luồng,</text>
+          <text x="500" y="339" text-anchor="middle" font-size="9" fill="#5b6167" opacity="0.85">không chặn tốc độ user</text>
+        </g>
+      </svg>
+
+      <div>
+        <div class="layer-game-summary ok" data-summary>✅ Đủ 7/7 layer — agent usable trong ngân sách latency đã tính.</div>
+        <ul class="ring-legend scope-legend-row" data-layer-game>
+          <li><input type="checkbox" checked data-toggle="datacollector"><span class="dot" style="background:#ff9500"></span><span><span class="nm">👀 Data Collector</span><span class="ds">nạp dữ liệu ngoài (mục 05)</span></span></li>
+          <li><input type="checkbox" checked data-toggle="memory"><span class="dot" style="background:#5856d6"></span><span><span class="nm">💾 Memory</span><span class="ds">nhớ ngắn/dài hạn (mục 03)</span></span></li>
+          <li><input type="checkbox" checked data-toggle="context"><span class="dot" style="background:#34c759"></span><span><span class="nm">📝 Context/Instruction</span><span class="ds">lắp ráp prompt (mục 04)</span></span></li>
+          <li><input type="checkbox" checked data-toggle="hosting"><span class="dot" style="background:#0a84ff"></span><span><span class="nm">🖥️ Model Hosting</span><span class="ds">chạy model (mục 01)</span></span></li>
+          <li><input type="checkbox" checked data-toggle="tools"><span class="dot" style="background:#30b0c7"></span><span><span class="nm">🛠️ Tools</span><span class="ds">thực thi hành động (mục 02)</span></span></li>
+          <li><input type="checkbox" checked data-toggle="harness"><span class="dot" style="background:#ff2d55"></span><span><span class="nm">🧠 Harness</span><span class="ds">điều phối vòng lặp (mục 06)</span></span></li>
+          <li><input type="checkbox" checked data-toggle="evaluation"><span class="dot" style="background:#8a9096"></span><span><span class="nm">🩺 Evaluation</span><span class="ds">quan sát ngoài luồng (mục 07)</span></span></li>
+        </ul>
+        <div class="consequence-combined ok" data-consequence-out>✅ Đủ 7/7 layer — agent phản hồi đúng, nhớ ngữ cảnh, thực thi được hành động, và tự giám sát chất lượng.</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px">
+      <h4>Ngân sách latency — thứ thật sự quyết định "usable"</h4>
+      <div class="latency-formula">Latency_tổng &asymp; Context_assembly(~ms) + Memory_retrieval(20-100ms) + [Model_TTFT + N_token&times;decode_time] &times; N_vòng_lặp(Harness) + Tool_call_time &times; N_lần_gọi_tool</div>
+      <p style="font-size:12.5px;color:var(--ink2);margin:0">So với ngưỡng "chấp nhận được" (vd &lt;3s cho chat tương tác, &lt;10-15s cho tác vụ agentic nhiều bước). Model_TTFT/decode_time (mục 01) chỉ là MỘT số hạng — Harness nhân số vòng lặp và Tools cộng latency gọi ngoài thường lớn hơn phần model nhiều lần.</p>
+    </div>
+
+    <div class="excel-note">
+      <span class="eb">Về file khảo sát khách hàng (FCI NCP)</span>
+      <p>Các giá trị đã điền vào <code>FCI NCP Product Detail Customer Survey - AI Inference 3.xlsx</code> hiện tại CHỈ phản ánh phần <b>Model Hosting</b> (mục 01) trong công thức trên — tức mới là ước lượng "kỳ vọng/có thể chấp nhận được" cho riêng phần chạy model, CHƯA cộng Harness (nhân số vòng lặp), Tools (cộng latency gọi ngoài), Memory/Context/Data Collector. Cần đi hết 6 layer dưới đây và ước lượng latency mỗi layer trước khi chốt số thật vào khảo sát.</p>
+    </div>
+  </section>
+
+  <section id="sec-1" class="section-bg s-bg1">
+    <div class="section-header">
+      <span class="tag">01 · Model Hosting Layer</span>
+      <h2>Lõi trong cùng: chạy được model — chi tiết đã phân tích, gọn lại để mở khi cần</h2>
+      <p>Đây là layer duy nhất cần GPU. 6 layer còn lại bên dưới chạy trên hạ tầng CPU thường — nhưng vẫn cộng dồn vào latency tổng. Bấm để mở từng phần.</p>
+    </div>
+
+    <details class="condense" open>
+      <summary>KV Cache là gì, và ngân sách VRAM 1024GB chia thế nào</summary>
+      <div class="condense-body">
+        <div class="diagram-box">
+          <svg viewBox="0 0 900 220" role="img" xmlns="http://www.w3.org/2000/svg">
+            <title>Vòng lặp KV cache: token mới, tính Key/Value, lưu cache, tra lại cho token tiếp theo</title>
+            <defs>
+              <marker id="arrow0" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#0a84ff"/></marker>
+            </defs>
+            <line class="flow" x1="180" y1="95" x2="228" y2="95" stroke="#0a84ff" stroke-width="2" marker-end="url(#arrow0)"/>
+            <line class="flow" x1="380" y1="95" x2="428" y2="95" stroke="#0a84ff" stroke-width="2" marker-end="url(#arrow0)"/>
+            <line class="flow" x1="600" y1="95" x2="628" y2="95" stroke="#0a84ff" stroke-width="2" marker-end="url(#arrow0)"/>
+            <line class="flow" x1="740" y1="120" x2="740" y2="170" stroke="#30b0c7" stroke-width="2"/>
+            <line class="flow" x1="740" y1="170" x2="105" y2="170" stroke="#30b0c7" stroke-width="2"/>
+            <line class="flow" x1="105" y1="170" x2="105" y2="120" stroke="#30b0c7" stroke-width="2" marker-end="url(#arrow0)"/>
+            <rect x="30" y="70" width="150" height="50" rx="10" fill="rgba(10,132,255,.12)" stroke="#0a84ff" stroke-width="1.5" class="pulse"/>
+            <text x="105" y="100" text-anchor="middle" font-size="11" font-weight="600" fill="#0a84ff">Token mới sinh</text>
+            <rect x="230" y="70" width="150" height="50" rx="10" fill="rgba(48,176,199,.14)" stroke="#30b0c7" stroke-width="1.5"/>
+            <text x="305" y="100" text-anchor="middle" font-size="11" font-weight="600" fill="#218a99">Tính Key/Value</text>
+            <rect x="430" y="70" width="170" height="50" rx="10" fill="rgba(88,86,214,.14)" stroke="#5856d6" stroke-width="1.5"/>
+            <text x="515" y="100" text-anchor="middle" font-size="11" font-weight="600" fill="#5856d6">Lưu vào KV Cache</text>
+            <rect x="630" y="70" width="220" height="50" rx="10" fill="rgba(255,149,0,.14)" stroke="#ff9500" stroke-width="1.5" class="pulse"/>
+            <text x="740" y="100" text-anchor="middle" font-size="11" font-weight="600" fill="#c76e00">Token N+1: tra lại cache</text>
+          </svg>
+        </div>
+        <p style="font-size:12.5px;color:var(--ink2);max-width:66ch">"VRAM còn lại sau khi load weight = trần cho context dài và số user đồng thời." Hết margin này, server không OOM ngay mà âm thầm cắt context hoặc từ chối request mới.</p>
+
+        <div class="diagram-box" style="min-height:190px">
+          <svg viewBox="0 0 900 190" role="img" xmlns="http://www.w3.org/2000/svg">
+            <title>Ngân sách VRAM 1024GB chia cho trọng số mô hình và KV cache còn lại</title>
+            <defs><marker id="arrow1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#30b0c7"/></marker></defs>
+            <line class="flow" x1="250" y1="65" x2="315" y2="45" stroke="#30b0c7" stroke-width="2" marker-end="url(#arrow1)"/>
+            <line class="flow" x1="250" y1="95" x2="315" y2="135" stroke="#34c759" stroke-width="2" marker-end="url(#arrow1)"/>
+            <line class="flow" x1="560" y1="135" x2="625" y2="135" stroke="#34c759" stroke-width="2" marker-end="url(#arrow1)"/>
+            <rect x="30" y="55" width="220" height="50" rx="10" fill="rgba(48,176,199,.14)" stroke="#30b0c7" stroke-width="1.5" class="pulse"/>
+            <text x="140" y="85" text-anchor="middle" font-size="11" font-weight="600" fill="#218a99">VRAM thuê: 1024GB</text>
+            <rect x="320" y="10" width="240" height="50" rx="10" fill="rgba(10,132,255,.14)" stroke="#0a84ff" stroke-width="1.5"/>
+            <text x="440" y="40" text-anchor="middle" font-size="11" font-weight="600" fill="#0a84ff">Trọng số mô hình</text>
+            <rect x="320" y="110" width="240" height="50" rx="10" fill="rgba(52,199,89,.14)" stroke="#34c759" stroke-width="1.5"/>
+            <text x="440" y="140" text-anchor="middle" font-size="11" font-weight="600" fill="#1f8f45">KV Cache còn lại</text>
+            <rect x="630" y="110" width="240" height="50" rx="10" fill="rgba(255,149,0,.14)" stroke="#ff9500" stroke-width="1.5" class="pulse"/>
+            <text x="750" y="140" text-anchor="middle" font-size="11" font-weight="600" fill="#c76e00">Context dài + nhiều user</text>
+          </svg>
+        </div>
+
+        <p style="font-size:11.5px;color:var(--ink2);margin:0 0 4px">Mỗi bar kèm ước lượng tốc độ (single-stream, cụm 8&times;H200, công thức + chart đầy đủ trong details "4 biểu đồ" bên dưới).</p>
+        <div class="bench">
+          <div class="bench-head"><span class="bench-name">Qwen3-235B-A22B</span><span class="bench-total">470 GB weight &middot; ~873 tok/s (8&times;H200)</span></div>
+          <div class="bar"><div class="bar-seg bar-weight" style="width:45.9%">weight 470GB</div><div class="bar-seg bar-kv" style="width:54.1%">554GB KV cache</div></div>
+        </div>
+        <div class="bench">
+          <div class="bench-head"><span class="bench-name">gpt-oss-120b</span><span class="bench-total">240 GB weight &middot; ~3765 tok/s (8&times;H200)</span></div>
+          <div class="bar"><div class="bar-seg bar-weight" style="width:23.4%">weight 240GB</div><div class="bar-seg bar-kv" style="width:76.6%">784GB KV cache</div></div>
+        </div>
+        <div class="bench">
+          <div class="bench-head"><span class="bench-name">Qwen3.5-397B-A17B <span class="pill pill-tight" style="margin-left:6px">nếu nâng target</span></span><span class="bench-total">794 GB weight &middot; ~1129 tok/s (8&times;H200)</span></div>
+          <div class="bar"><div class="bar-seg bar-weight" style="width:77.5%">weight 794GB</div><div class="bar-seg bar-kv" style="width:22.5%">230GB KV cache</div></div>
+        </div>
+        <div class="bench">
+          <div class="bench-head"><span class="bench-name">Llama 4 Maverick <span class="pill pill-tight" style="margin-left:6px">vendor khác, cùng tier</span></span><span class="bench-total">800 GB weight &middot; ~1129 tok/s (8&times;H200)</span></div>
+          <div class="bar"><div class="bar-seg bar-weight" style="width:78.1%">weight 800GB</div><div class="bar-seg bar-kv" style="width:21.9%">224GB KV cache</div></div>
+        </div>
+        <div class="bench">
+          <div class="bench-head"><span class="bench-name">DeepSeek V4-Flash <span class="pill pill-good" style="margin-left:6px">mới tìm — DeepSeek VẪN vừa</span></span><span class="bench-total">568 GB weight &middot; ~1477 tok/s (8&times;H200)</span></div>
+          <div class="bar"><div class="bar-seg bar-weight" style="width:55.5%">weight 568GB</div><div class="bar-seg bar-kv" style="width:44.5%">456GB KV cache</div></div>
+        </div>
+        <div class="bench">
+          <div class="bench-head"><span class="bench-name">GLM-4.6 <span class="pill pill-good" style="margin-left:6px">mới tìm — MIT license</span></span><span class="bench-total">714 GB weight &middot; ~600 tok/s (8&times;H200)</span></div>
+          <div class="bar"><div class="bar-seg bar-weight" style="width:69.7%">weight 714GB</div><div class="bar-seg bar-kv" style="width:30.3%">310GB KV cache</div></div>
+        </div>
+        <div class="bench-legend"><span><span class="swatch" style="background:#0a84ff"></span>Trọng số mô hình</span><span><span class="swatch" style="background:rgba(52,199,89,.5)"></span>Còn lại cho KV cache</span></div>
+        <p style="margin-top:12px;font-size:12.5px;color:var(--ink2)">Target 512GB (256B fp16), thuê thật 1024GB (2&times;). Nếu đặt target là <b>Qwen3.5</b> thay vì Qwen3, bản khớp ngân sách là <b>Qwen3.5-397B-A17B</b> — mới hơn, chất lượng cao hơn, margin co còn ~230GB. Vòng scout vendor còn tìm thêm <b>DeepSeek V4-Flash</b> và <b>GLM-4.6</b> — cả hai vừa ngân sách và margin còn khá.</p>
+      </div>
+    </details>
+
+    <details class="condense">
+      <summary>So sánh 4 ứng viên margin rộng + Khuyến nghị</summary>
+      <div class="condense-body">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Tiêu chí</th><th>Qwen3-235B-A22B</th><th>gpt-oss-120b</th><th>DeepSeek V4-Flash</th><th>GLM-4.6</th></tr></thead>
+            <tbody>
+              <tr><td>Tổng tham số / active</td><td class="num">235B / 22B</td><td class="num">120B / ~5.1B</td><td class="num">284B / 13B</td><td class="num">357B / 32B</td></tr>
+              <tr><td>Context native</td><td class="num">32K (YaRN → 131K)</td><td class="num">dài, tối ưu tool-use</td><td class="num">1M</td><td class="num">200K</td></tr>
+              <tr><td>License</td><td>Apache 2.0 — rõ ràng</td><td>Apache 2.0 — rõ ràng</td><td>MIT — sạch, không ràng buộc doanh thu/user</td><td>MIT — sạch</td></tr>
+              <tr><td>Margin KV cache @ 1024GB</td><td><span class="pill pill-good">554GB</span></td><td><span class="pill pill-good">784GB</span></td><td><span class="pill pill-good">456GB</span></td><td><span class="pill pill-good">310GB</span></td></tr>
+              <tr><td>Điểm mạnh</td><td>Chất lượng cao, coding/math/agentic</td><td>Throughput tốt, chịu tải nhiều user</td><td>Context 1M dài nhất nhóm, active param thấp (rẻ hơn để chạy)</td><td>MoE hiệu quả, danh tiếng coding mạnh (tiền thân của GLM-5.2 dẫn đầu benchmark)</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card verdict" style="margin-top:16px">
+          <span class="mark">"</span>
+          <p style="margin:0;font-size:13px;color:var(--ink)"><b>Qwen3-235B-A22B</b> vẫn là lựa chọn an toàn mặc định: đúng target ~256B, margin 554GB rộng rãi, Apache 2.0 sạch. Nhưng sau vòng scout vendor, hai đối thủ đáng thử nghiệm song song là <b>DeepSeek V4-Flash</b> (context 1M dài nhất, active param thấp hơn nên rẻ/nhanh hơn, MIT license) và <b>GLM-4.6</b> (MIT, họ hàng gần GLM-5.2 — model dẫn đầu benchmark mọi open-weight hiện nay). <b>gpt-oss-120b</b> vẫn là phương án hạ chi phí GPU. Nếu muốn flagship mạnh nhất còn vừa ngân sách, <b>Qwen3.5-397B-A17B</b> hoặc <b>Llama 4 Maverick</b> chấp nhận margin chật ~230GB — nhưng <b>lưu ý license: Llama 4 dùng Meta Community License, không phải Apache/MIT thuần</b> — giới hạn 700 triệu MAU/tháng, bắt buộc ghi "Built with Llama", cấm dùng output train model khác, loại bỏ đa phương thức cho pháp nhân EU.</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="condense">
+      <summary>Checklist triển khai — 6 mục kèm công thức tính ra số thật</summary>
+      <div class="condense-body">
+        <ul class="checklist">
+          <li><input type="checkbox" id="c1"><label for="c1"><b>1. Đo VRAM thật — công thức KV cache/token</b>
+            <code style="display:block;margin:6px 0;font-size:11.5px;background:rgba(0,0,0,.04);padding:6px 10px;border-radius:6px">KV_bytes/token = 2 &times; L &times; H_kv &times; d_head &times; bytes_elem</code>
+            <span style="display:block;margin:4px 0 8px;font-size:12px">Từng chữ nghĩa là gì:</span>
+            <span style="display:block;margin:2px 0"><b>L</b> = số layer transformer (num_hidden_layers) — model xếp chồng bao nhiêu tầng, mỗi tầng giữ K/V cache riêng.</span>
+            <span style="display:block;margin:2px 0"><b>H_kv</b> = số "đầu" lưu Key/Value (num_key_value_heads). Model hiện đại dùng GQA nên H_kv &lt; số attention-head thật — mẹo giảm cache.</span>
+            <span style="display:block;margin:2px 0"><b>d_head</b> = kích thước vector mỗi head (head_dim), thường 64-128.</span>
+            <span style="display:block;margin:2px 0"><b>bytes_elem</b> = số byte lưu 1 con số: 2 cho fp16/bf16, 1 cho fp8.</span>
+            <span style="display:block;margin:2px 0">Số "2" đứng đầu công thức = tính cả Key VÀ Value, không liên quan bytes_elem.</span>
+            <span style="display:block;margin:8px 0 2px;font-size:12px"><b>Ví dụ thật (Qwen3-235B-A22B, số từ config.json HuggingFace):</b> L=94, H_kv=4, d_head=128, bytes_elem=2 &rarr; KV_bytes/token = 2&times;94&times;4&times;128&times;2 = 192.512 byte &asymp; <b>188KB/token</b>. Context native 32K: 188KB&times;32.768 &asymp; 6,16GB/request. Ngân sách 554GB &rarr; tối đa &asymp; <b>89 request đồng thời</b> ở full 32K context.</span>
+            <span style="display:block;margin:6px 0 0;font-size:11.5px;color:var(--ink2)">Lấy L/H_kv/d_head từ <code>config.json</code> của model cụ thể, nhân theo context×CCU mục tiêu, so với "KV cache còn lại" — vượt số đó nghĩa là không thật sự chạy được ở tải đó.</span></label></li>
+          <li><input type="checkbox" id="c2"><label for="c2"><b>2. Chọn framework + số GPU — công thức tensor-parallel</b>
+            <code style="display:block;margin:6px 0;font-size:11.5px;background:rgba(0,0,0,.04);padding:6px 10px;border-radius:6px">TP_degree = ceil(Weight_GB / VRAM_moi_GPU)</code>
+            Vd Qwen3-235B-A22B (470GB) trên H100 80GB &rarr; ceil(470/80)=6, làm tròn lên 8. vLLM/SGLang/TensorRT-LLM đều cấu hình TP qua số này; MoE cần thêm expert-parallel.</label></li>
+          <li><input type="checkbox" id="c3"><label for="c3"><b>3. Interconnect — ngưỡng băng thông thật</b>
+            NVLink 4.0 trên H100 SXM: 900GB/s bidirectional/GPU — bắt buộc nếu TP&gt;4. Multi-node cần InfiniBand tốc độ cao.
+            <code style="display:block;margin:6px 0;font-size:11.5px;background:rgba(0,0,0,.04);padding:6px 10px;border-radius:6px">Do_tre_doc_weight = Weight_GB / (TP_degree &times; Bandwidth_GBps_moi_GPU)</code>
+            Vd Qwen3-235B-A22B, TP=8, H100 3.35TB/s/GPU: 470/(8&times;3350)&asymp;17.5ms/lần đọc full weight.</label></li>
+          <li><input type="checkbox" id="c4"><label for="c4"><b>4. Xác nhận license thật</b>
+            Apache 2.0/MIT sạch: Qwen (mọi bản), gpt-oss, Cohere Command A+, DeepSeek V4-Flash/Pro, GLM-4.6/5.2. <b>Có ràng buộc thật</b>: Llama 4 Maverick (700M MAU, cấm train model khác, hạn chế EU), Nemotron 3 Ultra (OpenMDW-1.1), MiniMax M3 (điều khoản thương mại chưa công bố rõ).</label></li>
+          <li><input type="checkbox" id="c5"><label for="c5"><b>5. Tự benchmark — trần lý thuyết trước khi đo thật</b>
+            <code style="display:block;margin:6px 0;font-size:11.5px;background:rgba(0,0,0,.04);padding:6px 10px;border-radius:6px">Token/giay &asymp; (TP_degree &times; Bandwidth_GBps) / (Active_params_B &times; bytes_elem)</code>
+            Vd Qwen3-235B-A22B (22B active) trên 8&times;H100: (8&times;3350)/(22&times;2)&asymp;609 token/s — trần lý thuyết. Đo thật dưới 30-40% số này &rarr; có vấn đề cấu hình.</label></li>
+          <li><input type="checkbox" id="c6"><label for="c6"><b>6. Giám sát KV cache — ngưỡng CCU tối đa</b>
+            <code style="display:block;margin:6px 0;font-size:11.5px;background:rgba(0,0,0,.04);padding:6px 10px;border-radius:6px">Max_CCU = KV_cache_con_lai_GB / (KV_bytes/token &times; context_length / 1e9)</code>
+            Đặt alert khi (concurrent_request &times; avg_context) tiệm cận số này — ranh giới OOM thật.</label></li>
+        </ul>
+      </div>
+    </details>
+
+    <details class="condense">
+      <summary>So sánh chéo 13 vendor (bảng đầy đủ, 4 tier margin)</summary>
+      <div class="condense-body">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Model</th><th>Vendor</th><th>Tổng / Active</th><th>Weight (fp16)</th><th>KV cache còn lại</th><th>Ghi chú</th></tr></thead>
+            <tbody>
+              <tr><td>gpt-oss-120b</td><td>OpenAI</td><td class="num">120B / ~5.1B</td><td class="num">240GB</td><td><span class="pill pill-good">784GB</span></td><td>Margin rộng nhất, throughput cao</td></tr>
+              <tr><td>Qwen3.5-122B-A10B</td><td>Alibaba</td><td class="num">122B / 10B</td><td class="num">244GB</td><td><span class="pill pill-good">780GB</span></td><td>Bản Qwen3.5 cỡ nhỏ</td></tr>
+              <tr><td>MiniMax M2</td><td>MiniMax</td><td class="num">230B / 10B</td><td class="num">460GB</td><td><span class="pill pill-good">564GB</span></td><td>Đã bị thay bởi M2.1/2.5/2.7/M3 — coi như bản cũ</td></tr>
+              <tr><td>Cohere Command A+</td><td>Cohere</td><td class="num">218B / 25B</td><td class="num">436GB</td><td><span class="pill pill-good">588GB</span></td><td>Apache 2.0 đầy đủ, native citation</td></tr>
+              <tr><td>Qwen3-235B-A22B</td><td>Alibaba</td><td class="num">235B / 22B</td><td class="num">470GB</td><td><span class="pill pill-good">554GB</span></td><td>Khuyến nghị hiện tại</td></tr>
+              <tr><td><b>DeepSeek V4-Flash</b></td><td>DeepSeek</td><td class="num">284B / 13B</td><td class="num">568GB</td><td><span class="pill pill-good">456GB</span></td><td>Bản DeepSeek THỰC SỰ vừa ngân sách — khác V4-Pro (1.6T, quá lớn). MIT license sạch, không ràng buộc doanh thu/user</td></tr>
+              <tr><td><b>GLM-4.6</b></td><td>Zhipu / Z.ai</td><td class="num">357B / 32B</td><td class="num">714GB</td><td><span class="pill pill-tight">310GB</span></td><td>MIT license, context 200K</td></tr>
+              <tr><td>Qwen3.5-397B-A17B</td><td>Alibaba</td><td class="num">397B / 17B</td><td class="num">794GB</td><td><span class="pill pill-tight">230GB</span></td><td>Flagship mới nếu nâng target lên Qwen3.5</td></tr>
+              <tr><td>Llama 4 Maverick</td><td>Meta</td><td class="num">400B / 17B</td><td class="num">800GB</td><td><span class="pill pill-tight">224GB</span></td><td>Benchmark ngang GPT-4o/DeepSeek V3 — <b>license KHÔNG Apache/MIT</b>: Meta Community License, trần 700M MAU, cấm train model khác từ output, hạn chế đa phương thức ở EU</td></tr>
+              <tr><td><b>MiniMax M3</b></td><td>MiniMax</td><td class="num">428B / 23B</td><td class="num">856GB</td><td><span class="pill pill-tight">168GB</span></td><td>Margin chật nhất trong nhóm vừa; context 1M — <b>điều khoản thương mại chưa công bố rõ</b></td></tr>
+              <tr><td><b>Nemotron 3 Ultra</b></td><td>Nvidia</td><td class="num">550B / 55B</td><td class="num">1,100GB</td><td><span class="pill pill-bad">-76GB · gần vừa</span></td><td>AA Intelligence Index 48 — cao nhất open-weight Mỹ; license riêng <b>OpenMDW-1.1</b> (không phải MIT/Apache)</td></tr>
+              <tr><td><b>GLM-5.2</b></td><td>Zhipu / Z.ai</td><td class="num">744B / 40B</td><td class="num">1,488GB</td><td><span class="pill pill-bad">-464GB</span></td><td>AA Intelligence Index <b>51</b> — cao nhất mọi open-weight hiện tại, nhưng quá lớn cho ngân sách này</td></tr>
+              <tr><td>Kimi K3, Qwen3.8-Max, DeepSeek V4-Pro, Inkling</td><td>đa vendor</td><td class="num">1.6T – 2.8T</td><td class="num">3.2TB – 5.6TB</td><td><span class="pill pill-bad">âm sâu</span></td><td>Chỉ khả thi nếu quantize (FP8/INT8) hoặc thuê thêm VRAM nhiều lần</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p style="margin-top:14px;font-size:12.5px;color:var(--ink2)"><b>Đính chính:</b> DeepSeek KHÔNG bị loại hoàn toàn — <b>DeepSeek V4-Flash</b> vừa khít tier "margin vừa", chỉ <b>V4-Pro</b> mới quá lớn. <b>GLM-4.6</b> (MIT) cũng nghiêm túc, cùng tier chật với Qwen3.5-397B/Llama 4 Maverick. <b>Nemotron 3 Ultra</b> mạnh nhất benchmark nhưng chỉ thiếu ~76GB.</p>
+        <p style="margin-top:8px;font-size:12.5px;color:var(--ink2)"><b>Ngoài lề:</b> <b>Apertus 1.5</b> (Thụy Sĩ) chỉ có bản 8B/70B, dư ~884GB cache nhưng sức mạnh thấp hơn hẳn — mở toàn phần cả training data, đáng cân nhắc nếu ưu tiên minh bạch hơn sức mạnh thô.</p>
+
+        <h4 style="margin:20px 0 8px;font-size:13.5px">Đặc điểm kiến trúc & rủi ro riêng từng model</h4>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Model</th><th>Đặc điểm kiến trúc</th><th>Rủi ro riêng</th></tr></thead>
+            <tbody>
+              <tr><td>Qwen3-235B-A22B / Qwen3.5-397B-A17B</td><td>MoE chi tiết: 128 expert, chỉ 8 active/token. "Nhiều chuyên gia" là ẩn dụ hợp lý nhưng KHÔNG literal — routing học tự động, không gán nhãn lĩnh vực rõ ràng như multi-agent thật. Vì phải giữ ĐỦ 128 expert trong VRAM dù chỉ 8 cái chạy, nên weight to hẳn so với active param.</td><td>Load-balance giữa expert có thể lệch với prompt bất thường/hiếm gặp — chất lượng phụ thuộc expert nào được train tốt cho đúng dạng câu hỏi đó.</td></tr>
+              <tr><td>gpt-oss-120b</td><td>Tỷ lệ active/total cực thấp (~4.25%) — sparse nhất nhóm margin rộng, tối ưu tốc độ/chi phí hơn là năng lực đỉnh.</td><td>Mới hơn, ít dữ liệu production thực chiến hơn Qwen; capability ceiling có thể hẹp hơn model đặc (dense) cùng active param.</td></tr>
+              <tr><td>DeepSeek V4-Flash</td><td>Biến thể "nhẹ" trong họ V4 (đi cùng V4-Pro) — active param thấp hơn nhiều so với Pro, đổi lấy tốc độ/chi phí.</td><td>Nhiều khả năng chất lượng trần thấp hơn V4-Pro (bản đắt/nặng) — chưa có benchmark riêng xác nhận khoảng cách thật giữa 2 bản.</td></tr>
+              <tr><td>GLM-4.6</td><td>Tiền thân trực tiếp của GLM-5.2 (model đang dẫn đầu AA Index 51) — cùng dòng kiến trúc MoE.</td><td><b>KHÔNG có điểm AA Index xác nhận cùng thang đo</b> — vì vậy bị loại khỏi bảng benchmark 4 model phía trên. Danh tiếng "mạnh" chỉ suy luận từ việc là tiền thân GLM-5.2, CHƯA phải bằng chứng trực tiếp.</td></tr>
+              <tr><td>Llama 4 Maverick</td><td>MoE 128 expert/17B active — kiến trúc tương tự họ Qwen.</td><td>Claim "ngang GPT-4o/DeepSeek V3" đến từ công bố của Meta lúc ra mắt — KHÔNG cùng snapshot AA Index v4.1 dùng ở bảng benchmark, nên không đối chiếu trực tiếp được với GLM-5.2/Nemotron/MiniMax M3/DeepSeek V4-Pro.</td></tr>
+              <tr><td>MiniMax M2 / M3</td><td>Nhịp ra bản CỰC nhanh (M2 → M2.1 → M2.5 → M2.7 → M3 trong vài tháng).</td><td>Version cụ thể dễ bị thay thế/ngừng hỗ trợ nhanh; M3 còn thêm rủi ro điều khoản thương mại chưa công bố rõ (đã nêu ở bảng chính).</td></tr>
+              <tr><td>Nemotron 3 Ultra</td><td>Kiến trúc hybrid Mamba-Transformer (không phải Transformer thuần) — đây là lý do đạt throughput cao so với quy mô, và cũng là lý do có AA Index 48 (cao nhất Mỹ) dù chỉ thiếu ~76GB để vừa ngân sách.</td><td>Kiến trúc hybrid còn mới — hỗ trợ trên vLLM/SGLang non-tôi luyện bằng Transformer/MoE thuần; cần kiểm tra framework serving có support đầy đủ Mamba layer hay chưa trước khi cam kết.</td></tr>
+              <tr><td>Cohere Command A+</td><td>Tỷ lệ active/total ~11.5% — "đặc" nhất (ít sparse nhất) trong nhóm margin rộng, đây chính là lý do tok/s (~768) thấp hơn hẳn MiniMax M2 dù weight gần bằng nhau (xem chart đánh đổi). Có tính năng native citation độc quyền trong nhóm.</td><td>Đánh đổi tốc độ lấy thiết kế "đặc" hơn — nếu ưu tiên throughput thuần, đây không phải lựa chọn nhanh nhất dù margin cache rộng.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p style="margin-top:10px;font-size:11.5px;color:var(--ink2)"><b>Loại khỏi so sánh benchmark có chủ đích:</b> Qwen3-235B-A22B, gpt-oss-120b, DeepSeek V4-Flash, GLM-4.6, Qwen3.5-397B-A17B, Llama 4 Maverick, MiniMax M2, Qwen3.5-122B-A10B, Cohere Command A+ — tất cả KHÔNG có điểm benchmark xác nhận cùng phiên bản/thang đo với 4 model trong chart "Benchmark" (mục biểu đồ). Đây là quyết định có chủ đích để tránh so sánh lệch chuẩn, không phải thiếu sót.</p>
+      </div>
+    </details>
+
+    <details class="condense">
+      <summary>4 biểu đồ trực quan — VRAM, đánh đổi tok/s, active params, benchmark</summary>
+      <div class="condense-body">
+
+        <div class="chart-box">
+          <h4>Ngân sách VRAM 1024GB: weight vs KV cache còn lại</h4>
+          <p class="chart-note">11 model có weight ≤ 1.1TB, sắp theo weight tăng dần. Đường đứt nét = ranh giới ngân sách 1024GB.</p>
+          <div class="table-wrap">
+            <svg class="chart-svg" viewBox="0 0 920 560" role="img" style="color:var(--ink)" xmlns="http://www.w3.org/2000/svg">
+              <title>Biểu đồ cột ngang: weight (fp16, GB) và KV cache còn lại của 11 model open-weight trong ngân sách 1024GB</title>
+              <line x1="729.1" y1="4" x2="729.1" y2="504" stroke="currentColor" stroke-opacity="0.35" stroke-width="1.5" stroke-dasharray="4 3"/>
+              <text x="729.1" y="0" text-anchor="middle" font-size="9.5" fill="currentColor" opacity="0.6" dy="-4">Ngân sách 1024GB</text>
+              <line x1="200" y1="504" x2="820" y2="504" stroke="currentColor" stroke-opacity="0.25" stroke-width="1"/>
+              <text x="200" y="518" font-size="9" fill="currentColor" opacity="0.55">0</text>
+              <text x="458.3" y="518" text-anchor="middle" font-size="9" fill="currentColor" opacity="0.55">500GB</text>
+              <text x="820" y="518" text-anchor="end" font-size="9" fill="currentColor" opacity="0.55">1200GB</text>
+<g><title>gpt-oss-120b: 240GB weight</title>
+<text x="192.0" y="28.0" text-anchor="end" font-size="10.5" fill="currentColor">gpt-oss-120b</text>
+<rect x="200.0" y="14.0" width="124.0" height="20" rx="3" fill="#0a84ff"/>
+<rect x="326.0" y="14.0" width="403.1" height="20" rx="3" fill="#199e70" fill-opacity="0.35"/>
+<text x="735.1" y="28.0" font-size="10" fill="currentColor" opacity="0.65">240GB &#183; d&#432; 784GB</text>
+</g>
+<g><title>Qwen3.5-122B-A10B: 244GB weight</title>
+<text x="192.0" y="74.0" text-anchor="end" font-size="10.5" fill="currentColor">Qwen3.5-122B-A10B</text>
+<rect x="200.0" y="60.0" width="126.1" height="20" rx="3" fill="#0a84ff"/>
+<rect x="328.1" y="60.0" width="401.0" height="20" rx="3" fill="#199e70" fill-opacity="0.35"/>
+<text x="735.1" y="74.0" font-size="10" fill="currentColor" opacity="0.65">244GB &#183; d&#432; 780GB</text>
+</g>
+<g><title>Cohere Command A+: 436GB weight</title>
+<text x="192.0" y="120.0" text-anchor="end" font-size="10.5" fill="currentColor">Cohere Command A+</text>
+<rect x="200.0" y="106.0" width="225.3" height="20" rx="3" fill="#0a84ff"/>
+<rect x="427.3" y="106.0" width="301.8" height="20" rx="3" fill="#199e70" fill-opacity="0.35"/>
+<text x="735.1" y="120.0" font-size="10" fill="currentColor" opacity="0.65">436GB &#183; d&#432; 588GB</text>
+</g>
+<g><title>MiniMax M2: 460GB weight</title>
+<text x="192.0" y="166.0" text-anchor="end" font-size="10.5" fill="currentColor">MiniMax M2</text>
+<rect x="200.0" y="152.0" width="237.7" height="20" rx="3" fill="#0a84ff"/>
+<rect x="439.7" y="152.0" width="289.4" height="20" rx="3" fill="#199e70" fill-opacity="0.35"/>
+<text x="735.1" y="166.0" font-size="10" fill="currentColor" opacity="0.65">460GB &#183; d&#432; 564GB</text>
+</g>
+<g><title>Qwen3-235B-A22B: 470GB weight</title>
+<text x="192.0" y="212.0" text-anchor="end" font-size="10.5" fill="currentColor">Qwen3-235B-A22B</text>
+<rect x="200.0" y="198.0" width="242.8" height="20" rx="3" fill="#0a84ff"/>
+<rect x="444.8" y="198.0" width="284.2" height="20" rx="3" fill="#199e70" fill-opacity="0.35"/>
+<text x="735.1" y="212.0" font-size="10" fill="currentColor" opacity="0.65">470GB &#183; d&#432; 554GB</text>
+</g>
+<g><title>DeepSeek V4-Flash: 568GB weight</title>
+<text x="192.0" y="258.0" text-anchor="end" font-size="10.5" fill="currentColor">DeepSeek V4-Flash</text>
+<rect x="200.0" y="244.0" width="293.5" height="20" rx="3" fill="#0a84ff"/>
+<rect x="495.5" y="244.0" width="233.6" height="20" rx="3" fill="#199e70" fill-opacity="0.35"/>
+<text x="735.1" y="258.0" font-size="10" fill="currentColor" opacity="0.65">568GB &#183; d&#432; 456GB</text>
+</g>
+<g><title>GLM-4.6: 714GB weight</title>
+<text x="192.0" y="304.0" text-anchor="end" font-size="10.5" fill="currentColor">GLM-4.6</text>
+<rect x="200.0" y="290.0" width="368.9" height="20" rx="3" fill="#0a84ff"/>
+<rect x="570.9" y="290.0" width="158.2" height="20" rx="3" fill="#199e70" fill-opacity="0.35"/>
+<text x="735.1" y="304.0" font-size="10" fill="currentColor" opacity="0.65">714GB &#183; d&#432; 310GB</text>
+</g>
+<g><title>Qwen3.5-397B-A17B: 794GB weight</title>
+<text x="192.0" y="350.0" text-anchor="end" font-size="10.5" fill="currentColor">Qwen3.5-397B-A17B</text>
+<rect x="200.0" y="336.0" width="410.2" height="20" rx="3" fill="#0a84ff"/>
+<rect x="612.2" y="336.0" width="116.8" height="20" rx="3" fill="#199e70" fill-opacity="0.35"/>
+<text x="735.1" y="350.0" font-size="10" fill="currentColor" opacity="0.65">794GB &#183; d&#432; 230GB</text>
+</g>
+<g><title>Llama 4 Maverick: 800GB weight</title>
+<text x="192.0" y="396.0" text-anchor="end" font-size="10.5" fill="currentColor">Llama 4 Maverick</text>
+<rect x="200.0" y="382.0" width="413.3" height="20" rx="3" fill="#0a84ff"/>
+<rect x="615.3" y="382.0" width="113.7" height="20" rx="3" fill="#199e70" fill-opacity="0.35"/>
+<text x="735.1" y="396.0" font-size="10" fill="currentColor" opacity="0.65">800GB &#183; d&#432; 224GB</text>
+</g>
+<g><title>MiniMax M3: 856GB weight</title>
+<text x="192.0" y="442.0" text-anchor="end" font-size="10.5" fill="currentColor">MiniMax M3</text>
+<rect x="200.0" y="428.0" width="442.3" height="20" rx="3" fill="#0a84ff"/>
+<rect x="644.3" y="428.0" width="84.8" height="20" rx="3" fill="#199e70" fill-opacity="0.35"/>
+<text x="735.1" y="442.0" font-size="10" fill="currentColor" opacity="0.65">856GB &#183; d&#432; 168GB</text>
+</g>
+<g><title>Nemotron 3 Ultra: 1100GB weight</title>
+<text x="192.0" y="488.0" text-anchor="end" font-size="10.5" fill="currentColor">Nemotron 3 Ultra</text>
+<rect x="200.0" y="474.0" width="529.1" height="20" rx="3" fill="#0a84ff"/>
+<rect x="731.1" y="474.0" width="37.3" height="20" rx="3" fill="#d03b3b"/>
+<text x="776.3" y="488.0" font-size="10" fill="currentColor" opacity="0.65">1100GB &#183; thi&#7871;u 76GB</text>
+</g>
+            </svg>
+          </div>
+          <div class="chart-legend">
+            <span><span class="swatch" style="background:#0a84ff"></span>Weight (fp16)</span>
+            <span><span class="swatch" style="background:#199e70;opacity:.6"></span>KV cache còn lại</span>
+            <span><span class="swatch" style="background:#d03b3b"></span>Vượt ngân sách</span>
+          </div>
+        </div>
+
+        <div class="chart-box">
+          <h4>Đánh đổi: model to hơn lấy được gì, mất gì — token/s ước lượng</h4>
+          <p class="chart-note">Cùng thứ tự hàng (weight tăng dần) như chart phía trên. <b>Vì sao ra số này (chứng minh, không phải áng chừng):</b> decode bị giới hạn bởi băng thông đọc weight (memory-bandwidth-bound) — mỗi token sinh ra phải đọc lại toàn bộ active-weight từ HBM một lần, không phải giới hạn bởi FLOPs (nguồn: phân tích inference-scaling MLSYS·IM + hướng dẫn triển khai vLLM/Anyscale). Công thức: <code>tok/s &asymp; Bandwidth_tong / (Active_params_B &times; bytes_elem)</code>. <b>Chứng minh bằng số thật (Qwen3-235B-A22B):</b> cụm 8&times;H200 (141GB/GPU, 4.8TB/s/GPU) &rarr; băng thông tổng = 8&times;4.800 = 38.400GB/s; active=22B, fp16=2byte &rarr; 38.400/(22&times;2) = 38.400/44 &asymp; <b>873 tok/s</b> — khớp đúng số hiển thị trong chart bên dưới cho model này.</p>
+          <p class="chart-note"><b>Đây là số SINGLE-STREAM (1 user dùng riêng), không phải throughput chia đều cho nhiều user.</b> Với nhiều user đồng thời, continuous batching giúp 1 lần đọc weight phục vụ nhiều sequence cùng lúc &rarr; throughput TỔNG có thể tăng gần tuyến tính theo batch size (chưa nghẽn, vẫn memory-bound). Nhưng vượt một ngưỡng batch size, hệ thống chuyển sang <b>compute-bound</b> (giới hạn FLOPs) &rarr; throughput tổng KHÔNG tăng thêm nữa dù thêm user &rarr; đây mới là điểm "nghẽn" thật, mỗi user mới làm chậm trung bình của tất cả.</p>
+          <div class="table-wrap">
+            <svg class="chart-svg" viewBox="0 0 920 550" role="img" style="color:var(--ink)" xmlns="http://www.w3.org/2000/svg">
+              <title>Biểu đồ cột ngang: token/giây ước lượng trên cụm 8xH200, cùng thứ tự weight tăng dần với chart ngân sách VRAM</title>
+<g><title>gpt-oss-120b: ~3765 tok/s (8xH200, uoc luong)</title>
+<text x="192.0" y="28.0" text-anchor="end" font-size="10.5" fill="currentColor">gpt-oss-120b</text>
+<rect x="200" y="14.0" width="583.6" height="20" rx="3" fill="#0a84ff"/>
+<text x="789.6" y="28.0" font-size="10" fill="currentColor" opacity="0.65">~3765 tok/s</text>
+</g>
+<g><title>Qwen3.5-122B-A10B: ~1920 tok/s (8xH200, uoc luong)</title>
+<text x="192.0" y="74.0" text-anchor="end" font-size="10.5" fill="currentColor">Qwen3.5-122B-A10B</text>
+<rect x="200" y="60.0" width="297.6" height="20" rx="3" fill="#0a84ff"/>
+<text x="503.6" y="74.0" font-size="10" fill="currentColor" opacity="0.65">~1920 tok/s</text>
+</g>
+<g><title>Cohere Command A+: ~768 tok/s (8xH200, uoc luong)</title>
+<text x="192.0" y="120.0" text-anchor="end" font-size="10.5" fill="currentColor">Cohere Command A+</text>
+<rect x="200" y="106.0" width="119.0" height="20" rx="3" fill="#0a84ff"/>
+<text x="325.0" y="120.0" font-size="10" fill="currentColor" opacity="0.65">~768 tok/s</text>
+</g>
+<g><title>MiniMax M2: ~1920 tok/s (8xH200, uoc luong)</title>
+<text x="192.0" y="166.0" text-anchor="end" font-size="10.5" fill="currentColor">MiniMax M2</text>
+<rect x="200" y="152.0" width="297.6" height="20" rx="3" fill="#0a84ff"/>
+<text x="503.6" y="166.0" font-size="10" fill="currentColor" opacity="0.65">~1920 tok/s</text>
+</g>
+<g><title>Qwen3-235B-A22B: ~873 tok/s (8xH200, uoc luong)</title>
+<text x="192.0" y="212.0" text-anchor="end" font-size="10.5" fill="currentColor">Qwen3-235B-A22B</text>
+<rect x="200" y="198.0" width="135.3" height="20" rx="3" fill="#0a84ff"/>
+<text x="341.3" y="212.0" font-size="10" fill="currentColor" opacity="0.65">~873 tok/s</text>
+</g>
+<g><title>DeepSeek V4-Flash: ~1477 tok/s (8xH200, uoc luong)</title>
+<text x="192.0" y="258.0" text-anchor="end" font-size="10.5" fill="currentColor">DeepSeek V4-Flash</text>
+<rect x="200" y="244.0" width="228.9" height="20" rx="3" fill="#0a84ff"/>
+<text x="434.9" y="258.0" font-size="10" fill="currentColor" opacity="0.65">~1477 tok/s</text>
+</g>
+<g><title>GLM-4.6: ~600 tok/s (8xH200, uoc luong)</title>
+<text x="192.0" y="304.0" text-anchor="end" font-size="10.5" fill="currentColor">GLM-4.6</text>
+<rect x="200" y="290.0" width="93.0" height="20" rx="3" fill="#0a84ff"/>
+<text x="299.0" y="304.0" font-size="10" fill="currentColor" opacity="0.65">~600 tok/s</text>
+</g>
+<g><title>Qwen3.5-397B-A17B: ~1129 tok/s (8xH200, uoc luong)</title>
+<text x="192.0" y="350.0" text-anchor="end" font-size="10.5" fill="currentColor">Qwen3.5-397B-A17B</text>
+<rect x="200" y="336.0" width="175.0" height="20" rx="3" fill="#0a84ff"/>
+<text x="381.0" y="350.0" font-size="10" fill="currentColor" opacity="0.65">~1129 tok/s</text>
+</g>
+<g><title>Llama 4 Maverick: ~1129 tok/s (8xH200, uoc luong)</title>
+<text x="192.0" y="396.0" text-anchor="end" font-size="10.5" fill="currentColor">Llama 4 Maverick</text>
+<rect x="200" y="382.0" width="175.0" height="20" rx="3" fill="#0a84ff"/>
+<text x="381.0" y="396.0" font-size="10" fill="currentColor" opacity="0.65">~1129 tok/s</text>
+</g>
+<g><title>MiniMax M3: ~835 tok/s (8xH200, uoc luong)</title>
+<text x="192.0" y="442.0" text-anchor="end" font-size="10.5" fill="currentColor">MiniMax M3</text>
+<rect x="200" y="428.0" width="129.4" height="20" rx="3" fill="#0a84ff"/>
+<text x="335.4" y="442.0" font-size="10" fill="currentColor" opacity="0.65">~835 tok/s</text>
+</g>
+<g><title>Nemotron 3 Ultra: ~349 tok/s (8xH200, uoc luong)</title>
+<text x="192.0" y="488.0" text-anchor="end" font-size="10.5" fill="currentColor">Nemotron 3 Ultra</text>
+<rect x="200" y="474.0" width="54.1" height="20" rx="3" fill="#0a84ff"/>
+<text x="260.1" y="488.0" font-size="10" fill="currentColor" opacity="0.65">~349 tok/s</text>
+</g>
+            </svg>
+          </div>
+          <p style="margin-top:8px;font-size:11.5px;color:var(--ink2)"><b>Đánh đổi không tuyến tính:</b> weight KHÔNG quyết định tốc độ — tỷ lệ active/total (độ "sparse" MoE) mới quyết định. <b>Cohere Command A+</b> (436GB, active 25B) chỉ ~768 tok/s, chậm hơn <b>MiniMax M2</b> (460GB, active 10B) đạt ~1920 tok/s.</p>
+        </div>
+
+        <div class="chart-box">
+          <h4>Chi phí suy luận thật: active params/token</h4>
+          <p class="chart-note">14 model có active-param đã xác nhận (loại Kimi K3, Qwen3.8-Max vì chưa verified). Sắp tăng dần.</p>
+          <div class="table-wrap">
+            <svg class="chart-svg" viewBox="0 0 920 460" role="img" style="color:var(--ink)" xmlns="http://www.w3.org/2000/svg">
+              <title>Biểu đồ cột ngang: số tham số active mỗi token của 14 model open-weight</title>
+<g><title>gpt-oss-120b: 5.1B active/token</title>
+<text x="192.0" y="21.5" text-anchor="end" font-size="10.2" fill="currentColor">gpt-oss-120b</text>
+<rect x="200" y="10.0" width="52.7" height="16" rx="3" fill="#0a84ff" fill-opacity="0.50"/>
+<text x="258.7" y="21.5" font-size="10" fill="currentColor" opacity="0.65">5.1B</text>
+</g>
+<g><title>Qwen3.5-122B-A10B: 10B active/token</title>
+<text x="192.0" y="51.5" text-anchor="end" font-size="10.2" fill="currentColor">Qwen3.5-122B-A10B</text>
+<rect x="200" y="40.0" width="103.3" height="16" rx="3" fill="#0a84ff" fill-opacity="0.55"/>
+<text x="309.3" y="51.5" font-size="10" fill="currentColor" opacity="0.65">10B</text>
+</g>
+<g><title>MiniMax M2: 10B active/token</title>
+<text x="192.0" y="81.5" text-anchor="end" font-size="10.2" fill="currentColor">MiniMax M2</text>
+<rect x="200" y="70.0" width="103.3" height="16" rx="3" fill="#0a84ff" fill-opacity="0.55"/>
+<text x="309.3" y="81.5" font-size="10" fill="currentColor" opacity="0.65">10B</text>
+</g>
+<g><title>DeepSeek V4-Flash: 13B active/token</title>
+<text x="192.0" y="111.5" text-anchor="end" font-size="10.2" fill="currentColor">DeepSeek V4-Flash</text>
+<rect x="200" y="100.0" width="134.3" height="16" rx="3" fill="#0a84ff" fill-opacity="0.58"/>
+<text x="340.3" y="111.5" font-size="10" fill="currentColor" opacity="0.65">13B</text>
+</g>
+<g><title>Llama 4 Maverick: 17B active/token</title>
+<text x="192.0" y="141.5" text-anchor="end" font-size="10.2" fill="currentColor">Llama 4 Maverick</text>
+<rect x="200" y="130.0" width="175.7" height="16" rx="3" fill="#0a84ff" fill-opacity="0.62"/>
+<text x="381.7" y="141.5" font-size="10" fill="currentColor" opacity="0.65">17B</text>
+</g>
+<g><title>Qwen3.5-397B-A17B: 17B active/token</title>
+<text x="192.0" y="171.5" text-anchor="end" font-size="10.2" fill="currentColor">Qwen3.5-397B-A17B</text>
+<rect x="200" y="160.0" width="175.7" height="16" rx="3" fill="#0a84ff" fill-opacity="0.62"/>
+<text x="381.7" y="171.5" font-size="10" fill="currentColor" opacity="0.65">17B</text>
+</g>
+<g><title>Qwen3-235B-A22B: 22B active/token</title>
+<text x="192.0" y="201.5" text-anchor="end" font-size="10.2" fill="currentColor">Qwen3-235B-A22B</text>
+<rect x="200" y="190.0" width="227.3" height="16" rx="3" fill="#0a84ff" fill-opacity="0.67"/>
+<text x="433.3" y="201.5" font-size="10" fill="currentColor" opacity="0.65">22B</text>
+</g>
+<g><title>MiniMax M3: 23B active/token</title>
+<text x="192.0" y="231.5" text-anchor="end" font-size="10.2" fill="currentColor">MiniMax M3</text>
+<rect x="200" y="220.0" width="237.7" height="16" rx="3" fill="#0a84ff" fill-opacity="0.68"/>
+<text x="443.7" y="231.5" font-size="10" fill="currentColor" opacity="0.65">23B</text>
+</g>
+<g><title>Cohere Command A+: 25B active/token</title>
+<text x="192.0" y="261.5" text-anchor="end" font-size="10.2" fill="currentColor">Cohere Command A+</text>
+<rect x="200" y="250.0" width="258.3" height="16" rx="3" fill="#0a84ff" fill-opacity="0.70"/>
+<text x="464.3" y="261.5" font-size="10" fill="currentColor" opacity="0.65">25B</text>
+</g>
+<g><title>GLM-4.6: 32B active/token</title>
+<text x="192.0" y="291.5" text-anchor="end" font-size="10.2" fill="currentColor">GLM-4.6</text>
+<rect x="200" y="280.0" width="330.7" height="16" rx="3" fill="#0a84ff" fill-opacity="0.77"/>
+<text x="536.7" y="291.5" font-size="10" fill="currentColor" opacity="0.65">32B</text>
+</g>
+<g><title>GLM-5.2: 40B active/token</title>
+<text x="192.0" y="321.5" text-anchor="end" font-size="10.2" fill="currentColor">GLM-5.2</text>
+<rect x="200" y="310.0" width="413.3" height="16" rx="3" fill="#0a84ff" fill-opacity="0.85"/>
+<text x="619.3" y="321.5" font-size="10" fill="currentColor" opacity="0.65">40B</text>
+</g>
+<g><title>Inkling: 41B active/token</title>
+<text x="192.0" y="351.5" text-anchor="end" font-size="10.2" fill="currentColor">Inkling</text>
+<rect x="200" y="340.0" width="423.7" height="16" rx="3" fill="#0a84ff" fill-opacity="0.86"/>
+<text x="629.7" y="351.5" font-size="10" fill="currentColor" opacity="0.65">41B</text>
+</g>
+<g><title>DeepSeek V4-Pro: 49B active/token</title>
+<text x="192.0" y="381.5" text-anchor="end" font-size="10.2" fill="currentColor">DeepSeek V4-Pro</text>
+<rect x="200" y="370.0" width="506.3" height="16" rx="3" fill="#0a84ff" fill-opacity="0.94"/>
+<text x="712.3" y="381.5" font-size="10" fill="currentColor" opacity="0.65">49B</text>
+</g>
+<g><title>Nemotron 3 Ultra: 55B active/token</title>
+<text x="192.0" y="411.5" text-anchor="end" font-size="10.2" fill="currentColor">Nemotron 3 Ultra</text>
+<rect x="200" y="400.0" width="568.3" height="16" rx="3" fill="#0a84ff" fill-opacity="1.00"/>
+<text x="774.3" y="411.5" font-size="10" fill="currentColor" opacity="0.65">55B</text>
+</g>
+            </svg>
+          </div>
+        </div>
+
+        <div class="chart-box">
+          <h4>Benchmark: Artificial Analysis Intelligence Index</h4>
+          <p class="chart-note">Chỉ 4 model có số điểm xác nhận CÙNG phiên bản index (v4.1, cùng nguồn) nên so được — model khác dùng thang đo khác nên KHÔNG đưa vào để tránh so sánh lệch chuẩn.</p>
+          <div class="table-wrap">
+            <svg class="chart-svg" viewBox="0 0 920 190" role="img" style="color:var(--ink)" xmlns="http://www.w3.org/2000/svg">
+              <title>Biểu đồ cột ngang: điểm Artificial Analysis Intelligence Index v4.1 của 4 model open-weight có cùng thang đo</title>
+<g><title>GLM-5.2: AA Intelligence Index 51</title>
+<text x="192.0" y="24.0" text-anchor="end" font-size="10.5" fill="currentColor">GLM-5.2</text>
+<rect x="200" y="10.0" width="574.9" height="20" rx="3" fill="#0a84ff"/>
+<text x="780.9" y="24.0" font-size="10.5" font-weight="700" fill="currentColor">51</text>
+</g>
+<g><title>Nemotron 3 Ultra: AA Intelligence Index 48</title>
+<text x="192.0" y="64.0" text-anchor="end" font-size="10.5" fill="currentColor">Nemotron 3 Ultra</text>
+<rect x="200" y="50.0" width="541.1" height="20" rx="3" fill="#0a84ff"/>
+<text x="747.1" y="64.0" font-size="10.5" font-weight="700" fill="currentColor">48</text>
+</g>
+<g><title>MiniMax M3: AA Intelligence Index 44</title>
+<text x="192.0" y="104.0" text-anchor="end" font-size="10.5" fill="currentColor">MiniMax M3</text>
+<rect x="200" y="90.0" width="496.0" height="20" rx="3" fill="#0a84ff"/>
+<text x="702.0" y="104.0" font-size="10.5" font-weight="700" fill="currentColor">44</text>
+</g>
+<g><title>DeepSeek V4-Pro: AA Intelligence Index 44</title>
+<text x="192.0" y="144.0" text-anchor="end" font-size="10.5" fill="currentColor">DeepSeek V4-Pro</text>
+<rect x="200" y="130.0" width="496.0" height="20" rx="3" fill="#0a84ff"/>
+<text x="702.0" y="144.0" font-size="10.5" font-weight="700" fill="currentColor">44</text>
+</g>
+            </svg>
+          </div>
+          <p style="margin-top:8px;font-size:11px;color:var(--ink2)">GLM-5.2 dẫn đầu benchmark nhưng nằm ở tier "quá lớn" — điểm số này KHÔNG phản ánh việc có vừa ngân sách VRAM hay không.</p>
+        </div>
+
+      </div>
+    </details>
+
+    <p class="infra-note"><b>Infra cost layer này:</b> 1 cụm GPU (8&times;H100/H200 tuỳ model, xem checklist mục 2) — layer DUY NHẤT trong 7 layer cần GPU. 6 layer còn lại dưới đây chạy trên CPU thường, nhưng vẫn cộng vào latency tổng.</p>
+  </section>
+
+  <section id="sec-2" class="section-bg s-bg2">
+    <div class="section-header">
+      <span class="tag">02 · Tools Layer</span>
+      <h2>Tay chân của agent — không có nó, agent chỉ nói suông</h2>
+      <p>Định nghĩa và thực thi các "hành động" agent có thể gọi: search web, chạy code, gọi API nội bộ, đọc/ghi file/database.</p>
+    </div>
+    <div class="content-grid">
+      <div class="card">
+        <h4>Bọc như thế nào</h4>
+        <p>Model chỉ SINH RA text mô tả "muốn gọi tool X với tham số Y". Tools layer là code THẬT nằm ngoài model, nhận yêu cầu đó, thực thi thật, trả kết quả về cho vòng lặp tiếp theo (do Harness điều phối).</p>
+      </div>
+      <div class="card">
+        <h4>Tại sao quan trọng</h4>
+        <p>Đây là ranh giới giữa "chatbot nói chuyện" và "agent làm việc thật". Model mạnh cỡ nào cũng chỉ dừng ở gợi ý nếu không có tay chân để thực thi.</p>
+      </div>
+    </div>
+    <div class="example-card">
+      <span class="eb">Nếu bỏ layer này — hệ thống ngố thế nào</span>
+      <p>Bạn nhờ agent "gửi email nhắc nhóm dự án X deadline mai" → nó chỉ trả lời "Đây là nội dung email bạn có thể copy..." rồi DỪNG LẠI — không gửi được, dù nó "biết" phải làm gì.</p>
+    </div>
+    <p class="infra-note"><b>Infra cost:</b> mỗi tool = 1 service/endpoint riêng (có thể cần sandbox chạy code cách ly, proxy gọi API ngoài). Latency tool call cộng TRỰC TIẾP vào tổng thời gian phản hồi — tool gọi API bên thứ 3 chậm là nguyên nhân phổ biến nhất khiến agent "nhanh trên giấy, chậm khi chạy thật".</p>
+  </section>
+
+  <section id="sec-3" class="section-bg s-bg3">
+    <div class="section-header">
+      <span class="tag">03 · Memory Layer</span>
+      <h2>Trí nhớ ngắn/dài hạn — không có nó, agent mất trí mỗi lượt</h2>
+      <p>Lưu trạng thái hội thoại ngắn hạn (trong session) và dài hạn (giữa các session) — lịch sử chat, fact đã học, preference user.</p>
+    </div>
+    <div class="content-grid">
+      <div class="card">
+        <h4>Bọc như thế nào</h4>
+        <p>Đọc/ghi mỗi lượt — đứng giữa Data Collector (nạp dữ liệu ngoài, mục 05) và Context layer (lắp vào prompt, mục 04).</p>
+      </div>
+      <div class="card">
+        <h4>Tại sao quan trọng</h4>
+        <p>Không có memory, agent "mất trí nhớ" hoàn toàn mỗi lần gọi mới — không nhớ ngữ cảnh hội thoại trước, không cá nhân hoá được.</p>
+      </div>
+    </div>
+    <div class="example-card">
+      <span class="eb">Nếu bỏ layer này — hệ thống ngố thế nào</span>
+      <p>Tin nhắn 1: "Tôi tên Minh, làm kế toán." Tin nhắn 3: "Vậy phòng tôi xử lý được yêu cầu này không?" → Agent hỏi lại: "Bạn làm phòng ban nào ạ?" — quên sạch 2 câu vừa nói.</p>
+    </div>
+    <p class="infra-note"><b>Infra cost:</b> 1 session store (Redis, &lt;5ms), 1 lần gọi vector DB retrieval (20-100ms tuỳ index size) — cộng trực tiếp vào latency mỗi turn.</p>
+  </section>
+
+  <section id="sec-4" class="section-bg s-bg4">
+    <div class="section-header">
+      <span class="tag">04 · Context/Instruction Layer</span>
+      <h2>Lắp ráp prompt — phần lớn "agent ngu" thực ra là lỗi ở đây</h2>
+      <p>Lắp ráp prompt thật gửi vào model mỗi lượt — system instruction, kết quả Memory, tool schema, lịch sử rút gọn, đúng thứ tự, đúng token budget.</p>
+    </div>
+    <div class="content-grid">
+      <div class="card">
+        <h4>Bọc như thế nào</h4>
+        <p>Lớp "biên dịch" ngay trước khi gọi model — nhận input từ Memory + Tools + Harness, xuất ra 1 prompt/messages array cuối cùng.</p>
+      </div>
+      <div class="card">
+        <h4>Tại sao quan trọng</h4>
+        <p>Prompt lắp sai thứ tự/thiếu context = model trả lời sai dù model mạnh cỡ nào — không phải lỗi model, mà lỗi assembly.</p>
+      </div>
+    </div>
+    <div class="example-card">
+      <span class="eb">Nếu bỏ layer này (hoặc lắp sai) — hệ thống ngố thế nào</span>
+      <p>Agent có đủ tool, đủ trí nhớ, đủ dữ liệu — nhưng lắp tài liệu 50 trang TRƯỚC câu hỏi thật của bạn, khiến model "quên" mất câu hỏi ở dưới cùng và trả lời lạc đề, dù mọi input đều đúng và đầy đủ.</p>
+    </div>
+    <p class="infra-note"><b>Infra cost:</b> thường KHÔNG cần service riêng — chạy như code trong Harness (vài ms CPU). Không tốn container riêng, nhưng tốn token budget (ảnh hưởng chi phí + latency gián tiếp qua độ dài prompt).</p>
+  </section>
+
+  <section id="sec-5" class="section-bg s-bg5">
+    <div class="section-header">
+      <span class="tag">05 · Data Collector Layer</span>
+      <h2>Nạp dữ liệu ngoài — không có nó, agent không biết gì riêng của bạn</h2>
+      <p>Thu thập, làm sạch, index dữ liệu bên ngoài (tài liệu nội bộ, web, API, database công ty) để nạp vào kho tri thức cho agent tra cứu (RAG).</p>
+    </div>
+    <div class="content-grid">
+      <div class="card">
+        <h4>Bọc như thế nào</h4>
+        <p>Chạy độc lập, theo lịch (cron/batch) hoặc streaming — KHÔNG nằm trong đường request-response trực tiếp; kết quả đổ vào vector DB mà Memory layer đọc.</p>
+      </div>
+      <div class="card">
+        <h4>Tại sao quan trọng</h4>
+        <p>Agent không tự "biết" dữ liệu riêng của tổ chức — thiếu layer này, nó chỉ dựa kiến thức train sẵn, dễ trả lời sai/lỗi thời với domain-specific info.</p>
+      </div>
+    </div>
+    <div class="example-card">
+      <span class="eb">Nếu bỏ layer này — hệ thống ngố thế nào</span>
+      <p>Hỏi "chính sách nghỉ phép công ty mình là gì?" → Agent trả lời chung chung kiểu Google, hoặc BỊA ra một chính sách nghe hợp lý nhưng SAI hoàn toàn, vì chưa từng "đọc" tài liệu nội bộ của bạn.</p>
+    </div>
+    <p class="infra-note"><b>Infra cost:</b> 1 service ETL/ingestion (worker, CPU-only), 1 vector database (Qdrant/Milvus/pgvector). KHÔNG nằm trong request-time trực tiếp, trừ khi làm real-time crawling.</p>
+  </section>
+
+  <section id="sec-6" class="section-bg s-bg6">
+    <div class="section-header">
+      <span class="tag">06 · Harness Layer</span>
+      <h2>Vòng lặp điều phối — "não" quyết định agent thông minh hay không</h2>
+      <p>Vòng lặp chính (think → act → observe → repeat) — quyết định khi nào gọi model, khi nào gọi tool, khi nào dừng, xử lý lỗi/retry.</p>
+    </div>
+    <div class="content-grid">
+      <div class="card">
+        <h4>Bọc như thế nào</h4>
+        <p>Layer NGOÀI CÙNG về mặt điều khiển — ôm toàn bộ Model/Tools/Memory/Context bên trong, chạy như 1 process điều phối, tự nó không sinh câu trả lời.</p>
+      </div>
+      <div class="card">
+        <h4>Tại sao quan trọng</h4>
+        <p>Độc lập với model mạnh cỡ nào — harness kém thì agent vẫn "ngu" theo nghĩa không biết dừng đúng lúc hay chọn đúng bước.</p>
+      </div>
+    </div>
+    <div class="example-card">
+      <span class="eb">Nếu bỏ layer này (hoặc yếu) — hệ thống ngố thế nào</span>
+      <p>Agent cần 3 bước để trả lời (tra dữ liệu → tính toán → viết báo cáo) nhưng không có ai điều phối vòng lặp, nên nó dừng lại sau bước 1 và trả lời luôn dữ liệu thô, hoặc lặp vô hạn không biết khi nào nên dừng.</p>
+    </div>
+    <p class="infra-note"><b>Infra cost:</b> 1 service điều phối (CPU-only, có thể serverless/lightweight) — nhưng mỗi bước lặp cộng thêm 1 lần gọi model → latency NHÂN theo số vòng lặp trung bình, không phải cộng 1 lần.</p>
+  </section>
+
+  <section id="sec-7" class="section-bg s-bg7">
+    <div class="section-header">
+      <span class="tag">07 · Evaluation Layer</span>
+      <h2>Cảm biến sức khoẻ — chạy ngoài luồng, không chặn latency user thật</h2>
+      <p>Đo chất lượng đầu ra (đúng/sai, hữu ích, an toàn), theo dõi regression, chấm điểm tự động hoặc người gác.</p>
+    </div>
+    <div class="content-grid">
+      <div class="card">
+        <h4>Bọc như thế nào</h4>
+        <p>Chạy SONG SONG/SAU (out-of-band) — không nằm trong đường request-response trực tiếp; quan sát toàn hệ thống từ ngoài. Vòng ngoài cùng, nét đứt trong sơ đồ mục 00.</p>
+      </div>
+      <div class="card">
+        <h4>Tại sao quan trọng</h4>
+        <p>Không có eval, không biết agent có đang xuống cấp (đổi version model, đổi prompt, tool lỗi) cho đến khi user complain.</p>
+      </div>
+    </div>
+    <div class="example-card">
+      <span class="eb">Nếu bỏ layer này — hệ thống ngố thế nào</span>
+      <p>Tuần trước agent trả lời đúng 95%. Tuần này ai đó đổi version model hoặc sửa prompt, độ chính xác rớt còn 60% — nhưng không ai biết, vì không có gì đo lường liên tục. Đến khi khách hàng complain hàng loạt mới phát hiện ra.</p>
+    </div>
+    <p class="infra-note"><b>Infra cost:</b> 1 pipeline eval riêng (batch job hoặc LLM-as-judge — tốn thêm GPU/API call NHƯNG offline, không cộng vào latency request thật).</p>
+  </section>
+
+  <footer>Ghi chú kỹ thuật nội bộ · dựa trên phân tích hạ tầng + kiến trúc agent, không phải dữ liệu research cộng đồng.<br><code>/Users/giatran/orca/workspaces/csv2json-poc-260724-1348/csv2json-poc-260724-1348/llmwiki/html/290726-kv-cache-llm-hosting.html</code></footer>
+
+</main>
+
+<script>
+(function(){
+  var nav = document.querySelector('nav'); if (!nav) return;
+  var btn = document.createElement('button'); btn.className = 'nav-toggle'; btn.textContent = '☰';
+  document.body.appendChild(btn);
+  var close = document.createElement('button'); close.className = 'nav-close'; close.textContent = '✕';
+  nav.appendChild(close);
+  var apply = function(c){ document.body.classList.toggle('nav-collapsed', c);
+    try { localStorage.setItem('navCollapsed', c ? '1' : '0'); } catch(e){} };
+  btn.addEventListener('click', function(){ apply(false); });
+  close.addEventListener('click', function(){ apply(true); });
+  try { var s = localStorage.getItem('navCollapsed');
+    if (s === '1' || (s !== '0' && matchMedia('(max-width:640px)').matches)) apply(true);
+  } catch(e){}
+})();
+
+(function(){
+  function attach(el){
+    el.addEventListener('pointerdown', function(e){
+      var r = el.getBoundingClientRect();
+      var x = e.clientX - r.left, y = e.clientY - r.top;
+      var rad = Math.hypot(Math.max(x, r.width - x), Math.max(y, r.height - y));
+      var ink = document.createElement('span'); ink.className = 'ripple-ink';
+      ink.style.width = ink.style.height = rad * 2 + 'px';
+      ink.style.left = (x - rad) + 'px'; ink.style.top = (y - rad) + 'px';
+      el.style.position = el.style.position || 'relative'; el.style.overflow = 'hidden';
+      el.appendChild(ink);
+      ink.addEventListener('animationend', function(){ ink.remove(); });
+    });
+  }
+  document.querySelectorAll('nav a, .nav-toggle, .nav-close').forEach(attach);
+})();
+
+(function(){
+  var flash = function(el){ var t; return function(){ el.classList.add('scrolling'); clearTimeout(t);
+    t = setTimeout(function(){ el.classList.remove('scrolling'); }, 900); }; };
+  var root = document.documentElement;
+  window.addEventListener('scroll', flash(root), { passive:true });
+  var nav = document.querySelector('nav');
+  if (nav) nav.addEventListener('scroll', flash(nav), { passive:true });
+})();
+
+(function(){
+  var mm = document.querySelector('.mm'); if (!mm) return; var NS='http://www.w3.org/2000/svg';
+  function colorOf(n){ return n.classList.contains('b-0')?'#0a84ff':n.classList.contains('b-1')?'#30b0c7':n.classList.contains('b-2')?'#5856d6':n.classList.contains('b-3')?'#34c759':n.classList.contains('b-4')?'#ff9500':n.classList.contains('b-5')?'#ff2d55':n.classList.contains('b-6')?'#8a9096':'#9aa4b2'; }
+  function draw(){
+    var canvas = mm.querySelector('.mm-canvas'), svg = mm.querySelector('.mm-links'); if (!canvas || !svg) return;
+    var w = canvas.offsetWidth, h = canvas.offsetHeight;
+    svg.setAttribute('width', w); svg.setAttribute('height', h); svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    var cR = canvas.getBoundingClientRect();
+    Array.prototype.slice.call(canvas.querySelectorAll('.node.has-children')).forEach(function(p){
+      var row = p.parentElement, kids = null, ch = row.children;
+      for (var i=0;i<ch.length;i++){ if (ch[i].classList.contains('children')) kids = ch[i]; }
+      if (!kids || kids.classList.contains('collapsed')) return;
+      var pr = p.getBoundingClientRect(), px = pr.right - cR.left, py = pr.top + pr.height/2 - cR.top;
+      Array.prototype.slice.call(kids.children).forEach(function(crow){
+        var cn = crow.querySelector(':scope > .node'); if (!cn) return;
+        var rr = cn.getBoundingClientRect(), cx = rr.left - cR.left, cy = rr.top + rr.height/2 - cR.top, dx = Math.max(22, (cx-px)*0.55);
+        var pa = document.createElementNS(NS, 'path');
+        pa.setAttribute('d', 'M'+px+' '+py+' C'+(px+dx)+' '+py+' '+(cx-dx)+' '+cy+' '+cx+' '+cy);
+        pa.setAttribute('stroke', colorOf(cn));
+        svg.appendChild(pa);
+      });
+    });
+  }
+  Array.prototype.slice.call(mm.querySelectorAll('.node.has-children')).forEach(function(n){
+    var row = n.parentElement, kids = null, c = row.children;
+    for (var i=0;i<c.length;i++){ if (c[i].classList.contains('children')) kids = c[i]; }
+    if (!kids) return;
+    if (n.classList.contains('cat')) { kids.classList.add('collapsed'); n.classList.add('collapsed-parent'); }
+    n.addEventListener('click', function(e){ e.stopPropagation();
+      var open = kids.classList.toggle('collapsed'); n.classList.toggle('collapsed-parent', open); draw(); });
+  });
+  draw();
+  addEventListener('load', function(){ setTimeout(draw, 60); });
+  addEventListener('resize', function(){ clearTimeout(window.__mmt); window.__mmt = setTimeout(draw, 120); }, { passive:true });
+})();
+
+function initDraggableDiagrams() {
+  var NS = 'http://www.w3.org/2000/svg';
+  var nearest = function(nodes, x, y){
+    var best = null, bd = 1e9;
+    nodes.forEach(function(n){
+      var cx = Math.max(n.x, Math.min(x, n.x + n.w)), cy = Math.max(n.y, Math.min(y, n.y + n.h));
+      var d = Math.hypot(x - cx, y - cy);
+      if (d < bd) { bd = d; best = n; }
+    });
+    return bd <= 42 ? best : null;
+  };
+  document.querySelectorAll('.diagram-box').forEach(function(box){
+    var svg = box.querySelector('svg');
+    if (!svg || box.dataset.draggable) return;
+    box.dataset.draggable = '1';
+    var vp = document.createElement('div'); vp.className = 'diagram-viewport';
+    box.insertBefore(vp, svg); vp.appendChild(svg);
+    var hint = document.createElement('div'); hint.className = 'diagram-hint';
+    hint.textContent = '✥ kéo từng ô · kéo nền để pan · cuộn để zoom';
+    box.appendChild(hint);
+    var reset = document.createElement('button'); reset.className = 'diagram-reset'; reset.textContent = '⟲ reset';
+    box.appendChild(reset);
+
+    var allRects = Array.prototype.slice.call(svg.querySelectorAll('rect'));
+    var nodes = allRects.filter(function(r){ return (+r.getAttribute('width')) >= 70 && (+r.getAttribute('height')) >= 30; })
+      .map(function(r){ return { rect:r, x:+r.getAttribute('x'), y:+r.getAttribute('y'), w:+r.getAttribute('width'), h:+r.getAttribute('height'), els:[r], tx:0, ty:0 }; });
+    var inNode = function(px, py){ return nodes.find(function(n){ return px >= n.x-1 && px <= n.x+n.w+1 && py >= n.y-1 && py <= n.y+n.h+1; }); };
+    Array.prototype.slice.call(svg.querySelectorAll('text')).forEach(function(t){
+      var x = parseFloat(t.getAttribute('x')), y = parseFloat(t.getAttribute('y'));
+      if (isNaN(x) || isNaN(y)) return; var n = inNode(x, y); if (n) n.els.push(t);
+    });
+    allRects.forEach(function(r){ if (nodes.some(function(n){ return n.rect === r; })) return;
+      var x = +r.getAttribute('x'), y = +r.getAttribute('y'), w = +r.getAttribute('width')||0, h = +r.getAttribute('height')||0;
+      var n = inNode(x+w/2, y+h/2); if (n) n.els.push(r); });
+    nodes.forEach(function(n){ var g = document.createElementNS(NS, 'g'); g.setAttribute('class', 'dnode');
+      n.rect.parentNode.insertBefore(g, n.rect); n.els.forEach(function(el){ g.appendChild(el); }); n.g = g; });
+
+    var links = Array.prototype.slice.call(svg.querySelectorAll('line')).filter(function(l){ return l.hasAttribute('x1') && l.hasAttribute('x2'); });
+    links.forEach(function(l){ l._x1=+l.getAttribute('x1'); l._y1=+l.getAttribute('y1'); l._x2=+l.getAttribute('x2'); l._y2=+l.getAttribute('y2');
+      l._n1 = nearest(nodes, l._x1, l._y1); l._n2 = nearest(nodes, l._x2, l._y2); });
+    var reroute = function(){ links.forEach(function(l){
+      if (l._n1) { l.setAttribute('x1', l._x1+l._n1.tx); l.setAttribute('y1', l._y1+l._n1.ty); }
+      if (l._n2) { l.setAttribute('x2', l._x2+l._n2.tx); l.setAttribute('y2', l._y2+l._n2.ty); } }); };
+
+    var vbBase = (svg.getAttribute('viewBox') || '0 0 900 200').split(/\s+/).map(Number);
+    var fitViewBox = function(){
+      var pad = 16;
+      var minX = vbBase[0], minY = vbBase[1], maxX = vbBase[0]+vbBase[2], maxY = vbBase[1]+vbBase[3];
+      nodes.forEach(function(n){ minX = Math.min(minX, n.x+n.tx-pad); minY = Math.min(minY, n.y+n.ty-pad);
+        maxX = Math.max(maxX, n.x+n.w+n.tx+pad); maxY = Math.max(maxY, n.y+n.h+n.ty+pad); });
+      svg.setAttribute('viewBox', minX+' '+minY+' '+(maxX-minX)+' '+(maxY-minY));
+    };
+
+    var ptx=0, pty=0, scale=1;
+    var applyCanvas = function(){ svg.style.transform = 'translate('+ptx+'px,'+pty+'px) scale('+scale+')'; };
+    var toSvg = function(cx, cy){ var p = svg.createSVGPoint(); p.x=cx; p.y=cy; return p.matrixTransform(svg.getScreenCTM().inverse()); };
+    var mode=null, node=null, start=null, t0=null, p0=null;
+    vp.addEventListener('pointerdown', function(e){ vp.setPointerCapture(e.pointerId);
+      var g = e.target.closest && e.target.closest('g.dnode');
+      if (g) { mode='node'; node = nodes.find(function(n){ return n.g === g; }); start = toSvg(e.clientX, e.clientY); t0 = { x: node.tx, y: node.ty }; }
+      else { mode='pan'; p0 = { x: e.clientX-ptx, y: e.clientY-pty }; vp.classList.add('grabbing'); } });
+    vp.addEventListener('pointermove', function(e){
+      if (mode==='node') { var c = toSvg(e.clientX, e.clientY); node.tx = t0.x+(c.x-start.x); node.ty = t0.y+(c.y-start.y);
+        node.g.setAttribute('transform', 'translate('+node.tx+','+node.ty+')'); reroute(); }
+      else if (mode==='pan') { ptx = e.clientX-p0.x; pty = e.clientY-p0.y; applyCanvas(); } });
+    var end = function(){ if (mode==='node') fitViewBox(); mode=null; node=null; vp.classList.remove('grabbing'); };
+    vp.addEventListener('pointerup', end); vp.addEventListener('pointercancel', end);
+    vp.addEventListener('wheel', function(e){ e.preventDefault();
+      var r = vp.getBoundingClientRect(), mx = e.clientX-r.left, my = e.clientY-r.top;
+      var ns = Math.min(4, Math.max(0.5, scale*(e.deltaY<0?1.1:0.9)));
+      ptx = mx-(mx-ptx)*(ns/scale); pty = my-(my-pty)*(ns/scale); scale = ns; applyCanvas(); }, { passive:false });
+    var doReset = function(){ ptx=0; pty=0; scale=1; svg.style.transition='transform .3s cubic-bezier(.4,0,.2,1)'; applyCanvas();
+      setTimeout(function(){ svg.style.transition=''; }, 320);
+      nodes.forEach(function(n){ n.tx=0; n.ty=0; n.g.setAttribute('transform', 'translate(0,0)'); }); reroute(); fitViewBox(); };
+    reset.addEventListener('click', doReset); vp.addEventListener('dblclick', doReset);
+  });
+}
+initDraggableDiagrams();
+
+function initRipple() {
+  document.addEventListener('pointerdown', function(e){
+    var el = e.target.closest('button, .collapse-toggle, .checklist label');
+    if (!el || el.dataset.noRipple) return;
+    var r = el.getBoundingClientRect();
+    var d = Math.max(r.width, r.height) * 1.2;
+    var s = document.createElement('span');
+    s.className = 'ripple';
+    s.style.cssText = 'width:'+d+'px;height:'+d+'px;left:'+(e.clientX - r.left - d/2)+'px;top:'+(e.clientY - r.top - d/2)+'px';
+    if (getComputedStyle(el).position === 'static') el.style.position = 'relative';
+    el.style.overflow = 'hidden';
+    el.appendChild(s);
+    s.addEventListener('animationend', function(){ s.remove(); });
+  });
+}
+initRipple();
+
+(function(){
+  var K = 'kvcache-llm-theme', d = document.documentElement, nav = document.querySelector('nav'); if (!nav) return;
+  function isDark(){ var t = d.getAttribute('data-theme'); return t ? t==='dark' : matchMedia('(prefers-color-scheme: dark)').matches; }
+  var sw = document.createElement('div'); sw.className = 'theme-switch'; sw.setAttribute('role','switch'); sw.setAttribute('tabindex','0');
+  sw.innerHTML = '<span class="track"><span class="knob"></span></span>';
+  var row = document.createElement('div'); row.className = 'theme-row';
+  var lb = document.createElement('span'); lb.className = 'lbl'; lb.textContent = 'Giao diện'; row.appendChild(lb); row.appendChild(sw); nav.appendChild(row);
+  function paint(){ var dk = isDark(); sw.classList.toggle('on', dk); sw.setAttribute('aria-checked', dk ? 'true':'false');
+    sw.setAttribute('aria-label', dk ? 'Nút gạt giao diện: đang tối — gạt sang sáng' : 'Nút gạt giao diện: đang sáng — gạt sang tối'); }
+  function flip(){ var n = isDark() ? 'light' : 'dark'; d.setAttribute('data-theme', n); try { localStorage.setItem(K, n); } catch(e){} paint(); }
+  sw.addEventListener('click', flip);
+  sw.addEventListener('keydown', function(e){ if (e.key==='Enter' || e.key===' ') { e.preventDefault(); flip(); } });
+  paint();
+})();
+
+(function(){
+  try { var t = localStorage.getItem('kvcache-llm-theme'); if (t==='dark'||t==='light') document.documentElement.setAttribute('data-theme', t); } catch(e){}
+})();
+
+(function(){
+  var links = Array.prototype.slice.call(document.querySelectorAll('nav a.nav-link'));
+  var sections = Array.prototype.slice.call(document.querySelectorAll('section[id]'));
+  var observer = new IntersectionObserver(function(entries){
+    var active = '';
+    entries.forEach(function(entry){ if (entry.isIntersecting) active = entry.target.id; });
+    if (active) links.forEach(function(a){ a.classList.toggle('active', a.getAttribute('href') === '#' + active); });
+  }, { rootMargin: '-40% 0px -55% 0px' });
+  sections.forEach(function(s){ observer.observe(s); });
+})();
+
+(function(){
+  var game = document.querySelector('[data-layer-game]'); if (!game) return;
+  var layers = ['hosting','tools','memory','context','datacollector','harness','evaluation'];
+  var IMPACT = {
+    hosting: 'không còn gì để chạy',
+    tools: 'chỉ nói suông, không thực thi được hành động nào',
+    memory: 'quên sạch ngữ cảnh sau mỗi lượt',
+    context: 'lắp prompt sai thứ tự nên dễ lạc đề dù input đủ',
+    datacollector: 'không biết gì về dữ liệu riêng của bạn, dễ bịa thông tin',
+    harness: 'không biết khi nào nên dừng — lặp vô hạn hoặc bỏ cuộc giữa chừng',
+    evaluation: 'xuống cấp âm thầm mà không ai phát hiện ra'
+  };
+  var summary = document.querySelector('[data-summary]');
+  var out = document.querySelector('[data-consequence-out]');
+  function compose(offKeys){
+    if (offKeys.length === 0) return { cls:'ok', text:'✅ Đủ 7/7 layer — agent phản hồi đúng, nhớ ngữ cảnh, thực thi được hành động, và tự giám sát chất lượng.' };
+    if (offKeys.indexOf('hosting') !== -1) return { cls:'', text:'⚠️ Thiếu Model Hosting: ' + IMPACT.hosting + ' — 6 layer còn lại vô nghĩa vì không có gì để chạy cả.' };
+    var clauses = offKeys.map(function(k){ return IMPACT[k]; });
+    var joined = clauses.length === 1 ? clauses[0] : clauses.slice(0, -1).join(', ') + ', và ' + clauses[clauses.length - 1];
+    return { cls:'', text:'⚠️ Thiếu ' + offKeys.length + '/7 layer cùng lúc — agent ' + joined + '.' };
+  }
+  function update(){
+    var offKeys = [];
+    layers.forEach(function(key){
+      var cb = game.querySelector('[data-toggle="'+key+'"]');
+      var ring = document.querySelector('[data-ring="'+key+'"]');
+      var nodes = document.querySelector('[data-ring-nodes="'+key+'"]');
+      var on = cb ? cb.checked : true;
+      if (!on) offKeys.push(key);
+      if (ring) ring.classList.toggle('ring-off', !on);
+      if (nodes) nodes.classList.toggle('ring-off', !on);
+    });
+    var onCount = layers.length - offKeys.length;
+    if (summary) {
+      if (onCount === layers.length) {
+        summary.textContent = '✅ Đủ 7/7 layer — agent usable trong ngân sách latency đã tính.';
+        summary.className = 'layer-game-summary ok';
+      } else {
+        summary.textContent = '⚠️ ' + onCount + '/7 layer đang bật — hệ thống đang thọt ' + offKeys.length + ' chỗ cùng lúc.';
+        summary.className = 'layer-game-summary warn';
+      }
+    }
+    if (out) {
+      var result = compose(offKeys);
+      out.textContent = result.text;
+      out.className = 'consequence-combined' + (result.cls ? ' ' + result.cls : '');
+    }
+  }
+  layers.forEach(function(key){
+    var cb = game.querySelector('[data-toggle="'+key+'"]');
+    if (cb) cb.addEventListener('change', update);
+  });
+  update();
+})();
+</script>

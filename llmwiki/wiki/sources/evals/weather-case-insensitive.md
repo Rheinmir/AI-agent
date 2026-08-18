@@ -2,17 +2,19 @@
 type: eval
 id: weather-case-insensitive
 tags: [weather-agent, tools]
-timestamp: 2026-08-01
+timestamp: 2026-08-03
 input: "  HÀ NỘI  "
-expected: "Hà Nội: 29°C, Nhiều mây"
+expected: "Hà Nội: <nhiệt độ thật>°C, <mô tả WMO>"
 asserts:
   - 'contains:Hà Nội'
+  - 'regex:\d+([.,]\d+)?°C'
 ---
 
 # weather-case-insensitive
 
-Golden cho `_normalize()` (`.strip().lower()`): input có khoảng trắng thừa và toàn chữ hoa vẫn phải
-khớp key dict `_WEATHER_DATA` (giữ dấu tiếng Việt — bug thật đã sửa lúc build, xem
+Golden cho việc `city.strip()` trước khi gọi Open-Meteo geocoding: input có khoảng trắng thừa và
+toàn chữ hoa vẫn phải resolve đúng "Hà Nội" (Open-Meteo tự xử lý case-insensitivity ở phía server,
+`agent.py` chỉ cần `strip()` khoảng trắng trước khi gửi request — xem
 [[huong-dan-xay-dung-agent-thuc-te]]).
 
 ## Origin

@@ -1,0 +1,2 @@
+[https://github.com/microsoft/generative-ai-for-beginners.git](https://github.com/microsoft/generative-ai-for-beginners.git)  
+[https://github.com/bradygaster/squad.git](https://github.com/bradygaster/squad.git)
