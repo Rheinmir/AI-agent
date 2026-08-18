@@ -1,0 +1,3 @@
+openai-agents==0.8.4
+openai==2.19.0  # ghim — cùng lý do demo_agents/devops_agent/requirements.txt (openai>=2.40 vỡ pydantic)
+pytest
