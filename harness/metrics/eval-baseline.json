@@ -1,20 +1,118 @@
 {
   "schema": "wikieval-baseline/v1",
   "generated_by": "harness/scripts/wikieval.py",
-  "generated_at": "2026-08-01",
+  "generated_at": "2026-08-04",
   "evals_dir": "llmwiki/wiki/sources/evals",
   "summary": {
-    "goldens": 3,
-    "decided": 3,
-    "passed": 3
+    "goldens": 14,
+    "decided": 14,
+    "passed": 14
   },
   "goldens": {
+    "agent-capability-declaration": {
+      "pass": true,
+      "score": 1.0,
+      "decided_by": "tier1-asserts",
+      "asserts": [
+        "icontains:Open-Meteo",
+        "icontains:thời tiết"
+      ]
+    },
+    "agent-city-note-known": {
+      "pass": true,
+      "score": 1.0,
+      "decided_by": "tier1-asserts",
+      "asserts": [
+        "icontains:UTC+9"
+      ]
+    },
+    "agent-city-note-unknown-guardrail": {
+      "pass": true,
+      "score": 1.0,
+      "decided_by": "tier1-asserts",
+      "asserts": [
+        "icontains:chưa có",
+        "not-contains:UTC"
+      ]
+    },
+    "agent-guardrail-fictional-place-weather-not-blocked": {
+      "pass": true,
+      "score": 1.0,
+      "decided_by": "tier1-asserts",
+      "asserts": [
+        "not-contains:ngoài phạm vi của mình",
+        "regex:\\d+([.,]\\d+)?°C"
+      ]
+    },
+    "agent-guardrail-legit-weather-not-blocked": {
+      "pass": true,
+      "score": 1.0,
+      "decided_by": "tier1-asserts",
+      "asserts": [
+        "regex:\\d+([.,]\\d+)?°C",
+        "not-contains:ngoài phạm vi của mình"
+      ]
+    },
+    "agent-guardrail-meta-question": {
+      "pass": true,
+      "score": 1.0,
+      "decided_by": "tier1-asserts",
+      "asserts": [
+        "equals:Câu hỏi này ngoài phạm vi của mình — mình chỉ hỗ trợ thời tiết HIỆN TẠI và ghi chú múi giờ/khí hậu chung cho một số thành phố tiêu biểu. Mình không có thông tin địa lý, lịch sử, hay chi tiết kỹ thuật nội bộ (harness/guardrail/code). Bạn hỏi lại về thời tiết được không?"
+      ]
+    },
+    "agent-guardrail-off-topic-geography": {
+      "pass": true,
+      "score": 1.0,
+      "decided_by": "tier1-asserts",
+      "asserts": [
+        "equals:Câu hỏi này ngoài phạm vi của mình — mình chỉ hỗ trợ thời tiết HIỆN TẠI và ghi chú múi giờ/khí hậu chung cho một số thành phố tiêu biểu. Mình không có thông tin địa lý, lịch sử, hay chi tiết kỹ thuật nội bộ (harness/guardrail/code). Bạn hỏi lại về thời tiết được không?"
+      ]
+    },
+    "agent-known-city": {
+      "pass": true,
+      "score": 1.0,
+      "decided_by": "tier1-asserts",
+      "asserts": [
+        "contains:Hà Nội",
+        "regex:\\d+([.,]\\d+)?°C"
+      ]
+    },
+    "agent-multiturn-memory": {
+      "pass": true,
+      "score": 1.0,
+      "decided_by": "tier1-asserts",
+      "asserts": [
+        "contains:Hạ Long",
+        "contains:Hà Nội",
+        "regex:\\d+([.,]\\d+)?°C"
+      ]
+    },
+    "agent-recall-last-city": {
+      "pass": true,
+      "score": 1.0,
+      "decided_by": "tier1-asserts",
+      "asserts": [
+        "icontains:Đà Lạt",
+        "regex:\\?",
+        "not-contains:°C"
+      ]
+    },
+    "agent-unknown-city-guardrail": {
+      "pass": true,
+      "score": 1.0,
+      "decided_by": "tier1-asserts",
+      "asserts": [
+        "icontains:không có dữ liệu"
+      ]
+    },
     "weather-case-insensitive": {
       "pass": true,
       "score": 1.0,
       "decided_by": "tier1-asserts",
       "asserts": [
-        "contains:Hà Nội"
+        "contains:Hà Nội",
+        "regex:\\d+([.,]\\d+)?°C"
       ]
     },
     "weather-known-city": {
@@ -23,7 +121,7 @@
       "decided_by": "tier1-asserts",
       "asserts": [
         "contains:Hà Nội",
-        "contains:29°C"
+        "regex:\\d+([.,]\\d+)?°C"
       ]
     },
     "weather-unknown-city": {
@@ -31,7 +129,7 @@
       "score": 1.0,
       "decided_by": "tier1-asserts",
       "asserts": [
-        "equals:NO_DATA:Atlantis"
+        "equals:NO_DATA:Xyzzyxplorpqq"
       ]
     }
   }

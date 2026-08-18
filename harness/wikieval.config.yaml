@@ -10,19 +10,29 @@
 
 verified: true    # VERIFIED 2026-06-28 (user "đồng ý"): the deterministic tier-1 assertion cascade is
                   # validated by `wikieval.py --self-test` (2/2 goldens' `expected` satisfy their own asserts —
-                  # no model, reproducible). The tier-3 LLM-rubric judge stays a SEPARATE disabled adapter:
-                  # judge.enabled:false below + judge() is a no-op stub until wired. Embedding tier-2 also off.
+                  # no model, reproducible).
+                  # 2026-08-05: tier-3 LLM-rubric judge WIRED FOR REAL (user "eval mặc định bật") —
+                  # judge() in wikieval.py now calls a real model via
+                  # demo_agents.weather_agent.model_provider.get_model() (DeepSeek/OpenAI per whatever
+                  # key is configured), NOT judge.model below (that field is now VESTIGIAL — the
+                  # provider abstraction picks the model, not this config; kept only as a label).
+                  # Verified live: judge scores a good weather answer 1.0 and a refusal/non-answer 0.0
+                  # against the SAME rubric — see wiki/log.md for the exact verification transcript.
 
-# ── tier 3: LLM-rubric judge (quarantined; the engine never calls it in deterministic mode) ──
+# ── tier 3: LLM-rubric judge (LIVE — real model call via demo_agents/weather_agent/model_provider.py) ──
 judge:
-  enabled: false                  # ASSUMPTION: keep OFF until verified (fail-safe — a judge is never auto-trusted).
-  model: claude-opus-4-8          # ASSUMPTION (source: claude-api skill, cached 2026-06 — the default judge model).
+  enabled: true                   # 2026-08-05: bật thật, xem verify sống trong wiki/log.md.
+  model: "(unused — see model_provider.get_model())"  # provider abstraction chọn model, KHÔNG hardcode Anthropic
+                                   # (project chưa từng cấu hình ANTHROPIC_API_KEY — xem quyết định
+                                   # thiết kế trong wiki/log.md).
   max_tokens: 1024                # ASSUMPTION: unverified against real scoring output length.
-  thinking: adaptive              # ASSUMPTION: Opus 4.8 uses adaptive thinking (budget_tokens is rejected).
+  thinking: adaptive              # KHÔNG dùng — model_provider.get_model() không hỗ trợ thinking budget riêng.
   pass_threshold: 0.7             # ASSUMPTION: judge score >= threshold counts as pass.
-  # rubric_prompt is rendered then sent as ONE Messages API user turn by wikieval.py:judge().
-  # {input} {expected} {rubric} {output} are filled in when the adapter is wired.
-  rubric_prompt: |                # ASSUMPTION: prompt shape unverified — calibrate against real scores before trusting.
+  # rubric_prompt render bằng str.replace() có chủ đích (KHÔNG str.format() — template chứa JSON ví
+  # dụ literal '{"score": ...}' gây KeyError nếu dùng .format(), bug thật gặp lúc verify sống, xem
+  # wikieval.py::judge() cho giải thích đầy đủ). {input} {expected} {rubric} {output} vẫn 4
+  # placeholder được thay.
+  rubric_prompt: |
     Bạn là giám khảo chấm điểm. Chấm câu trả lời CANDIDATE theo RUBRIC dưới đây.
     Chỉ trả về JSON duy nhất, không thêm chữ nào khác: {"score": <0.0-1.0>, "reason": "<ngắn gọn>"}.
 

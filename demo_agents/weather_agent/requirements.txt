@@ -1,3 +1,9 @@
-openai-agents
+openai-agents==0.8.4
+openai==2.19.0  # ghim — openai>=2.40 đổi InputTokensDetails (thêm field cache_write_tokens bắt buộc)
+                # mà openai-agents 0.8.4 chưa set, gây pydantic.ValidationError lúc Runner.run_sync
 pytest
-eval_type_backport  # cần cho Python 3.9 — SDK dùng cú pháp union `X | None` (3.10+ mới có native)
+requests  # agent.py gọi trực tiếp Open-Meteo (geocoding + forecast) cho tool get_weather
+mcp  # client MCP thật (agents.mcp.server.MCPServerStdio) — YÊU CẦU Python 3.10+ (mọi bản mcp trên
+     # PyPI đều pin requires-python >=3.10, không có bản nào chạy được 3.9 — lý do project migrate
+     # baseline runtime lên 3.10+ ngày 2026-08-04, xem wiki/log.md "python-3.10-migration-for-mcp")
+feedparser  # mcp_tools/channels.py::rss_read_impl

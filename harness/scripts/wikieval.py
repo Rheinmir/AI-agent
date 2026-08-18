@@ -146,22 +146,58 @@ def tier2_similarity(output, expected, cfg):
 
 # ───────────────────────────── tier 3: ADAPTER BOUNDARY (verified: false) ─────────────────────────────
 
-def judge(output, rubric, config=None):
-    """tier-3 LLM-rubric judge — THE quarantined adapter (verified: false).
+def judge(output, rubric, config=None, input_text="", expected=""):
+    """tier-3 LLM-rubric judge — CHẠY THẬT (không còn stub). Dùng CHUNG
+    `demo_agents.weather_agent.model_provider.get_model()` (DeepSeek/OpenAI theo key có sẵn) thay
+    vì hardcode 1 model Anthropic riêng như config cũ ghi (`claude-opus-4-8`) — project này chưa
+    từng cấu hình ANTHROPIC_API_KEY ở đâu cả, ép thêm 1 provider mới chỉ cho judge là chi phí/rủi
+    ro không cần thiết. Import Agents SDK + model_provider TRỄ (bên trong hàm) — wikieval.py là
+    script CLI thuần, không phụ thuộc agents SDK ở top-level để vẫn chạy được (tier 1/2) khi thiếu
+    thư viện đó.
 
-    STUB. The deterministic engine NEVER calls this. It returns an UNDECIDED verdict
-    (score=None) so a half-wired adapter can never auto-pass a golden (fail-safe).
+    Trả {"score": float 0-1 hoặc None, "reason": str}. score=None khi judge TẮT (`judge.enabled:
+    false`) hoặc lỗi gọi model/parse — KHÔNG BAO GIỜ tự bịa điểm khi không chắc (fail-safe, khớp
+    tinh thần adapter cũ)."""
+    cfg = ((config or {}).get("judge")) or {}
+    if not cfg.get("enabled"):
+        return {"score": None, "reason": "tier-3 LLM-rubric judge đang TẮT (judge.enabled: false)"}
+    prompt_template = cfg.get("rubric_prompt") or ""
+    # KHÔNG dùng str.format() — rubric_prompt trong wikieval.config.yaml chứa NGUYÊN VĂN JSON ví dụ
+    # cho model đọc (vd '{"score": <0.0-1.0>, ...}'), .format() sẽ coi MỌI cặp {} là placeholder và
+    # raise KeyError (bug thật gặp khi verify sống lúc build tính năng này — xem wiki/log.md) — thay
+    # bằng replace() CÓ CHỦ ĐÍCH chỉ 4 placeholder đã biết, không đụng các {} khác trong template.
+    prompt = prompt_template
+    for key, value in (
+        ("input", input_text or ""), ("expected", expected or ""),
+        ("rubric", rubric or ""), ("output", output),
+    ):
+        prompt = prompt.replace("{" + key + "}", str(value))
+    try:
+        from agents import Agent, Runner
 
-    To finalize tier-3: render config['judge']['rubric_prompt'] with {input}/{expected}/
-    {rubric}/{output}, send it as one Messages API user turn to config['judge']['model'],
-    parse {"score","reason"} from the reply, then flip `verified: true` in
-    harness/wikieval.config.yaml. That single edit (+ this function) is the whole change.
-    """
-    return {
-        "score": None,
-        "reason": "tier-3 LLM-rubric judge not wired (adapter, verified:false). "
-                  "See harness/wikieval.config.yaml: judge.model + judge.rubric_prompt.",
-    }
+        from demo_agents.weather_agent.model_provider import get_model
+
+        model = get_model()
+        if model is None:
+            return {"score": None, "reason": "judge: thiếu DEEPSEEK_API_KEY/OPENAI_API_KEY"}
+        judge_agent = Agent(
+            name="WikiEval judge", model=model,
+            instructions="Bạn là giám khảo chấm điểm — CHỈ trả về ĐÚNG 1 dòng JSON theo yêu cầu "
+                         "trong prompt, không thêm chữ nào khác.",
+        )
+        result = Runner.run_sync(judge_agent, prompt)
+        text = (result.final_output or "").strip()
+        start, end = text.find("{"), text.rfind("}")
+        if start == -1 or end == -1:
+            return {"score": None, "reason": f"judge trả không phải JSON: {text[:120]!r}"}
+        decision = json.loads(text[start : end + 1])
+        score = decision.get("score")
+        return {
+            "score": float(score) if score is not None else None,
+            "reason": str(decision.get("reason", "")),
+        }
+    except Exception as exc:  # noqa: BLE001 — judge lỗi KHÔNG được làm crash cả lượt chạy eval
+        return {"score": None, "reason": f"judge lỗi: {type(exc).__name__}: {exc}"}
 
 
 # ───────────────────────────── cascade ─────────────────────────────
@@ -192,10 +228,22 @@ def run_golden(g, output, cfg):
         return {"id": gid, "status": "ok", "pass": score >= thr, "score": score,
                 "decided_by": label, "detail": f"similarity {score} vs threshold {thr}"}
 
-    # ── tier 3 (adapter; NOT called) ──
-    return {"id": gid, "status": "needs-judge", "pass": None, "score": None,
-            "decided_by": "tier3-judge",
-            "detail": f"{label}; escalated to LLM-rubric judge (adapter, verified:false) — not run"}
+    # ── tier 3: LLM-rubric judge ──
+    judge_cfg = (cfg or {}).get("judge") or {}
+    if not judge_cfg.get("enabled"):
+        return {"id": gid, "status": "needs-judge", "pass": None, "score": None,
+                "decided_by": "tier3-judge",
+                "detail": f"{label}; escalated to LLM-rubric judge nhưng judge.enabled=false"}
+    verdict = judge(
+        output, g.get("rubric"), cfg,
+        input_text=g.get("input") or "", expected=g.get("expected") or "",
+    )
+    if verdict["score"] is None:
+        return {"id": gid, "status": "needs-judge", "pass": None, "score": None,
+                "decided_by": "tier3-judge", "detail": verdict["reason"]}
+    threshold = float(judge_cfg.get("pass_threshold", 0.7))
+    return {"id": gid, "status": "ok", "pass": verdict["score"] >= threshold, "score": verdict["score"],
+            "decided_by": "tier3-judge", "detail": f"{verdict['reason']} (score {verdict['score']} vs threshold {threshold})"}
 
 
 # ───────────────────────────── loaders ─────────────────────────────

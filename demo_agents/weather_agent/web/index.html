@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Weather Agent — Demo tool thật</title>
+<meta name="description" content="Demo tool thật (Open-Meteo) tách riêng khỏi Model — không gọi LLM.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2310a37f'/%3E%3Cpath d='M9 20a4.5 4.5 0 0 1 .8-8.9A6 6 0 0 1 21.4 9 4 4 0 0 1 23 17H9z' fill='none' stroke='white' stroke-width='1.8' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+/* Hallmark · macrostructure: App Shell (non-catalog — single-card utility, không phải trang
+ * marketing nên không map vào 21 macrostructure) · genre: modern-minimal
+ * theme: custom (vibe: "panel nổi bo tròn trên nền tối, single green accent") · studied: no
+ * design-system: design.md (demo_agents/weather_agent/web/design.md) — tokens mirror từ tokens.css.
+ * 2026-08-03: đồng bộ theo amend "panel nổi" ở chat.html (xem design.md § Variants) — .card giờ
+ * là tấm nổi trên --app-base-bg trắng, cùng --radius-panel/--shadow-panel-light với .chat-main.
+ */
+:root{
+  --sidebar-bg:#f5f5f7; --sidebar-text:#0d0d0d; --sidebar-text-dim:#6e6e80; --sidebar-hover:#ececed;
+  --main-bg:#fbfefc; --text:#0d0d0d; --text-dim:#6e6e80;
+  --bubble-user:#f4f4f4; --border:#e5e5e5; --color-border-2:#d0d0d5;
+  --color-hover-surface:#f7f7f8; --color-disabled:#d9d9e3;
+  --accent:#10a37f; --accent-2:#1a7f64; --color-on-accent:#ffffff;
+  --color-danger:#b3261e; --color-danger-bg:#fdecea; --color-danger-hover:#ff6b6b;
+  --icon-stroke:2;
+
+  --radius-panel:16px;
+  --shadow-panel-light:0 8px 24px rgba(13,13,13,.10);
+  --app-base-bg:#ffffff;
+
+  --accent-a08:rgba(16,163,127,.08);
+  --accent-a12:rgba(16,163,127,.12);
+  --accent-a35:rgba(16,163,127,.35);
+  --danger-a3:rgba(179,38,30,.3);
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  color:var(--text); background:var(--app-base-bg);
+  min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;
+}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:8px}
+:focus:not(:focus-visible){outline:none}
+button{font-family:inherit;transition:transform .12s ease,background .15s ease,color .15s ease,opacity .15s ease}
+button:active{transform:scale(.97)}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.001ms!important;animation-duration:.001ms!important}}
+
+.card{
+  /* Không viền — đồng bộ với .chat-main, chỉ dựa box-shadow để nổi lên khỏi nền trắng */
+  width:100%;max-width:480px;background:var(--main-bg);
+  border-radius:var(--radius-panel);
+  box-shadow:var(--shadow-panel-light);
+  padding:28px 26px;
+}
+h1{font-size:19px;font-weight:600;margin:0 0 4px;letter-spacing:-.01em}
+.sub{font-size:12.5px;color:var(--text-dim);margin:0 0 20px;line-height:1.55}
+.badge{display:inline-block;font-size:10.5px;padding:2px 8px;border-radius:999px;background:var(--accent-a12);color:var(--accent-2);font-weight:600;margin-right:4px}
+form{display:flex;gap:8px;margin-bottom:16px}
+input{
+  flex:1;font-size:14px;padding:10px 14px;border-radius:12px;border:1px solid var(--border);
+  background:var(--main-bg);outline:none;font-family:inherit;color:var(--text);
+}
+input:focus{border-color:var(--accent)}
+button{
+  font-size:13px;font-weight:600;padding:10px 18px;border-radius:12px;border:none;cursor:pointer;
+  background:var(--accent);color:var(--color-on-accent);
+}
+button:hover{background:var(--accent-2)}
+button:disabled{opacity:.5;cursor:default;transform:none}
+.cities{font-size:11.5px;color:var(--text-dim);margin-bottom:18px}
+.result{
+  border-radius:14px;padding:16px 18px;font-size:13.5px;line-height:1.6;
+  border:1px solid var(--border);min-height:60px;display:flex;align-items:center;
+  background:var(--color-hover-surface);color:var(--text-dim);
+}
+.result.found{background:var(--accent-a08);border-color:var(--accent-a35);color:var(--text)}
+.result.miss{background:var(--color-danger-bg);border-color:var(--danger-a3);color:var(--text)}
+.result .tag{display:block;font-size:10.5px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;margin-bottom:4px}
+.result.found .tag{color:var(--accent-2)}
+.result.miss .tag{color:var(--color-danger)}
+code{font-family:ui-monospace,"SF Mono",Menlo,monospace;background:var(--color-hover-surface);padding:1px 5px;border-radius:5px;font-size:11.5px}
+footer{margin-top:16px;font-size:10.5px;color:var(--text-dim);text-align:center}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Weather Agent — Tool thật, không qua LLM</h1>
+  <p class="sub">
+    Gõ tên thành phố → gọi trực tiếp <code>_get_weather_impl()</code> thật trong
+    <code>agent.py</code> — tra qua API thật Open-Meteo (bất kỳ thành phố nào trên thế giới).
+    Không gọi LLM, không cần <code>DEEPSEEK_API_KEY</code>/<code>OPENAI_API_KEY</code> — đây là
+    demo phần <span class="badge">Tools</span> tách riêng khỏi <span class="badge">Model</span>.
+  </p>
+  <form id="f">
+    <input id="city" type="text" placeholder="vd: Hà Nội, Tokyo, New York…" autocomplete="off" autofocus>
+    <button id="btn" type="submit">Tra</button>
+  </form>
+  <p class="cities">Bất kỳ thành phố thật nào trên thế giới — gõ tên bịa (vd "Xyzzyxplorpqq") để xem guardrail NO_DATA.</p>
+  <div class="result" id="result">Kết quả sẽ hiện ở đây.</div>
+  <footer>demo_agents/weather_agent/webdemo.py · http.server, không phụ thuộc ngoài</footer>
+</div>
+<script>
+const f = document.getElementById('f');
+const input = document.getElementById('city');
+const btn = document.getElementById('btn');
+const result = document.getElementById('result');
+
+f.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const city = input.value.trim();
+  if (!city) return;
+  btn.disabled = true;
+  result.className = 'result';
+  result.textContent = 'Đang gọi tool…';
+  try {
+    const res = await fetch('/api/weather', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ city }),
+    });
+    const data = await res.json();
+    if (data.error) {
+      result.className = 'result';
+      result.textContent = data.error;
+    } else if (data.found) {
+      result.className = 'result found';
+      result.innerHTML = '<span class="tag">✓ có dữ liệu</span>' + data.raw;
+    } else {
+      result.className = 'result miss';
+      result.innerHTML = '<span class="tag">✕ NO_DATA guardrail</span>Không có dữ liệu thời tiết cho "' + data.city + '" — agent sẽ nói rõ điều này thay vì đoán số liệu.';
+    }
+  } catch (err) {
+    result.className = 'result miss';
+    result.textContent = 'Lỗi gọi API: ' + err.message;
+  } finally {
+    btn.disabled = false;
+  }
+});
+</script>
+</body>
+</html>
