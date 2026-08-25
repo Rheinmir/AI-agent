@@ -20,9 +20,11 @@
     --bubble-user:#f4f4f4; --border:#e5e5e5; --accent:#10a37f; --accent-2:#1a7f64;
     --color-on-accent:#ffffff;
     /* librarian = process RIÊNG (không phải tool nội bộ weather) — màu accent riêng để không lẫn
-       với màu agent chính. Tím Obsidian (app note-taking, logo gradient tím) — #8a5cf6 → #6d28d9,
-       CÙNG giá trị với devops_agent/web/chat.html (librarian là 1 identity xuyên agent). */
-    --librarian-accent:#8a5cf6; --librarian-accent-2:#6d28d9;
+       với màu agent chính. Bài học 25/08/2026 (Design Feedback: "không đủ đẹp, giống logo Claude
+       Code") — đổi từ tím Obsidian sang CAM ĐẤT ấm (terracotta), CÙNG giá trị với
+       devops_agent/web/chat.html (librarian là 1 identity xuyên agent, không đổi theo màu riêng
+       từng agent). */
+    --librarian-accent:#d97757; --librarian-accent-2:#b85c3e;
     --color-danger:#b3261e; --color-danger-bg:#fdecea; --color-danger-hover:#ff6b6b;
     --color-avatar-user:#5a5a66;
     --color-dim-2:#9a9aa5;
@@ -250,8 +252,7 @@
   .step-indicator.step-librarian .step-icon{width:20px;height:20px;border-radius:50%;flex-shrink:0;
     background:linear-gradient(135deg,var(--librarian-accent),var(--librarian-accent-2));
     display:flex;align-items:center;justify-content:center}
-  .step-indicator.step-librarian .step-icon svg{width:12px;height:12px;stroke:var(--color-on-accent);
-    fill:none;stroke-width:var(--icon-stroke);stroke-linecap:round;stroke-linejoin:round}
+  .step-indicator.step-librarian .step-icon svg{width:11px;height:11px;fill:var(--color-on-accent);stroke:none}
   @keyframes step-pulse{0%,100%{opacity:.65}50%{opacity:1}}
 
   .empty-state{max-width:520px;margin:12vh auto 0;text-align:center;padding:0 20px}
@@ -706,14 +707,15 @@ const TOOL_STEPS = {
   get_weather: { icon: '🌦️', label: 'Đang tra thời tiết…' },
   get_city_note: { icon: '📝', label: 'Đang tra ghi chú thành phố…' },
   recall_last_city: { icon: '🧠', label: 'Đang nhớ lại thành phố gần nhất…' },
-  // Icon librarian = SVG line-art (quả cầu + kính) trong badge tròn, CÙNG style .avatar.assistant
-  // (logo agent) — không dùng emoji 📚/🌐 nữa (không đồng bộ ngôn ngữ icon của trang, xem CSS
-  // .step-indicator.step-librarian .step-icon).
+  // Icon librarian = 1 sparkle 4 cánh FILL KHỐI (không phải line-art nhiều nét như quả cầu+kính
+  // cũ — nhiều chi tiết nhỏ nhìn rối ở badge 20px). Bài học 25/08/2026 (Design Feedback: "không đủ
+  // đẹp, giống logo Claude Code") — đổi phong cách sang hình học tối giản 1 khối duy nhất, màu cam
+  // đất ấm (--librarian-accent, xem CSS :root) thay vì tím, gợi cảm giác "spark AI" quen thuộc mà
+  // KHÔNG copy logo thật của bất kỳ hãng nào.
   ask_librarian: {
-    icon: '<svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="6"/><path d="M6 9h12"/>'
-      + '<path d="M12 3a8 8 0 0 1 0 12"/><path d="M12 3a8 8 0 0 0 0 12"/>'
-      + '<circle cx="7.5" cy="19" r="2.3"/><circle cx="16.5" cy="19" r="2.3"/>'
-      + '<path d="M9.8 19h4.4"/><path d="M5.2 19h-1.4"/><path d="M18.8 19h1.4"/></svg>',
+    icon: '<svg viewBox="0 0 24 24"><path d="M12 2c0 4.4-1.1 6.5-2.3 7.7S6.4 12 2 12c4.4 0 '
+      + '6.5 1.1 7.7 2.3S12 17.6 12 22c0-4.4 1.1-6.5 2.3-7.7S17.6 12 22 12c-4.4 0-6.5-1.1-7.7-2.3'
+      + 'S12 6.4 12 2Z"/></svg>',
     label: 'Librarian đang tìm tài liệu…',
   },
   github_search: { icon: '🐙', label: 'Đang tìm trên GitHub…' },

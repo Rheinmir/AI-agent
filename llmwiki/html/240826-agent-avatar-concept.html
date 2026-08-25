@@ -1,0 +1,168 @@
+<title>Snap the Agent</title>
+<style>
+  :root{
+    --bg:#eef1f5; --surface:#ffffff; --ink:#1b2430; --ink-dim:#5a6472;
+    --amber:#f4a340; --amber-shade:#d9862a; --teal:#2fb8a6; --border:#d7dee6;
+    --shadow: 0 1px 2px rgba(20,30,45,.06), 0 10px 28px rgba(20,30,45,.08);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#10141c; --surface:#171c26; --ink:#eef1f5; --ink-dim:#9aa5b3;
+      --amber:#f4a340; --amber-shade:#c9741d; --teal:#45d1bd; --border:#2a3140;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#10141c; --surface:#171c26; --ink:#eef1f5; --ink-dim:#9aa5b3;
+    --amber:#f4a340; --amber-shade:#c9741d; --teal:#45d1bd; --border:#2a3140;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.5);
+  }
+
+  @font-face{
+    font-family:"IBM Plex Mono";
+    src: local("IBM Plex Mono");
+  }
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500&display=swap');
+
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:"IBM Plex Sans",-apple-system,"Segoe UI",sans-serif;
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    padding:3rem 1.5rem;
+  }
+  main{ max-width:760px; width:100%; }
+  .eyebrow{
+    font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:.72rem; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--teal); font-weight:600; margin:0 0 .8rem;
+  }
+  h1{
+    font-family:"IBM Plex Mono",ui-monospace,monospace; font-weight:600; font-size:2rem;
+    margin:0 0 .7rem; text-wrap:balance;
+  }
+  p.lede{ color:var(--ink-dim); max-width:56ch; margin:0 0 2.4rem; font-size:1.02rem; }
+
+  .sizes{
+    display:flex; align-items:flex-end; gap:2.4rem; flex-wrap:wrap;
+    background:var(--surface); border:1px solid var(--border); border-radius:20px;
+    padding:2.4rem 2rem 2rem; box-shadow:var(--shadow); margin-bottom:2rem;
+  }
+  .size-slot{ display:flex; flex-direction:column; align-items:center; gap:.7rem; }
+  .size-slot .cap{
+    font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:.72rem; color:var(--ink-dim);
+    letter-spacing:.04em;
+  }
+  .size-slot.lg svg{ width:132px; height:132px; }
+  .size-slot.md svg{ width:56px; height:56px; }
+  .size-slot.sm svg{ width:28px; height:28px; }
+  .size-slot.chip{
+    background: var(--bg); border:1px solid var(--border); border-radius:8px; padding:6px 10px 6px 6px;
+    display:flex; align-items:center; gap:.5rem;
+  }
+  .size-slot.chip svg{ width:22px; height:22px; }
+  .size-slot.chip span{ font-family:"IBM Plex Mono",monospace; font-size:.82rem; color:var(--ink-dim); }
+
+  .notes{
+    display:grid; grid-template-columns: 1fr 1fr; gap:1.2rem;
+  }
+  .card{
+    background:var(--surface); border:1px solid var(--border); border-radius:16px;
+    padding:1.3rem 1.5rem; box-shadow:var(--shadow);
+  }
+  .card h2{ font-size:.8rem; margin:0 0 .6rem; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-dim); font-weight:600; }
+  .card p{ margin:0; font-size:.92rem; color:var(--ink); line-height:1.55; }
+  .swatches{ display:flex; gap:.6rem; margin-top:.2rem; }
+  .sw{ width:28px; height:28px; border-radius:8px; border:1px solid var(--border); }
+
+  @media (max-width:620px){
+    .notes{ grid-template-columns:1fr; }
+    .sizes{ justify-content:center; }
+  }
+</style>
+
+<main>
+  <p class="eyebrow">first pass · avatar concept</p>
+  <h1>Snap the Agent</h1>
+  <p class="lede">A quick mascot pass for this repo's agents — a small claw-eared badge with a single scanning eye and a terminal-cursor mouth. Shown at icon scale on the right so it's clear whether it still reads once it's small.</p>
+
+  <div class="sizes">
+    <div class="size-slot lg">
+      <svg viewBox="0 0 200 200" role="img" aria-label="Snap, a claw-eared agent mascot with a visor eye and cursor mouth">
+        <path d="M46 54 C30 40, 26 20, 34 8 C44 18, 48 34, 50 50 Z" fill="var(--ink)"/>
+        <path d="M154 54 C170 40, 174 20, 166 8 C156 18, 152 34, 150 50 Z" fill="var(--ink)"/>
+        <circle cx="34" cy="9" r="7" fill="var(--teal)"/>
+        <circle cx="166" cy="9" r="7" fill="var(--teal)"/>
+        <rect x="34" y="46" width="132" height="120" rx="38" fill="var(--amber)"/>
+        <rect x="34" y="130" width="132" height="36" rx="18" fill="var(--amber-shade)"/>
+        <rect x="34" y="46" width="132" height="120" rx="38" fill="none" stroke="var(--ink)" stroke-width="4"/>
+        <rect x="58" y="80" width="84" height="34" rx="17" fill="var(--ink)"/>
+        <circle cx="100" cy="97" r="9" fill="var(--teal)"/>
+        <rect x="88" y="140" width="24" height="10" rx="2" fill="var(--ink)"/>
+      </svg>
+      <span class="cap">128px</span>
+    </div>
+    <div class="size-slot md">
+      <svg viewBox="0 0 200 200" role="img" aria-hidden="true">
+        <path d="M46 54 C30 40, 26 20, 34 8 C44 18, 48 34, 50 50 Z" fill="var(--ink)"/>
+        <path d="M154 54 C170 40, 174 20, 166 8 C156 18, 152 34, 150 50 Z" fill="var(--ink)"/>
+        <circle cx="34" cy="9" r="7" fill="var(--teal)"/>
+        <circle cx="166" cy="9" r="7" fill="var(--teal)"/>
+        <rect x="34" y="46" width="132" height="120" rx="38" fill="var(--amber)"/>
+        <rect x="34" y="130" width="132" height="36" rx="18" fill="var(--amber-shade)"/>
+        <rect x="34" y="46" width="132" height="120" rx="38" fill="none" stroke="var(--ink)" stroke-width="4"/>
+        <rect x="58" y="80" width="84" height="34" rx="17" fill="var(--ink)"/>
+        <circle cx="100" cy="97" r="9" fill="var(--teal)"/>
+        <rect x="88" y="140" width="24" height="10" rx="2" fill="var(--ink)"/>
+      </svg>
+      <span class="cap">56px</span>
+    </div>
+    <div class="size-slot sm">
+      <svg viewBox="0 0 200 200" role="img" aria-hidden="true">
+        <path d="M46 54 C30 40, 26 20, 34 8 C44 18, 48 34, 50 50 Z" fill="var(--ink)"/>
+        <path d="M154 54 C170 40, 174 20, 166 8 C156 18, 152 34, 150 50 Z" fill="var(--ink)"/>
+        <circle cx="34" cy="9" r="7" fill="var(--teal)"/>
+        <circle cx="166" cy="9" r="7" fill="var(--teal)"/>
+        <rect x="34" y="46" width="132" height="120" rx="38" fill="var(--amber)"/>
+        <rect x="34" y="130" width="132" height="36" rx="18" fill="var(--amber-shade)"/>
+        <rect x="34" y="46" width="132" height="120" rx="38" fill="none" stroke="var(--ink)" stroke-width="4"/>
+        <rect x="58" y="80" width="84" height="34" rx="17" fill="var(--ink)"/>
+        <circle cx="100" cy="97" r="9" fill="var(--teal)"/>
+        <rect x="88" y="140" width="24" height="10" rx="2" fill="var(--ink)"/>
+      </svg>
+      <span class="cap">28px</span>
+    </div>
+    <div class="size-slot chip">
+      <svg viewBox="0 0 200 200" role="img" aria-hidden="true">
+        <path d="M46 54 C30 40, 26 20, 34 8 C44 18, 48 34, 50 50 Z" fill="var(--ink)"/>
+        <path d="M154 54 C170 40, 174 20, 166 8 C156 18, 152 34, 150 50 Z" fill="var(--ink)"/>
+        <circle cx="34" cy="9" r="7" fill="var(--teal)"/>
+        <circle cx="166" cy="9" r="7" fill="var(--teal)"/>
+        <rect x="34" y="46" width="132" height="120" rx="38" fill="var(--amber)"/>
+        <rect x="34" y="130" width="132" height="36" rx="18" fill="var(--amber-shade)"/>
+        <rect x="34" y="46" width="132" height="120" rx="38" fill="none" stroke="var(--ink)" stroke-width="4"/>
+        <rect x="58" y="80" width="84" height="34" rx="17" fill="var(--ink)"/>
+        <circle cx="100" cy="97" r="9" fill="var(--teal)"/>
+        <rect x="88" y="140" width="24" height="10" rx="2" fill="var(--ink)"/>
+      </svg>
+      <span>Snap — running weather_agent…</span>
+    </div>
+  </div>
+
+  <div class="notes">
+    <div class="card">
+      <h2>Why this shape</h2>
+      <p>Two claw tips instead of antennae — a quiet nod to the "Clawatar" naming rabbit hole that started this. A visor with one teal dot reads as "paying attention" without the generic two-round-eyes-and-eyelashes cute-bot look. The cursor mouth ties it to a coding agent specifically, not a generic AI blob.</p>
+    </div>
+    <div class="card">
+      <h2>Palette</h2>
+      <p>Amber body, ink outline, one teal accent — deliberately not the usual purple-blue AI gradient.</p>
+      <div class="swatches">
+        <div class="sw" style="background:var(--amber)"></div>
+        <div class="sw" style="background:var(--amber-shade)"></div>
+        <div class="sw" style="background:var(--ink)"></div>
+        <div class="sw" style="background:var(--teal)"></div>
+      </div>
+    </div>
+  </div>
+</main>
