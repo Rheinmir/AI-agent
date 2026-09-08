@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gale, Patch &amp; Dewey — Humanoid Sprites</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%234a90d9'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#eef1f5; --surface:#ffffff; --ink:#1b2430; --ink-dim:#5a6472; --border:#d7dee6;
+    --shadow: 0 1px 2px rgba(20,30,45,.06), 0 10px 28px rgba(20,30,45,.08);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#10141c; --surface:#171c26; --ink:#eef1f5; --ink-dim:#9aa5b3; --border:#2a3140;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#10141c; --surface:#171c26; --ink:#eef1f5; --ink-dim:#9aa5b3; --border:#2a3140;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.5);
+  }
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=IBM+Plex+Sans:wght@400;500&display=swap');
+
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:"IBM Plex Sans",-apple-system,"Segoe UI",sans-serif;
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    padding:3rem 1.5rem;
+  }
+  main{ max-width:940px; width:100%; }
+  .eyebrow{
+    font-family:"Press Start 2P",monospace; font-size:.62rem; letter-spacing:.05em;
+    color:var(--ink-dim); margin:0 0 1rem;
+  }
+  h1{ font-family:"Press Start 2P",monospace; font-weight:400; font-size:1.35rem; margin:0 0 1rem; text-wrap:balance; line-height:1.6; }
+  p.lede{ color:var(--ink-dim); max-width:64ch; margin:0 0 2.4rem; font-size:1.02rem; }
+
+  .trio{ display:grid; grid-template-columns:repeat(3,1fr); gap:1.2rem; margin-bottom:2rem; }
+  .card{
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    padding:1.6rem 1.2rem 1.6rem; box-shadow:var(--shadow); text-align:center;
+  }
+  .sprite{
+    display:inline-grid; border:3px solid #14171f; image-rendering:pixelated; margin-bottom:.8rem;
+    background:linear-gradient(to bottom, #d7ecfa, #aee1f5);
+  }
+  .sprite div{ width:11px; height:11px; }
+  .card h2{ font-family:"Press Start 2P",monospace; font-weight:400; font-size:.95rem; margin:.4rem 0 .3rem; }
+  .card .role{
+    font-family:ui-monospace,monospace; font-size:.68rem; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--accent); font-weight:600; margin-bottom:.6rem;
+  }
+  .card p{ font-size:.85rem; color:var(--ink-dim); margin:0; line-height:1.5; }
+  .card.gale{ --accent:#3f7bc4; }
+  .card.patch{ --accent:#2c8350; }
+  .card.dewey{ --accent:#6b3a88; }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]) .card.gale{ --accent:#7db8ee; }
+    :root:not([data-theme="light"]) .card.patch{ --accent:#6bd99a; }
+    :root:not([data-theme="light"]) .card.dewey{ --accent:#c79bdf; }
+  }
+  :root[data-theme="dark"] .card.gale{ --accent:#7db8ee; }
+  :root[data-theme="dark"] .card.patch{ --accent:#6bd99a; }
+  :root[data-theme="dark"] .card.dewey{ --accent:#c79bdf; }
+
+  .note{
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    padding:1.2rem 1.5rem; box-shadow:var(--shadow); font-size:.9rem; color:var(--ink-dim); line-height:1.6;
+  }
+  .note b{ color:var(--ink); }
+
+  @media (max-width:700px){ .trio{ grid-template-columns:1fr; } .sprite div{ width:8px; height:8px; } }
+</style>
+</head>
+<body>
+<main>
+  <p class="eyebrow">// HUMANOID SPRITE, NOT A FACE</p>
+  <h1>GALE, PATCH<br>&amp; DEWEY</h1>
+  <p class="lede">Head, torso, two arms, two legs, standing on the same grass-and-dirt strip — a proper humanoid figure instead of a big face on stick legs. One hand rests at the side, the other holds the item that names the job.</p>
+
+  <div class="trio">
+    <div class="card gale">
+      <div class="sprite" id="s-gale"></div>
+      <h2>GALE</h2>
+      <div class="role">weather_agent</div>
+      <p>Reads the sky, holds the proof in hand.</p>
+    </div>
+    <div class="card patch">
+      <div class="sprite" id="s-patch"></div>
+      <h2>PATCH</h2>
+      <div class="role">devops_agent</div>
+      <p>Tool in hand, on call for the pipeline.</p>
+    </div>
+    <div class="card dewey">
+      <div class="sprite" id="s-dewey"></div>
+      <h2>DEWEY</h2>
+      <div class="role">librarian_agent</div>
+      <p>Reference already open, before you finish asking.</p>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>Where this is rougher than the face-only version:</b> the held item (cloud / tool / book) is honest about being hard to read at this scale and this pose — it's clearly "something in hand," less clearly which something, compared to the cleaner bust icons from the portrait version. The humanoid shape itself (head/torso/arms/legs, feet actually touching the ground — an earlier pass had them floating one row above it) is the part that's solid. If the held item needs to read clearly, it likely needs a bigger canvas or a simpler item per character rather than one more redraw at this same size.
+  </div>
+</main>
+
+<script>
+var PALETTE = {"0": "transparent", "1": "#14171f", "4": "#ffffff", "6": "#ff8fa3", "2": "#4a90d9", "3": "#356fae", "5": "#ffd166", "7": "#3fae6a", "8": "#2c8350", "9": "#f4a340", "10": "#8a4fae", "11": "#6b3a88", "12": "#2fb8a6", "20": "#6fbf4f", "21": "#5aa63d", "22": "#8b5a3c", "23": "#6e4529"};
+var GRIDS = {
+"gale": [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 1, 4, 2, 2, 2, 4, 1, 1, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 6, 1, 2, 2, 2, 2, 2, 1, 6, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 2, 1, 1, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 1, 3, 1, 2, 2, 2, 2, 2, 2, 2, 1, 3, 1, 0, 0, 0, 0, 0], [0, 0, 0, 0, 1, 3, 1, 2, 2, 2, 2, 2, 2, 2, 1, 3, 3, 1, 0, 4, 4, 0], [0, 0, 0, 0, 1, 3, 1, 2, 2, 2, 2, 2, 2, 2, 1, 0, 3, 3, 4, 4, 4, 4], [0, 0, 0, 0, 1, 3, 1, 2, 2, 2, 2, 2, 2, 2, 1, 0, 1, 3, 1, 5, 0, 0], [0, 0, 0, 0, 1, 3, 3, 2, 2, 2, 2, 2, 2, 2, 1, 0, 0, 1, 0, 0, 5, 0], [0, 0, 0, 0, 0, 1, 1, 2, 2, 2, 2, 2, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 3, 3, 1, 0, 0, 1, 3, 3, 1, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 3, 3, 1, 0, 0, 1, 3, 3, 1, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 3, 3, 1, 0, 0, 1, 3, 3, 1, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 3, 3, 0, 0, 0, 0, 3, 3, 1, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 3, 3, 0, 0, 0, 0, 3, 3, 1, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 3, 3, 0, 0, 0, 0, 3, 3, 1, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0], [0, 0, 20, 0, 20, 0, 0, 20, 0, 0, 0, 20, 0, 0, 0, 20, 0, 20, 20, 0, 0, 0], [21, 20, 20, 21, 20, 20, 21, 20, 20, 21, 20, 20, 21, 20, 20, 21, 20, 20, 21, 20, 20, 21], [22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22], [22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22], [23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23], [23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23]],
+"patch": [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 7, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 1, 4, 7, 7, 7, 4, 1, 1, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 6, 1, 7, 7, 7, 7, 7, 1, 6, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 8, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 7, 1, 1, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 1, 8, 1, 7, 7, 7, 7, 7, 7, 7, 1, 8, 1, 0, 9, 9, 9, 9], [0, 0, 0, 0, 1, 8, 1, 7, 7, 7, 7, 7, 7, 7, 1, 8, 8, 1, 1, 4, 4, 1], [0, 0, 0, 0, 1, 8, 1, 7, 7, 7, 7, 7, 7, 7, 1, 0, 8, 8, 1, 1, 4, 1], [0, 0, 0, 0, 1, 8, 1, 7, 7, 7, 7, 7, 7, 7, 1, 0, 1, 8, 1, 1, 1, 1], [0, 0, 0, 0, 1, 8, 8, 7, 7, 7, 7, 7, 7, 7, 1, 0, 0, 1, 0, 0, 0, 0], [0, 0, 0, 0, 0, 1, 1, 7, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 8, 8, 1, 0, 0, 1, 8, 8, 1, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 8, 8, 1, 0, 0, 1, 8, 8, 1, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 8, 8, 1, 0, 0, 1, 8, 8, 1, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 8, 8, 0, 0, 0, 0, 8, 8, 1, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 8, 8, 0, 0, 0, 0, 8, 8, 1, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 8, 8, 0, 0, 0, 0, 8, 8, 1, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0], [0, 0, 20, 0, 20, 0, 0, 20, 0, 0, 0, 20, 0, 0, 0, 20, 0, 20, 20, 0, 0, 0], [21, 20, 20, 21, 20, 20, 21, 20, 20, 21, 20, 20, 21, 20, 20, 21, 20, 20, 21, 20, 20, 21], [22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22], [22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22], [23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23], [23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23]],
+"dewey": [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 10, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 1, 10, 10, 10, 10, 10, 1, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 10, 10, 10, 10, 10, 10, 10, 1, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 1, 4, 10, 10, 10, 4, 1, 1, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 10, 10, 10, 10, 10, 10, 10, 1, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 6, 1, 10, 10, 10, 10, 10, 1, 6, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 11, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 10, 10, 10, 10, 10, 10, 10, 1, 1, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 1, 11, 1, 10, 10, 10, 10, 10, 10, 10, 1, 11, 1, 0, 0, 0, 12, 0], [0, 0, 0, 0, 1, 11, 1, 10, 10, 10, 10, 10, 10, 10, 1, 11, 11, 1, 4, 4, 4, 0], [0, 0, 0, 0, 1, 11, 1, 10, 10, 10, 10, 10, 10, 10, 1, 0, 11, 11, 4, 1, 4, 0], [0, 0, 0, 0, 1, 11, 1, 10, 10, 10, 10, 10, 10, 10, 1, 0, 1, 11, 4, 4, 4, 0], [0, 0, 0, 0, 1, 11, 11, 10, 10, 10, 10, 10, 10, 10, 1, 0, 0, 1, 0, 0, 0, 0], [0, 0, 0, 0, 0, 1, 1, 10, 10, 10, 10, 10, 10, 10, 1, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 11, 11, 1, 0, 0, 1, 11, 11, 1, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 11, 11, 1, 0, 0, 1, 11, 11, 1, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 11, 11, 1, 0, 0, 1, 11, 11, 1, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 11, 11, 0, 0, 0, 0, 11, 11, 1, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 11, 11, 0, 0, 0, 0, 11, 11, 1, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 11, 11, 0, 0, 0, 0, 11, 11, 1, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0], [0, 0, 20, 0, 20, 0, 0, 20, 0, 0, 0, 20, 0, 0, 0, 20, 0, 20, 20, 0, 0, 0], [21, 20, 20, 21, 20, 20, 21, 20, 20, 21, 20, 20, 21, 20, 20, 21, 20, 20, 21, 20, 20, 21], [22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22], [22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22], [23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23], [23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23]]
+};
+Object.keys(GRIDS).forEach(function(name){
+  var grid = GRIDS[name];
+  var el = document.getElementById("s-" + name);
+  el.style.gridTemplateColumns = "repeat(" + grid[0].length + ", 1fr)";
+  grid.forEach(function(row){
+    row.forEach(function(v){
+      var d = document.createElement("div");
+      d.style.background = PALETTE[v] || "transparent";
+      el.appendChild(d);
+    });
+  });
+});
+</script>
+</body>
+</html>

@@ -40,9 +40,45 @@ khi đóng gói triển khai — 2 nơi phải khớp giá trị hex, sửa ở 
 Thay path SVG hình đám mây (`M17.5 19a4.5...`, biểu tượng thời tiết) bằng path hình **vòng vô cực**
 (kiểu Tabler icon "infinity", `M9.828 9.172a4 4 0...`) — biểu tượng phổ biến nhất cho DevOps (vòng
 lặp develop→deploy→monitor liên tục). Dùng ở ĐÚNG 4 chỗ như bản gốc: favicon, icon empty-state, 2
-chỗ avatar trợ lý (JS). Giữ NGUYÊN kỹ thuật vẽ của hệ gốc — single `<path>`, `fill:none`,
-`stroke:currentColor` (hoặc `var(--color-on-accent)` trong khối màu), `stroke-linecap`/
-`stroke-linejoin:round`, cùng token `--icon-stroke` — chỉ đổi hình dạng, không đổi cách vẽ.
+chỗ avatar trợ lý (JS).
+
+**Cập nhật 26/08/2026 — đổi kỹ thuật vẽ sang PIXEL ART (rect-grid), giữ NGUYÊN ý nghĩa vòng vô
+cực.** User yêu cầu 3 agent (weather/devops/librarian) cùng chuyển sang 1 hệ icon pixel-art thống
+nhất, sau khi research `/last30days` về xu hướng "AI agent pixel style" (Pixel Agents, AgentRoom —
+biến agent thành nhân vật pixel-art). Thay `<path>` cong (`M9.828 9.172a4 4 0...`, `stroke`-based)
+bằng lưới `<rect>` vuông (`fill`-based, `shape-rendering:crispEdges`) — VẪN vẽ hình vòng vô cực
+(2 vòng lặp nối nhau ở giữa), chỉ đổi kỹ thuật vẽ (đường cong mượt → khối pixel vuông), không đổi
+Ý NGHĨA biểu tượng đã chọn ở trên. Áp dụng ở ĐÚNG 4 chỗ như cũ (favicon, empty-state, 2× avatar JS)
+— không thêm/bớt vị trí dùng icon.
+```html
+<svg viewBox="0 0 8 4"><rect x="1" y="0" width="2" height="1"/><rect x="5" y="0" width="2" height="1"/><rect x="0" y="1" width="1" height="2"/><rect x="3" y="1" width="2" height="2"/><rect x="7" y="1" width="1" height="2"/><rect x="1" y="3" width="2" height="1"/><rect x="5" y="3" width="2" height="1"/></svg>
+```
+CSS đổi từ `stroke:var(--color-on-accent);fill:none;stroke-width:var(--icon-stroke);stroke-linecap/
+linejoin:round` sang `fill:var(--color-on-accent);stroke:none;shape-rendering:crispEdges` — vì rect
+là khối đặc (fill), không phải nét (stroke), khác kỹ thuật vẽ gốc đã ghi ở trên (đoạn này THAY THẾ,
+không còn áp dụng đoạn "Giữ NGUYÊN kỹ thuật vẽ" phía trên nữa kể từ 26/08/2026).
+
+**Cập nhật 29/08/2026 — đổi từ icon hình học (vòng vô cực) sang NHÂN VẬT pixel "Clawd-style" đeo
+KÍNH đẩy lên đỉnh đầu (ẩn dụ hình vô cực CI/CD) + BELT dụng cụ + cờ lê.** Cùng đợt đổi với
+`weather_agent` (xem `weather_agent/web/design.md` § Variants, entry cùng ngày, cùng skill
+`/create-agent-avatar` + engine `harness/scripts/pixel_icon_gen.py`) — quy trình đầy đủ +
+Design Feedback nằm ở `wiki/log.md`. Kính (2 vòng nối cầu giữa) CHÍNH LÀ ký hiệu vô cực (∞) khi
+nhìn ngang — giữ được ý nghĩa biểu tượng gốc "vòng lặp CI/CD" dù đổi hẳn từ icon hình học sang nhân
+vật đeo phụ kiện. Sinh markup qua `build_icon_svg('devops')` trong `pixel_icon_gen.py`, KHÔNG gõ
+tay toạ độ `<rect>` — đổi cấu trúc phải sửa `AGENTS['devops']` trong file đó trước rồi generate lại.
+```html
+<svg viewBox="0 0 10 9" shape-rendering="crispEdges"><g fill="#475569"><rect x="2" y="0" width="2" height="0.5"/><rect x="6" y="0" width="2" height="0.5"/></g><g fill="#1F2937"><rect x="2" y="0.5" width="2" height="0.5"/><rect x="6" y="0.5" width="2" height="0.5"/><rect x="2" y="1" width="6" height="0.5"/><rect x="2" y="1.5" width="6" height="0.5"/></g><g fill="#ffffff"><rect x="1" y="2" width="8" height="1"/><rect x="0" y="3" width="10" height="1"/><rect x="1" y="4" width="8" height="1"/><rect x="1" y="5" width="8" height="1"/><rect x="1" y="6" width="8" height="1"/><rect x="1" y="7" width="8" height="1"/><rect x="1" y="8" width="1" height="1"/><rect x="3" y="8" width="1" height="1"/><rect x="6" y="8" width="1" height="1"/><rect x="8" y="8" width="1" height="1"/></g><g fill="#1a1a1a"><rect x="2" y="3" width="1" height="1"/><rect x="7" y="3" width="1" height="1"/></g><g fill="#44403C"><rect x="1" y="6" width="8" height="1"/></g><g fill="#F97316"><rect x="6" y="5" width="2" height="1"/><rect x="6" y="6" width="1" height="1"/><rect x="6" y="7" width="1" height="1"/></g></svg>
+```
+Nhân vật có MÀU RIÊNG từng phần (thân trắng, mắt đen, kính xám `#1F2937`/`#475569`, belt nâu
+`#44403C`, cờ lê cam `#F97316`) — CSS `fill:var(--color-on-accent)` hiện có VẪN GIỮ NGUYÊN, không
+xoá (màu inline trên `<g>` con luôn thắng màu kế thừa từ `<svg>` cha). Áp dụng ĐÚNG 4 chỗ như cũ.
+
+### Icon librarian (step-indicator) — cập nhật 29/08/2026, cùng đợt với weather_agent
+`TOOL_STEPS.ask_librarian` (badge nhỏ khi devops_agent gọi sang librarian_agent qua socket) trước
+đó bị bỏ sót — vẫn dùng icon kính lúp pixel cũ trong khi avatar chính đã đổi. Đổi sang NHÂN VẬT
+librarian đã khoá (mũ cử nhân + kính một mắt + tua), sinh qua `build_icon_svg('librarian')` trong
+`harness/scripts/pixel_icon_gen.py` — xem `weather_agent/web/design.md` § entry cùng ngày để biết
+chi tiết so sánh size (11px→15px). Đồng bộ y hệt sang file này.
 
 ### Nội dung — đổi toàn bộ copy, giữ cấu trúc
 Title/meta description, header sidebar + hero ("Weather Agent"→"DevOps Agent"), 4 câu hỏi mẫu (đổi

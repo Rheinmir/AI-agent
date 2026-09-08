@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ -f \"$CLAUDE_PROJECT_DIR/harness/poc-vendor-neutral/bin/llmwiki-validate.py\" ] && exec python3 \"$CLAUDE_PROJECT_DIR/harness/poc-vendor-neutral/bin/llmwiki-validate.py\" claude-hook || exit 0",
+            "command": "[ -f \"$CLAUDE_PROJECT_DIR/.harness/poc-vendor-neutral/bin/llmwiki-validate.py\" ] && exec python3 \"$CLAUDE_PROJECT_DIR/.harness/poc-vendor-neutral/bin/llmwiki-validate.py\" claude-hook || exit 0",
             "timeout": 15
           }
         ]
@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ -f \"$CLAUDE_PROJECT_DIR/harness/poc-vendor-neutral/bin/harness-events.py\" ] && exec python3 \"$CLAUDE_PROJECT_DIR/harness/poc-vendor-neutral/bin/harness-events.py\" stop || exit 0",
+            "command": "[ -f \"$CLAUDE_PROJECT_DIR/.harness/poc-vendor-neutral/bin/harness-events.py\" ] && exec python3 \"$CLAUDE_PROJECT_DIR/.harness/poc-vendor-neutral/bin/harness-events.py\" stop || exit 0",
             "timeout": 15
           }
         ]
@@ -28,7 +28,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/harness/poc-vendor-neutral/bin/harness-events.py\" audit 2>/dev/null || true",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.harness/poc-vendor-neutral/bin/harness-events.py\" audit 2>/dev/null || true",
             "timeout": 10
           }
         ],
@@ -40,7 +40,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/harness/poc-vendor-neutral/bin/harness-events.py\" session 2>/dev/null || true",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.harness/poc-vendor-neutral/bin/harness-events.py\" session 2>/dev/null || true",
             "timeout": 10
           }
         ]
@@ -51,7 +51,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/harness/poc-vendor-neutral/bin/harness-events.py\" docs 2>/dev/null || true",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.harness/poc-vendor-neutral/bin/harness-events.py\" docs 2>/dev/null || true",
             "timeout": 10
           }
         ]
@@ -62,7 +62,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/harness/poc-vendor-neutral/bin/harness-events.py\" session-end 2>/dev/null || true",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.harness/poc-vendor-neutral/bin/harness-events.py\" session-end 2>/dev/null || true",
             "timeout": 15
           }
         ]

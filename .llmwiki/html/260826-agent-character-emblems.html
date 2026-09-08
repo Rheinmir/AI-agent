@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gale, Patch, Dewey Emblems</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23f4a340'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#eef1f5; --surface:#ffffff; --ink:#1b2430; --ink-dim:#5a6472; --border:#d7dee6; --paper:#fbfaf7;
+    --badge-ink:#1b2430;
+    --shadow: 0 1px 2px rgba(20,30,45,.06), 0 10px 28px rgba(20,30,45,.08);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#10141c; --surface:#171c26; --ink:#eef1f5; --ink-dim:#9aa5b3; --border:#2a3140; --paper:#f4f1ea;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#10141c; --surface:#171c26; --ink:#eef1f5; --ink-dim:#9aa5b3; --border:#2a3140; --paper:#f4f1ea;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.5);
+  }
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500&display=swap');
+
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:"IBM Plex Sans",-apple-system,"Segoe UI",sans-serif;
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    padding:3rem 1.5rem;
+  }
+  main{ max-width:920px; width:100%; }
+  .eyebrow{
+    font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:.72rem; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--ink-dim); font-weight:600; margin:0 0 .8rem;
+  }
+  h1{ font-family:"IBM Plex Mono",ui-monospace,monospace; font-weight:600; font-size:1.9rem; margin:0 0 .7rem; text-wrap:balance; }
+  p.lede{ color:var(--ink-dim); max-width:64ch; margin:0 0 2.4rem; font-size:1.02rem; }
+
+  .trio{ display:grid; grid-template-columns:repeat(3,1fr); gap:1.2rem; margin-bottom:2rem; }
+  .card{
+    background:var(--surface); border:1px solid var(--border); border-radius:20px;
+    padding:1.8rem 1.4rem 1.6rem; box-shadow:var(--shadow); text-align:center;
+  }
+  .card svg{ width:132px; height:132px; }
+  .card h2{ font-family:"IBM Plex Mono",monospace; font-size:1.1rem; margin:.6rem 0 .1rem; }
+  .card .role{
+    font-family:"IBM Plex Mono",monospace; font-size:.68rem; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--accent); font-weight:600; margin-bottom:.6rem;
+  }
+  .card p{ font-size:.85rem; color:var(--ink-dim); margin:0; line-height:1.5; }
+  .card.gale{ --accent:#c9930a; }
+  .card.patch{ --accent:#c9741d; }
+  .card.dewey{ --accent:#2fb8a6; }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]) .card.gale{ --accent:#ffd166; }
+    :root:not([data-theme="light"]) .card.patch{ --accent:#f4a340; }
+    :root:not([data-theme="light"]) .card.dewey{ --accent:#45d1bd; }
+  }
+  :root[data-theme="dark"] .card.gale{ --accent:#ffd166; }
+  :root[data-theme="dark"] .card.patch{ --accent:#f4a340; }
+  :root[data-theme="dark"] .card.dewey{ --accent:#45d1bd; }
+
+  .note{
+    background:var(--surface); border:1px solid var(--border); border-radius:16px;
+    padding:1.2rem 1.5rem; box-shadow:var(--shadow); font-size:.9rem; color:var(--ink-dim); line-height:1.6;
+  }
+  .note b{ color:var(--ink); }
+
+  @media (max-width:700px){ .trio{ grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <p class="eyebrow">agent character set · face kept, symbol turned into an emblem</p>
+  <h1>Gale, Patch, Dewey — Emblems</h1>
+  <p class="lede">Same face and body as the first pass — claw-tip ears, one-dot visor — but the small corner badge is now a full chest emblem, so the character reads with personality first and the domain symbol second, not the other way round.</p>
+
+  <div class="trio">
+    <div class="card gale">
+      <svg viewBox="0 0 200 200" role="img" aria-label="Gale: claw-eared character, sky blue, with a cloud-and-bolt chest emblem, for weather_agent">
+        <path d="M46 54 C30 40, 26 20, 34 8 C44 18, 48 34, 50 50 Z" fill="var(--ink)"/>
+        <path d="M154 54 C170 40, 174 20, 166 8 C156 18, 152 34, 150 50 Z" fill="var(--ink)"/>
+        <circle cx="34" cy="9" r="7" fill="#ffd166"/>
+        <circle cx="166" cy="9" r="7" fill="#ffd166"/>
+        <rect x="34" y="46" width="132" height="120" rx="38" fill="#4a90d9"/>
+        <rect x="34" y="46" width="132" height="120" rx="38" fill="none" stroke="var(--ink)" stroke-width="4"/>
+        <rect x="58" y="76" width="84" height="32" rx="16" fill="var(--ink)"/>
+        <circle cx="100" cy="92" r="8" fill="#ffd166"/>
+        <rect x="94" y="116" width="12" height="6" rx="3" fill="var(--ink)"/>
+        <rect x="62" y="128" width="76" height="34" rx="10" fill="var(--paper)" stroke="var(--ink)" stroke-width="2.5"/>
+        <circle cx="84" cy="148" r="7" fill="var(--badge-ink)"/>
+        <circle cx="98" cy="142" r="9" fill="var(--badge-ink)"/>
+        <circle cx="112" cy="148" r="7" fill="var(--badge-ink)"/>
+        <rect x="79" y="148" width="38" height="11" rx="5.5" fill="var(--badge-ink)"/>
+        <polygon points="126,134 119,148 124,148 120,160 132,144 126,144" fill="#ffd166" stroke="var(--badge-ink)" stroke-width="1.5"/>
+      </svg>
+      <h2>Gale</h2>
+      <div class="role">weather_agent</div>
+      <p>Still Gale — now wearing the cloud-and-bolt like a badge, not hiding behind it.</p>
+    </div>
+
+    <div class="card patch">
+      <svg viewBox="0 0 200 200" role="img" aria-label="Patch: claw-eared character, terminal green, with an infinity-loop chest emblem, for devops_agent">
+        <path d="M46 54 C30 40, 26 20, 34 8 C44 18, 48 34, 50 50 Z" fill="var(--ink)"/>
+        <path d="M154 54 C170 40, 174 20, 166 8 C156 18, 152 34, 150 50 Z" fill="var(--ink)"/>
+        <circle cx="34" cy="9" r="7" fill="#f4a340"/>
+        <circle cx="166" cy="9" r="7" fill="#f4a340"/>
+        <rect x="34" y="46" width="132" height="120" rx="38" fill="#3fae6a"/>
+        <rect x="34" y="46" width="132" height="120" rx="38" fill="none" stroke="var(--ink)" stroke-width="4"/>
+        <rect x="58" y="76" width="84" height="32" rx="16" fill="var(--ink)"/>
+        <circle cx="100" cy="92" r="8" fill="#f4a340"/>
+        <rect x="94" y="116" width="12" height="6" rx="3" fill="var(--ink)"/>
+        <rect x="62" y="128" width="76" height="34" rx="10" fill="var(--paper)" stroke="var(--ink)" stroke-width="2.5"/>
+        <circle cx="84" cy="145" r="12" fill="none" stroke="var(--badge-ink)" stroke-width="6"/>
+        <circle cx="110" cy="145" r="12" fill="none" stroke="#c9741d" stroke-width="6"/>
+      </svg>
+      <h2>Patch</h2>
+      <div class="role">devops_agent</div>
+      <p>The infinity loop moved to the chest, same shrug about the uptime.</p>
+    </div>
+
+    <div class="card dewey">
+      <svg viewBox="0 0 200 200" role="img" aria-label="Dewey: claw-eared character, plum, with an open-book chest emblem, for librarian_agent">
+        <path d="M46 54 C30 40, 26 20, 34 8 C44 18, 48 34, 50 50 Z" fill="var(--ink)"/>
+        <path d="M154 54 C170 40, 174 20, 166 8 C156 18, 152 34, 150 50 Z" fill="var(--ink)"/>
+        <circle cx="34" cy="9" r="7" fill="#2fb8a6"/>
+        <circle cx="166" cy="9" r="7" fill="#2fb8a6"/>
+        <rect x="34" y="46" width="132" height="120" rx="38" fill="#8a4fae"/>
+        <rect x="34" y="46" width="132" height="120" rx="38" fill="none" stroke="var(--ink)" stroke-width="4"/>
+        <rect x="58" y="76" width="84" height="32" rx="16" fill="var(--ink)"/>
+        <circle cx="100" cy="92" r="8" fill="#2fb8a6"/>
+        <rect x="94" y="116" width="12" height="6" rx="3" fill="var(--ink)"/>
+        <rect x="62" y="128" width="76" height="34" rx="10" fill="var(--paper)" stroke="var(--ink)" stroke-width="2.5"/>
+        <path d="M68,137 Q84,132 100,135 L100,155 Q84,151 68,155 Z" fill="#ffffff" stroke="var(--badge-ink)" stroke-width="2"/>
+        <path d="M132,137 Q116,132 100,135 L100,155 Q116,151 132,155 Z" fill="#ffffff" stroke="var(--badge-ink)" stroke-width="2"/>
+        <line x1="100" y1="133" x2="100" y2="157" stroke="var(--badge-ink)" stroke-width="2.5"/>
+        <rect x="121" y="130" width="9" height="15" fill="#2fb8a6"/>
+      </svg>
+      <h2>Dewey</h2>
+      <div class="role">librarian_agent</div>
+      <p>Book on the chest now, bookmark tucked into the corner — still cites before answering.</p>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>What changed from the flat set:</b> the cloud/loop/book are no longer the whole mark — they sit on a character that has ears, a face, and a personality line. If you want to go further (holding the bolt like a prop, a different expression, a full-body pose), say which one and I'll iterate on just that character instead of redoing all three.
+  </div>
+</main>
+</body>
+</html>

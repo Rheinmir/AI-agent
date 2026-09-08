@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gale, Patch &amp; Dewey — Ghost Icons</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%233f9e6f'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#eef1f5; --surface:#ffffff; --ink:#1b2430; --ink-dim:#5a6472; --border:#d7dee6;
+    --shadow: 0 1px 2px rgba(20,30,45,.06), 0 10px 28px rgba(20,30,45,.08);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#10141c; --surface:#171c26; --ink:#eef1f5; --ink-dim:#9aa5b3; --border:#2a3140;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#10141c; --surface:#171c26; --ink:#eef1f5; --ink-dim:#9aa5b3; --border:#2a3140;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.5);
+  }
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500&display=swap');
+
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:"IBM Plex Sans",-apple-system,"Segoe UI",sans-serif;
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    padding:3rem 1.5rem;
+  }
+  main{ max-width:880px; width:100%; }
+  .eyebrow{
+    font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:.72rem; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--ink-dim); font-weight:600; margin:0 0 .8rem;
+  }
+  h1{ font-family:"IBM Plex Mono",ui-monospace,monospace; font-weight:600; font-size:1.7rem; margin:0 0 .7rem; text-wrap:balance; }
+  p.lede{ color:var(--ink-dim); max-width:64ch; margin:0 0 2.4rem; font-size:1.02rem; }
+
+  .trio{ display:grid; grid-template-columns:repeat(3,1fr); gap:1.2rem; margin-bottom:2rem; }
+  .card{
+    background:var(--surface); border:1px solid var(--border); border-radius:16px;
+    padding:1.6rem 1.2rem 1.6rem; box-shadow:var(--shadow); text-align:center;
+  }
+  .tile{
+    width:120px; height:120px; border-radius:28px; display:grid; place-items:center;
+    margin:0 auto .9rem; overflow:hidden;
+  }
+  .g{ display:grid; image-rendering:pixelated; }
+  .g div{ width:6.6px; height:6.6px; }
+  .favi{
+    width:26px; height:26px; border-radius:7px; display:inline-grid; place-items:center;
+    overflow:hidden; margin-top:.6rem; vertical-align:middle;
+  }
+  .favi .g div{ width:1.4px; height:1.4px; }
+  .card h2{ font-family:"IBM Plex Mono",monospace; font-size:1.05rem; margin:.4rem 0 .1rem; }
+  .card .role{
+    font-family:"IBM Plex Mono",monospace; font-size:.68rem; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--ink-dim); font-weight:600; margin-bottom:.5rem;
+  }
+  .card p{ font-size:.85rem; color:var(--ink-dim); margin:0; line-height:1.5; }
+
+  .note{
+    background:var(--surface); border:1px solid var(--border); border-radius:16px;
+    padding:1.2rem 1.5rem; box-shadow:var(--shadow); font-size:.9rem; color:var(--ink-dim); line-height:1.6;
+  }
+  .note b{ color:var(--ink); }
+  code{ background:rgba(120,140,170,.14); border-radius:4px; padding:1px 5px; font-size:.92em; }
+
+  @media (max-width:700px){ .trio{ grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <p class="eyebrow">app-icon style · symmetry fixed</p>
+  <h1>Gale, Patch &amp; Dewey — Ghost Icons</h1>
+  <p class="lede">Rebuilt from the reference you flagged — same rounded-square app-icon frame, white ghost silhouette, two dot eyes — but the bottom "feet" were visibly uneven left-to-right in that reference. Fixed by construction: the shape is generated on one half and mirrored, so the two sides can't drift apart — the bug is structurally impossible now, not just eyeballed-and-fixed.</p>
+
+  <div class="trio">
+    <div class="card">
+      <div class="tile" style="background:#3f9e6f" id="t-gale"></div>
+      <h2>Gale</h2>
+      <div class="role">weather_agent</div>
+      <p>Same mark, down to favicon size:</p>
+      <div class="favi" style="background:#3f9e6f" id="f-gale"></div>
+    </div>
+    <div class="card">
+      <div class="tile" style="background:#3a6fd8" id="t-patch"></div>
+      <h2>Patch</h2>
+      <div class="role">devops_agent</div>
+      <p>Same mark, down to favicon size:</p>
+      <div class="favi" style="background:#3a6fd8" id="f-patch"></div>
+    </div>
+    <div class="card">
+      <div class="tile" style="background:#c96a45" id="t-dewey"></div>
+      <h2>Dewey</h2>
+      <div class="role">librarian_agent</div>
+      <p>Same mark, down to favicon size:</p>
+      <div class="favi" style="background:#c96a45" id="f-dewey"></div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>How the symmetry is guaranteed, not just checked:</b> the generator only ever computes the <b>left half</b> of the shape (dome curve, ear nub, eye, one side of each foot) and writes every pixel twice — once at <code>x</code>, once at <code>mirror_x = width - 1 - x</code> — via a single <code>put_mirrored()</code> call. There's no code path that can place a left-side pixel without its right-side twin, which is what the reference screenshot's build was missing. Same one white silhouette + black outline for all three; only the frame color changes.
+  </div>
+</main>
+
+<script>
+var GRID = [[0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 2, 2, 0, 0, 0, 0, 0, 2, 2, 0, 0, 0, 0, 0], [0, 1, 0, 0, 0, 0, 0, 1, 2, 2, 2, 1, 0, 0, 0, 0, 0, 1, 0], [0, 1, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 2, 1, 0, 0, 0, 1, 0], [0, 1, 0, 1, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 1, 0, 1, 0], [0, 1, 0, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 0, 1, 0], [0, 1, 1, 0, 2, 2, 1, 1, 2, 2, 2, 1, 1, 2, 2, 0, 1, 1, 0], [0, 1, 1, 2, 2, 2, 1, 1, 2, 2, 2, 1, 1, 2, 2, 2, 1, 1, 0], [0, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 0], [0, 1, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 1, 0], [0, 1, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 1, 0], [0, 1, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 1, 0], [0, 1, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 1, 0], [0, 0, 2, 2, 2, 2, 0, 0, 2, 2, 2, 0, 0, 2, 2, 2, 2, 0, 0], [0, 0, 2, 2, 2, 2, 0, 0, 2, 2, 2, 0, 0, 2, 2, 2, 2, 0, 0], [0, 0, 0, 2, 2, 2, 0, 0, 2, 2, 2, 0, 0, 2, 2, 2, 0, 0, 0], [0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]];;
+function draw(id, cellSize){
+  var el = document.getElementById(id);
+  var wrap = document.createElement('div');
+  wrap.className = 'g';
+  wrap.style.gridTemplateColumns = 'repeat(' + GRID[0].length + ', ' + cellSize + 'px)';
+  GRID.forEach(function(row){
+    row.forEach(function(v){
+      var d = document.createElement('div');
+      d.style.width = cellSize + 'px'; d.style.height = cellSize + 'px';
+      d.style.background = v===0 ? 'transparent' : (v===1 ? '#0f1720' : '#ffffff');
+      wrap.appendChild(d);
+    });
+  });
+  el.appendChild(wrap);
+}
+['gale','patch','dewey'].forEach(function(name){
+  draw('t-'+name, 6.6);
+  draw('f-'+name, 1.4);
+});
+</script>
+</body>
+</html>

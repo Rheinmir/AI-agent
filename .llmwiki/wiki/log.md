@@ -1815,6 +1815,311 @@
   cả 2 server live.
 - **Chưa commit** — theo quy tắc an toàn chung, chờ user xác nhận rõ ràng.
 
+## 2026-08-26 — ui-tweak — pixel-art-icon-system-3-agents
+
+- User: `/last30days` research về "AI agent style Claude pixel" (Pixel Agents, AgentRoom — biến
+  agent thành nhân vật pixel-art) → "chọn lấy 1 [icon shape] và tạo 3 icons cho 3 agent style pixel
+  thôi". Diễn giải: chuyển ICON MARK của cả 3 (weather/devops/librarian) sang cùng 1 kỹ thuật vẽ
+  pixel-art (lưới `<rect>` vuông, `shape-rendering:crispEdges`) thay vì `<path>` cong mượt — GIỮ
+  NGUYÊN Ý NGHĨA biểu tượng đã chọn trước đó cho từng agent (không đổi concept, chỉ đổi kỹ thuật vẽ):
+  weather = mây, devops = vòng vô cực (2 icon này đã có sẵn, KHÔNG phải trùng nhau như tôi từng nhớ
+  nhầm lúc đầu — devops có design.md riêng ghi rõ đã đổi từ mây sang vòng vô cực từ trước), librarian
+  = kính lúp (chọn từ 6 phương án B–F đã show trước đó qua artifact, chọn B — ẩn dụ search rõ nhất và
+  dễ vẽ pixel nhất).
+- **Tôn trọng khoá thiết kế đã có**: `devops_agent/web/design.md` có quy tắc tường minh "mọi thay
+  đổi màu/icon/copy phải qua file này trước, không sửa tay `chat.html` rồi thôi" (từng bị user chỉ
+  ra 1 lần lỗi tương tự trước đây: copy nguyên icon weather không suy nghĩ). Đã cập nhật CẢ 2
+  `design.md` (weather gốc + devops fork) § Variants TRƯỚC/CÙNG lúc sửa code, ghi rõ: đổi KỸ THUẬT
+  VẼ (path→rect, stroke→fill), không đổi Ý NGHĨA biểu tượng đã khoá.
+- **Implementation** (đồng bộ cả 2 file `web/chat.html`): mỗi icon áp dụng ở ĐÚNG 4 vị trí như cũ
+  (favicon data-URI, `.empty-state .icon`, 2× `.avatar.assistant` trong JS) — không thêm/bớt điểm
+  dùng icon. CSS đổi từ `stroke:var(--color-on-accent);fill:none;stroke-width;stroke-linecap/
+  linejoin:round` sang `fill:var(--color-on-accent);stroke:none;shape-rendering:crispEdges` (rect
+  là khối đặc, khác kỹ thuật `stroke` cũ cho `<path>`). Icon librarian (`step-indicator.step-
+  librarian`) đổi tương tự, giữ màu terracotta đã chốt trước đó.
+- **Grid pixel dùng** (8 cột, gộp rect liền kề cho gọn thay vì 1 `<rect>`/pixel):
+  - weather (mây, 8×5): `x=3 w=2 h=1` (đỉnh) → `x=1 w=6 h=1` → `x=0 w=8 h=2` (thân) → `x=1 w=6 h=1`.
+  - devops (vòng vô cực, 8×4): 2 khối góc trên/dưới (`w=2 h=1`) + 3 cột dọc giữa nối 2 vòng (`h=2`).
+  - librarian (kính lúp, 8×7): vòng tròn kính (4 hàng đầu) + tay cầm chéo (3 hàng cuối, dịch phải
+    dần).
+- Verify: self-review bằng `qlmanage -t` (QuickLook screenshot, KHÔNG đoán mò hình dạng) trước khi
+  áp — dựng preview riêng cả 3 icon cạnh nhau ở size lớn (120px) lẫn size thật (30px/20px), TỰ XEM
+  qua Read tool trước khi sửa file thật. Sau khi sửa: `node -e "new Function(...)"` cả 2 file không
+  lỗi cú pháp; restart cả 2 `chatdemo.py`; dựng lại 1 trang test trích ĐÚNG hàm `renderStepIndicator`
+  + CSS thật từ file, gọi với `'ask_librarian'`, chụp qua `qlmanage` — xác nhận avatar chính (pixel
+  vòng vô cực) và avatar librarian (pixel kính lúp) dóng thẳng cột, không đè nhau, đúng như layout đã
+  fix trước đó. `pytest llmwiki/ mcp_tools/ demo_agents/ harness/scripts` → vẫn 203 passed (thay đổi
+  thuần frontend, không đụng code Python).
+- **Chưa commit** — theo quy tắc an toàn chung, chờ user xác nhận rõ ràng.
+
+## 2026-08-28 — feature — clawd-pixel-character-avatars-and-create-agent-avatar-skill
+
+- User: "style pixel nhân vật liên quan cơ vd weather thì biên tập viên thời tiết, librarian thì là
+  scholar, devops là kỹ sư hình người pixel" → thiết kế LẠI HẲN 3 avatar từ icon hình học đơn giản
+  (mây/vòng vô cực/kính lúp, xem entry 2026-08-26 phía trên) sang NHÂN VẬT pixel đầy đủ (thân/mắt/
+  chân dùng chung, lấy cảm hứng Clawd — mascot informal của Claude Code) + phụ kiện riêng theo chức
+  nghiệp. Đây là công đoạn RIÊNG, không đè lên entry trước.
+- **~30 vòng Design Feedback** (không đoán mò — mỗi lần sửa đều do user chỉ ra cụ thể qua text hoặc
+  screenshot): sai đầu (co hẹp rồi phình tay) → tai/tay lệch hàng mắt → mắt 2px→1px → chân 2→4 →
+  thân hẹp làm chân tràn → tay/tai biến mất khi nới thân → đầu bị co so với thân → mắt lệch hàng tai
+  → tô màu mũ → mũ đơn điệu (thêm hàng phụ kiện RỖNG → phát hiện đó chính là nguyên nhân "mũ lơ
+  lửng") → tham khảo WebSearch hình mũ pixel thật (hard-hat có vành xoè, mortarboard có bảng tràn +
+  khuy, mây có múi gồ ghề) → **đảo hướng lớn**: 2 ảnh tham khảo thật user gửi (weatherman thật mặc
+  suit không đội gì; devops thật trong minh hoạ đeo kính, không phải nón bảo hộ) → bỏ hard-hat/
+  cloud-hat, đổi devops sang kính hình vô cực (ẩn dụ trực tiếp sơ đồ CI/CD trong ảnh) + belt/cờ lê,
+  weather sang tai nghe rồi cuối cùng chốt suit+tie (tai nghe "xấu quá" ở quy mô pixel này) → **lỗi
+  lặp lại 4 lần**: mọi phụ kiện đặt ở hàng ngay-trên/ngay-dưới mắt đều bị user báo "chạm mắt"/"dính
+  khối" ở kích thước avatar thật (mic, tai nghe, kính đeo mắt, ve áo vest, cả nút cà vạt dù không
+  đúng cột mắt) — rút ra LUẬT chung: hàng ngay dưới mắt phải TRẮNG HOÀN TOÀN, không riêng cột mắt.
+- **Quyết định thiết kế đã chốt** (ghi trong docstring `pixel_icon_gen.py`, đọc trước khi sửa):
+  thân/mắt/chân (`CLAWD_BODY`/`EYES`) DÙNG CHUNG 100% cho mọi agent, chỉ `hat`/`accessories` khác
+  nhau; `hat` LUÔN 2 hàng ĐẶC chạm thẳng vào đầu (không hàng đệm rỗng); phụ kiện vùng thân LUÔN bắt
+  đầu từ row3 trở xuống (row2 để trắng hoàn toàn); phụ kiện vùng đầu LUÔN đi vào `hat` (tự cách mắt
+  do offset chiều cao mũ) chứ không vẽ đè lên thân.
+- **Kết quả chốt 3 agent**: weather = suit navy + cà vạt đỏ (không đội gì, đúng ảnh tham khảo);
+  devops = kính 2 mắt hình vô cực (ẩn dụ CI/CD) + belt da nâu + cờ lê cam kẹp trên belt; librarian =
+  mortarboard tím (bảng tràn rộng hơn đầu, khuy giữa bảng, tua mũ lệch trái) + kính quý tộc 1 mắt
+  (monocle) vàng kim bên phải.
+- **Refactor kỹ thuật** (`accessory_rects`/`accessory_color` đơn-màu → `accessories: list[(color,
+  [rect,...])]` đa-nhóm-đa-màu) — cần thiết vì devops cần 3 màu riêng (kính/belt/cờ lê) trong 1 icon,
+  cơ chế cũ chỉ cho 1 màu/agent.
+- User tiếp: "giữ 3 cái này và spawn thêm 8 phiên bản nữa của mỗi agent... và trích xuất thành skill
+  tạo `/create-agent-avatar`":
+  - Thêm `_with_accessory_color()` + `VARIANTS` (8 màu/agent — weather đổi màu cà vạt, devops đổi
+    màu cờ lê, librarian đổi màu bộ trang sức) và `build_gallery_html()`/`--gallery` CLI flag — sinh
+    hàng loạt bằng cách đổi MÀU của nhóm accessory cuối (signature), giữ NGUYÊN toạ độ đã kiểm chứng
+    an toàn (không tự sinh hình dạng mới hàng loạt — rủi ro tái phạm các lỗi đã liệt kê ở trên).
+  - `.claude/skills/create-agent-avatar/SKILL.md` (MỚI) — đúc kết quy trình 6 bước + toàn bộ luật đã
+    rút ra ở trên thành skill tái dùng cho agent mới sau này (research ảnh thật trước → chọn 1
+    signature → dựng qua `AgentIcon` → luật "không đè hàng mắt" → luật "hat 2 hàng đặc" → tự kiểm
+    QuickLook cả zoom lớn lẫn mini TRƯỚC khi cho user xem).
+- Verify: `python3 harness/scripts/pixel_icon_gen.py` (stdout/`--preview`/`--gallery`) chạy không
+  lỗi; `len(VARIANTS[key]) == 8` cho cả 3 agent; tự soi qua `qlmanage -t` + `Read` ở CẢ zoom lớn
+  (280-400px, thấy rõ chi tiết) VÀ mini (22-30px, đúng kích thước avatar thật) cho từng vòng sửa —
+  bắt được cả những lỗi KHÔNG thấy ở bản zoom lớn (vd ve áo chạm mắt chỉ rõ ở mini).
+- **CHƯA áp dụng vào `chat.html` thật** của cả 3 agent (favicon, `.empty-state .icon`, 2×
+  `.avatar.assistant`, step-icon librarian) — toàn bộ vẫn ở dạng `pixel_icon_gen.py` + Artifact
+  preview, chờ user xác nhận cuối cùng trước khi áp + cập nhật `design.md` (bắt buộc cho devops) +
+  restart server + verify sống + `pytest`.
+- **Chưa commit** — theo quy tắc an toàn chung, chờ user xác nhận rõ ràng.
+
+## 2026-08-28 — feature — clawd-avatar-eye-touch-fixes-wiki-registration-and-8-agent-skill-test
+
+Tiếp nối entry cùng ngày phía trên — 3 việc RIÊNG, làm liên tục sau khi entry đó được ghi.
+
+- **Sửa tiếp weather/devops sau khi user chỉ ra 2 ảnh tham khảo thật** (weatherman thật chỉ suit
+  không đội gì; devops thật trong minh hoạ đeo kính không phải nón bảo hộ): weather bỏ hẳn tai nghe
+  (đã thử headset → user: "tai nghe xấu quá", chuyển sang suit navy + cà vạt đỏ theo ĐÚNG ảnh tham
+  khảo); devops giữ kính nhưng đổi ẩn dụ theo yêu cầu tiếp "kính hình vô cực CI/CD" + thêm belt/cờ
+  lê cho đủ signature (theo "kính không đủ signature").
+- **2 vòng sửa lỗi "chạm mắt" LẶP LẠI** (đúng luật đã ghi trong SKILL.md, nhưng lúc code thực tế vẫn
+  vi phạm 2 lần trước khi soát kỹ): (1) ve áo vest weather ở row2 đè đúng cột mắt → dời jacket+cà vạt
+  xuống row3, để row2 trắng hoàn toàn; (2) kính+cờ lê devops chạm nhau ở ranh giới row2/row3 → theo
+  gợi ý user "kính đặt lên đỉnh đầu", chuyển kính devops từ accessory-trên-thân sang `hat` riêng
+  (tách hẳn khỏi belt/cờ lê ở thân bằng nguyên hàng mắt + hàng đỉnh đầu).
+- **Trích xuất skill `/create-agent-avatar`** (`.claude/skills/create-agent-avatar/SKILL.md`) — quy
+  trình 6 bước + 2 luật cốt lõi đúc kết từ toàn bộ lỗi ở trên. Sinh `VARIANTS`/`_with_accessory_color`
+  + `build_gallery_html()`/`--gallery` CLI flag (8 biến thể màu/agent, đổi màu nhóm accessory cuối,
+  giữ nguyên toạ độ đã kiểm chứng).
+- **Đăng ký skill vào wiki + repo** (yêu cầu user: "update vào skill là tạo vào wiki luôn và đăng ký
+  nó như skill của wiki và repo này"): thêm mục "Output Report" bắt buộc vào SKILL.md (mỗi lần dùng
+  skill này từ nay TỰ ghi snapshot vào `llmwiki/html/`, log vào `wiki/log.md`, cân nhắc thêm
+  `wiki/index.md`); tạo trang concept mới `llmwiki/wiki/concepts/create-agent-avatar-skill.md`, thêm
+  vào `wiki/index.md`. Lưu gallery đầu tiên (3 agent chuẩn + 8 variant/agent) vào
+  `llmwiki/html/280826-clawd-icon-gallery.html` (yêu cầu user: "lưu vào uiwk đi chứ").
+- **Test skill bằng cách tạo 8 agent hoàn toàn mới** (yêu cầu user: "thêm 8 agent khác biệt để test
+  skill /create-agent-avatar") — gọi qua `Skill("create-agent-avatar", args=...)` (không tự làm tắt,
+  đúng quy trình skill vừa viết): `security_agent` (hoodie + terminal badge xanh lá), `finance_agent`
+  (visor kế toán xanh lá + xấp tiền vàng), `legal_agent` (suit + nơ đỏ + huy hiệu búa toà vàng),
+  `marketing_agent` (beret hồng tím + huy hiệu ống kính cyan), `hr_agent` (lanyard navy + thẻ cam),
+  `data_scientist_agent` (áo blouse xám nhạt + biểu đồ cột tím), `support_agent` (tai nghe xanh
+  dương — CHÍNH concept đã bỏ ở weather, nay có agent hợp hẳn), `sales_agent` (suit + cà vạt vàng +
+  cặp táp nâu tràn nhẹ ra mép thân). Mỗi role đều `WebSearch` ảnh tham khảo thật TRƯỚC khi chọn
+  signature (không đoán mò) — vd xác nhận hoodie cho security, green-eyeshade-visor cho accountant
+  (biểu tượng kế toán cổ điển, không phải chỉ kính như devops), lanyard cho HR, headset gần như đồng
+  nhất cho customer support trong mọi bộ icon.
+- **Self-check tự động trước khi vẽ**: script kiểm mọi `(x,y,w,h)` trong `accessories` của 8 agent
+  mới, KHÔNG rect nào có `y` trong {0,1,2} (vùng nguy hiểm) — phát hiện 2 false-positive (2 ốp tai
+  `support_agent` ở row1 col0/col9, khác cột mắt col2/col7) → xác nhận qua QuickLook đây là pattern
+  AN TOÀN đã dùng cho weather gốc (chỉ cần mic bên dưới mới thực sự gây lỗi, không phải bản thân ốp
+  tai) — không sửa code, chỉ xác nhận bằng mắt.
+- Verify: `python3 harness/scripts/pixel_icon_gen.py` (mọi mode) chạy sạch; tự soi qua `qlmanage -t`
+  + `Read` CẢ zoom lớn (180-500px) LẪN mini (28/20px, đúng kích thước avatar thật) cho cả 8 agent
+  mới — không icon nào bị dính mắt/lơ lửng. Gallery cuối (11 agent + 24 variant) publish qua Artifact
+  + lưu `llmwiki/html/280826-skill-test-8-new-agents-avatar.html`.
+- **CHƯA áp dụng agent mới nào vào `demo_agents/`** — đây là 8 agent THỬ NGHIỆM để test skill, không
+  phải agent thật đang chạy trong dự án; không có `chat.html`/`design.md` tương ứng để áp vào.
+- **Design Feedback ngay sau đó, 2 việc**: (1) "data scientist sao không để mắt kính luôn" — đúng,
+  kính KHÔNG hề trùng devops (devops đeo kính ĐẨY LÊN ĐỈNH ĐẦU qua `hat`; đây là kính ĐEO TRÊN MẶT,
+  dạng hở đáy — viền row0-1 CHỈ, không viền row2, để row2 vẫn trắng 100% làm khe hở an toàn trước áo
+  blouse ở row3, đúng LUẬT SỐ 1) — bỏ biểu đồ cột (signature yếu hơn) để nhường chỗ. (2) "logo quá
+  khó biểu diễn thì dùng tên viết tắt được không, vd HR hay bảo mật thì SEC" — thêm `PIXEL_FONT_3x3`
+  (font khối 3 hàng cao, chỉ định nghĩa 5 chữ cần dùng: H,R,S,E,C — không phải bảng chữ đầy đủ) +
+  `_text_rects()` ghép chữ thành rect, thay huy hiệu terminal (security) và lanyard+thẻ (HR) bằng
+  chữ "SEC"/"HR" dạng pixel — dùng full cols0-9 cho "SEC" (3+1+2+1+3=10, vừa khít), cols1-7 cho "HR".
+  Verify: self-check tự động (không rect nào trùng ĐÚNG ô mắt col2/7·row1) PASS; tự soi QuickLook cả
+  zoom lớn lẫn mini — cả 2 chữ đọc được trong ngữ cảnh (S/Z hơi mơ hồ ở font 3x3, chấp nhận được vì
+  luôn đi kèm E+C). Gallery + snapshot wiki đã cập nhật lại (đè lên file cũ cùng tên, không tạo file
+  mới — vẫn là cùng 1 lô test).
+- **LUẬT SỐ 3 mới — tỉ lệ + độ mịn pixel của `hat`** (Design Feedback: user gửi ảnh 1 mô hình Clawd
+  thật đội top hat): "tỉ lệ nón với Clawd như vậy mới hợp lý, sao mình làm mũ khổ thế" — mọi `hat`
+  trước giờ đều RỘNG BẰNG ĐẦU (khớp `CLAWD_BODY[0]`, 8/10 đơn vị) và chỉ 2 hàng DẸT, khác hẳn ảnh
+  thật (mũ hẹp hơn hẳn đầu, cao hơn). Demo thử trên `security_agent` (thu hẹp còn 4/10, thêm 1 hàng
+  = 3 hàng cao) → user xác nhận đúng hướng nhưng CHƯA ĐỦ: "ý là accessory chọn bộ chia pixel nhỏ
+  hơn thay vì to ngang với thân" — mũ THẬT làm từ voxel nhỏ hơn hẳn khối thân, không phải phóng to
+  cùng cỡ lưới.
+  - Thêm field `hat_subdiv: int = 1` vào `AgentIcon` (mặc định 1 = giống agent cũ, không đổi) —
+    subdiv=2 nghĩa là mỗi ký tự trong `hat` chỉ chiếm NỬA đơn vị thân, cho phép lưới 6 hàng x 20
+    cột (thay vì 3x10) → đường thóp MƯỢT hơn (nhiều nấc nhỏ) trong CÙNG kích thước vật lý (5/10 đơn
+    vị thân ở hàng rộng nhất, vẫn hẹp hơn hẳn đầu). `build_icon_svg_for()` tự chia toạ độ `hat` cho
+    `hat_subdiv` khi render (rect SVG hỗ trợ toạ độ lẻ, không cần làm tròn).
+  - Hỏi user (AskUserQuestion) phạm vi áp dụng trước khi sửa hàng loạt — chọn "áp cho tất cả
+    accessory trên đầu": `devops` (kính), `finance_agent` (visor), `marketing_agent` (beret),
+    `support_agent` (tai nghe) đều đổi sang `hat_subdiv=2` + lưới 6x20, mỗi cái thóp dần lên đỉnh
+    theo hình dạng riêng (devops giữ được 2 tròng kính tách rời + khe cầu — vẫn đọc ra ẩn dụ vô cực
+    ∞; marketing thêm chóp phồng LỆCH 1 bên đúng đặc trưng beret thật). `librarian` GIỮ NGUYÊN (bảng
+    mũ RỘNG HƠN đầu là đúng thật per WebSearch trước đó, không phải lỗi cần sửa).
+  - Verify: `len(row) == 10*hat_subdiv` cho mọi hàng của cả 5 agent; tự soi QuickLook cả zoom lớn
+    (170-450px) lẫn mini (20-28px) — không icon nào vỡ hình hay dính mắt; gallery đầy đủ 11 agent +
+    24 variant re-publish, không có variant nào bị lệch do đổi hat (chỉ đổi màu accessory, không
+    đụng hat). Cập nhật SKILL.md (LUẬT SỐ 3 mới, đổi "quy trình 6 bước" → "7 bước") + concept page
+    `wiki/concepts/create-agent-avatar-skill.md` (2→3 luật) + snapshot
+    `llmwiki/html/280826-skill-test-8-new-agents-avatar.html` (đè lên bản cũ, cùng 1 lô test).
+- **LUẬT SỐ 4 mới — `accessories` không cần cơ chế subdiv riêng, đã hỗ trợ toạ độ lẻ sẵn** (Design
+  Feedback: "áp [pixel mịn] với tất cả phụ kiện quần áo không chỉ mũ, và nhờ vậy HR và security có
+  độ phân giải cao hơn cho phụ kiện thì không cần nhất thiết phải đè chữ thay tên nữa"):
+  - Kiểm tra `build_icon_svg_for()`: hàm build accessory KHÔNG hề ép kiểu nguyên — `(x, y, w, h)`
+    đi thẳng vào `_rects_to_svg_children()` rồi f-string vào `<rect>`, SVG vốn nhận số thực — nghĩa
+    là KHÔNG cần thêm field `accessory_subdiv` như `hat_subdiv`, chỉ cần DÙNG toạ độ lẻ trực tiếp.
+  - Vẽ lại 5 badge ở độ phân giải phần tư-đơn-vị (0.25-0.6): `security_agent` — bỏ chữ "SEC", quay
+    lại ICON THẬT là khiên bảo mật (2 màu, 5 dải thu nhọn dần); `hr_agent` — bỏ chữ "HR", quay lại
+    lanyard (dây mảnh 0.4 đơn vị) + thẻ (tỉ lệ dọc thật 2.4x1.7) + khung ảnh + dải tên giả lập (4
+    nhóm màu, chi tiết trước đây KHÔNG khả thi ở độ phân giải nguyên đơn vị); `legal_agent` — búa
+    toà refine 3 rect (đầu dẹt/cán thon/đế gỗ) thay 2 khối vuông; `marketing_agent` — vòng ống kính
+    4 cạnh cong (trên/dưới dày+ngắn, trái/phải mảnh+cao) thay 3-rect góc vuông; `finance_agent` — 3
+    tờ tiền XOÈ LỆCH (0.4 đơn vị/tờ, dịch dần) thay 2 thanh phẳng chồng khít.
+  - `suit`/`belt` (mảng màu phẳng lớn) GIỮ NGUYÊN đơn vị thường — mịn hoá không có lợi cho 1 hình
+    chữ nhật đặc, chỉ áp cho chi tiết/badge cần đường cong hoặc hình dạng phức tạp.
+  - `PIXEL_FONT_3x3`/`_text_rects()` (từ LUẬT chữ-thay-icon trước) GIỮ LẠI trong code dù không còn
+    agent nào dùng — vẫn là fallback hợp lệ cho trường hợp THẬT SỰ không tìm được icon nào rõ (khác
+    với 2 case này, vốn CÓ icon thật, chỉ do vẽ ở độ phân giải quá thô).
+  - Verify: `python3 harness/scripts/pixel_icon_gen.py` (mọi mode) chạy sạch; tự soi QuickLook cả
+    zoom lớn (170-220px) lẫn mini (20-28px) cho cả 5 badge mới — đọc rõ hơn hẳn bản chữ/khối vuông
+    cũ, không lỗi chạm mắt (mọi rect vẫn ở row>=3, không đổi vùng an toàn, chỉ đổi ĐỘ MỊN toạ độ);
+    gallery đầy đủ 11 agent + 24 variant re-publish, không variant nào lệch (đổi màu accessory
+    signature vẫn hoạt động bình thường trên toạ độ lẻ). Cập nhật SKILL.md (thêm mẹo toạ độ lẻ vào
+    mục bước 3) + concept page (3→4 luật) + snapshot `280826-skill-test-8-new-agents-avatar.html`.
+- **finance_agent — thêm ký hiệu "$"** (Design Feedback: "xấp tiền thì ghi thêm ký tự dollar cho
+  ngầu"): thử bản đầu (0.5 đơn vị, nét lệch 0.15-0.4) → đọc thành dấu "+" chứ không ra hình cong S
+  (offset quá nhỏ so với kích thước render). Phóng to hẳn thành "con dấu $" in đè lên xấp tiền (nét
+  lệch trái/phải tăng lên 0.6 đơn vị, span gần hết bề rộng xấp tiền) → tự soi QuickLook xác nhận đọc
+  rõ hình S + 2 nét dọc trên/dưới, không chạm chân (row6) hay hàng mắt.
+- **5 mũ bị chê "nhìn na ná nhau"** (Design Feedback: "sao mấy cái nón nhìn na ná và lối mòn với
+  nhau thế, có thêm pixel nhỏ bao nhiêu tuỳ thích thì bẻ nó kỹ hơn mới đúng, đến cả kính và vòm trên
+  tai nghe giờ cũng không tưởng tượng ra nổi nữa") — nguyên nhân gốc: LUẬT SỐ 3 (thêm ở entry trước)
+  chỉ dạy "hẹp hơn + cao hơn + pixel mịn hơn", KHÔNG dạy phải sculpt hình dạng THẬT khác nhau — kết
+  quả `devops`/`finance_agent`/`marketing_agent`/`support_agent` đều dùng CHUNG 1 khuôn tam giác
+  thóp-nhọn-dần, chỉ khác màu/độ rộng nhẹ.
+  - Vẽ lại TỪ ĐẦU theo đúng hình dạng thật của từng vật, không dùng công thức chung:
+    - `devops` (kính): 4 hàng, THẤP (hat_h=2.0) — 2 khối tròng RÕ RỆT tách biệt ở 2 hàng TRÊN CÙNG,
+      gộp gọng ở 2 hàng dưới — không nhọn từ 1 điểm nữa.
+    - `marketing_agent` (beret): 6 hàng (hat_h=3.0) — DOME TRÒN PHỒNG rộng ngay từ hàng thứ 2 (không
+      thóp dần), chỉ 1 cục tem nhỏ lệch phải ở hàng đỉnh mới nhọn.
+    - `support_agent` (headset): CHỈ 2 hàng (hat_h=1.0, thấp hơn hẳn mọi mũ khác) — dải MỎNG cong
+      nhẹ, không dày thành khối tam giác.
+    - `finance_agent` (visor): CHỈ 2 hàng (hat_h=1.0) nhưng RỘNG NGANG hơn cao (14/20 cột ở hàng
+      brim) — tỉ lệ ngang>dọc, khác hẳn dome tròn của beret dù cùng thấp như headset.
+    - `security_agent` (hoodie): GIỮ NGUYÊN — tam giác thóp nhọn ĐÚNG là hình dạng thật của mũ trùm
+      kéo lên, không phải lỗi cần sửa.
+  - Verify: `len(row) == 10*hat_subdiv` cho cả 5; tự soi QuickLook — 5 silhouette giờ rõ ràng KHÁC
+    NHAU cả về hình dạng lẫn CHIỀU CAO (1.0/1.0/2.0/3.0/3.0 đơn vị thân, không còn đồng loạt ~3 như
+    trước); gallery đầy đủ re-publish, không lỗi mới. Cập nhật SKILL.md LUẬT SỐ 3: thêm cảnh báo rõ
+    "KHÔNG dùng chung 1 khuôn thóp-nhọn cho mọi agent" + bảng tỉ lệ tham khảo cho từng loại phụ kiện
+    (kính/beret/headset/visor/hoodie) + yêu cầu chiều cao cũng phải khác nhau theo vật thật.
+- **2 fix tiếp theo cùng đợt** (Design Feedback: "nhìn hổng ra hoodie luôn, còn con đeo tai nghe thì
+  chụp tai phải to hơn tai mới ra dáng là đang đeo chụp tai chứ, thiếu mic tai nghe nữa"):
+  - `security_agent` (hoodie): silhouette tam giác thóp ĐÚNG dáng mũ trùm nhưng thiếu 2 tín hiệu thị
+    giác mà mắt người dùng để NHẬN RA hoodie cụ thể — thêm (1) LỚP LÓT bên trong hé ra ở miệng mũ
+    (màu xám nhạt `#71717A` khác hẳn vải ngoài đen, đặt ở `y` ÂM trong vùng `hat` — vẫn nằm trong mũ,
+    không đụng luật "row2 phải trắng"), (2) vải BUNG RỘNG ở hàng đáy (12/20 cột, thay vì thóp mượt
+    tiếp tới 10/20) mô phỏng vải dồn quanh cổ/vai khi kéo mũ lên.
+  - `support_agent` (headset): ốp tai cũ (1x1) đúng bằng ô tai gốc → không có cảm giác "đang đeo gì
+    cả". Phóng to hẳn (1.3x1.8, tràn nhẹ qua row2) để rõ ràng LỚN HƠN tai thật — xác nhận qua
+    QuickLook: tràn qua row2 ở cột xa mắt (cách mắt 0.7 đơn vị) vẫn AN TOÀN, đúng như đã quan sát với
+    ốp tai bản gốc (cột cách mắt mới là yếu tố quyết định, không phải "mọi thứ ở row1/row2 đều cấm"
+    như câu chữ LUẬT SỐ 1 viết hơi rộng hơn thực tế). Bổ sung LẠI cần mic (đã bỏ ở bản weather vì lỗi
+    chạm mắt) — lần này giữ TOÀN BỘ đường đi của mic trong khoảng cột 8.0-8.7, KHÔNG BAO GIỜ chạm cột
+    7 (đúng cột mắt phải), khác hẳn lỗi cũ (mic weather nằm ĐÚNG cột mắt, cách 2 hàng).
+  - Verify: tự soi QuickLook cả zoom lớn (280-500px) lẫn mini (28/20px) — hoodie đọc rõ hơn (dù vẫn
+    không hoàn hảo 100%, thừa nhận trong summary gửi user); headset đọc RÕ RÀNG hơn hẳn (ốp tai to +
+    mic cong xuống miệng); không lỗi chạm mắt mới; gallery đầy đủ re-publish sạch.
+- **Chưa commit** — theo quy tắc an toàn chung, chờ user xác nhận rõ ràng.
+
+## 2026-08-29 — feature — apply-clawd-avatars-to-production-weather-devops
+
+User: "thay thế logo cho các agent hiện có đi" — ÁP DỤNG bộ avatar Clawd-style đã chốt (hàng "Chuẩn"
+trong gallery, không phải 8 agent thử nghiệm) vào 2 agent THẬT đang chạy: `weather_agent`,
+`devops_agent`. `librarian_agent` không có `web/chat.html` riêng (chỉ là process gọi qua socket từ
+2 agent kia) nên không có "logo riêng" để thay — icon librarian (sparkle terracotta, xem entry
+2026-08-25) hiển thị NHỎ bên trong step-indicator của weather/devops, KHÔNG đổi trong lượt này (chỉ
+đổi logo/avatar CHÍNH của từng agent — favicon + empty-state + 2× avatar JS, đúng phạm vi user nói
+"các agent hiện có", không tự ý mở rộng sang phụ kiện librarian chưa được yêu cầu).
+
+- **Cập nhật `design.md` TRƯỚC theo đúng quy tắc đã khoá** (đặc biệt `devops_agent/web/design.md`
+  có quy tắc tường minh "mọi đổi icon phải qua đây trước") — thêm mục "Cập nhật 29/08/2026" ở cả 2
+  file, ghi rõ: đổi từ icon hình học sang NHÂN VẬT pixel, dẫn tới skill `/create-agent-avatar` +
+  engine `pixel_icon_gen.py` làm nguồn sinh markup (không gõ tay `<rect>`), và xác nhận CSS
+  `fill:var(--color-on-accent)` hiện có GIỮ NGUYÊN không cần xoá (màu inline trên `<g>` con của
+  nhân vật mới luôn thắng màu kế thừa từ `<svg>` cha theo cơ chế CSS bình thường — không phải
+  ngoại lệ cần code riêng).
+- **Sinh markup bằng script** (`build_icon_svg('weather')`/`build_icon_svg('devops')` từ
+  `pixel_icon_gen.py`), tự viết thêm 1 đoạn Python tính khung favicon (canvas 32×32, margin ~19%,
+  giữ tỉ lệ khung nhân vật) thay vì đoán tay toạ độ — tự soi qua QuickLook TRƯỚC khi áp vào file thật
+  (đúng kỷ luật đã dùng suốt phiên thiết kế).
+- **Áp vào ĐÚNG 4 vị trí/agent** (`<link rel="icon">` favicon data-URI, `.empty-state .icon`, 2×
+  `.avatar.assistant` trong JS `addRow`/typing-indicator) cho cả `weather_agent/web/chat.html` và
+  `devops_agent/web/chat.html` — không thêm/bớt vị trí dùng icon.
+- **Verify sống, không chỉ đọc code**:
+  - Node syntax check (`new Function(...)` trên nội dung `<script>`) cho cả 2 file — PASS.
+  - Phát hiện + tự sửa 1 lỗi môi trường KHÔNG liên quan tới thay đổi: restart server ban đầu dùng
+    nhầm `python3` hệ thống (3.9, thiếu `MCPServerManager`/`llmwiki`) thay vì venv dự án
+    (`.venv/bin/python3.14` + `PYTHONPATH` trỏ repo root) — sau khi sửa đường chạy đúng, cả 2 server
+    lên port 8767/8768 sạch, không traceback.
+  - Kéo HTML thật đang chạy về qua `curl` (không phải đọc file nguồn) → tự soi QuickLook: cả 2 empty-
+    state icon hiển thị ĐÚNG nhân vật Clawd mới (weather = suit+tie navy/đỏ; devops = kính+belt+cờ
+    lê xanh Kubernetes) trên nền badge tròn đúng gradient accent của từng agent.
+  - Render riêng khung `.avatar.assistant` ở ĐÚNG kích thước CSS thật (17px, dùng trong bubble chat)
+    để xác nhận không vỡ hình/quá nhỏ ở size thật, không chỉ ở bản zoom lớn lúc thiết kế.
+  - `pytest llmwiki/ mcp_tools/ demo_agents/ harness/scripts` → 203 passed, không giảm so với trước
+    (thay đổi thuần frontend, không đụng code Python nào ngoài chính `pixel_icon_gen.py` không sửa
+    lần này).
+- 2 server dev (`chatdemo.py`) được để CHẠY NỀN sau khi verify xong (port 8767/8768) để user xem
+  trực tiếp ngay nếu muốn, không tự tắt.
+- **Chưa commit** — theo quy tắc an toàn chung, chờ user xác nhận rõ ràng.
+
+## 2026-08-29 — fix — librarian-step-icon-still-old-magnifying-glass
+
+User phát hiện phần bị nói rõ là "chưa đổi trong lượt này" ở entry ngay phía trên vẫn cần đổi: "librarian
+đang search chưa được đổi icon kìa này tui thấy thanh tìm kiếm ở dưới không có" — icon nhỏ trong
+`step-indicator.step-librarian` (badge hiện khi weather/devops gọi sang `ask_librarian`) vẫn là kính
+lúp pixel cũ, không phải nhân vật librarian (mũ cử nhân + kính một mắt + tua) đã chốt từ trước.
+
+- Thay `icon:` của `TOOL_STEPS.ask_librarian` trong CẢ `weather_agent/web/chat.html` VÀ
+  `devops_agent/web/chat.html` bằng markup sinh từ `build_icon_svg('librarian')`
+  (`harness/scripts/pixel_icon_gen.py`) — không gõ tay `<rect>`.
+- So sánh trực quan 3 mức size (11px/15px/18px) trong badge tròn 20px trước khi quyết định — nhân
+  vật nhiều màu/chi tiết hơn hẳn kính lúp đơn sắc cũ nên 11px cũ (dù tỉ lệ nhất quán với avatar
+  chính 17px/30px) không đủ rõ. Chốt 15px là mức nhỏ nhất vẫn đọc được mũ+tua+monocle, badge tròn
+  giữ nguyên 20px không đổi. Cập nhật `.step-indicator.step-librarian .step-icon svg{width;height}`
+  ở cả 2 file.
+- Cập nhật `design.md` của cả 2 agent TRƯỚC/CÙNG lúc sửa code (đúng kỷ luật đã khoá).
+- **Verify sống**: node syntax check (`new Function`) PASS cả 2 file; `curl` HTML thật đang chạy từ
+  2 server nền (port 8767/8768, không cần restart — `chatdemo.py` đọc file mới mỗi request) xác
+  nhận cả icon markup mới VÀ CSS size 15px đã lên; QuickLook render badge 20px/15px xác nhận nhân
+  vật đọc rõ ở size thật; `pytest llmwiki/ mcp_tools/ demo_agents/ harness/scripts` → 203 passed,
+  không giảm (thay đổi thuần frontend).
+- **Chưa commit** — chờ user xác nhận.
+
 <!-- log:auto:start -->
 
 ### 🤖 Log tự-động (code-logger, không do agent ghi)

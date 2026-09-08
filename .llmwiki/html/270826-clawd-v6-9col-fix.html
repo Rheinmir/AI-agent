@@ -1,0 +1,50 @@
+<meta charset="utf-8">
+<title>Clawd v6 — 9-col fix</title>
+<style>
+  body{margin:0;padding:40px;background:#0f1115;display:flex;gap:32px;font-family:-apple-system,sans-serif;flex-wrap:wrap}
+  .card{display:flex;flex-direction:column;align-items:center;gap:10px}
+  .badge{width:130px;height:130px;border-radius:26px;display:flex;align-items:center;justify-content:center;position:relative}
+  .badge svg{width:90px;shape-rendering:crispEdges;position:absolute}
+  .eyes{fill:#1a1a1a}
+  .label{color:#cfd3da;font-size:13px}
+  .mini{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative}
+  .mini svg{width:21px;shape-rendering:crispEdges;position:absolute}
+</style>
+
+<!-- weather: 9-wide viewBox, body rects shifted +0.5 to stay centered, feet extended
+     to 5 teeth at x=0,2,4,6,8 (self-mirroring around the new center at x=4.5). -->
+<div class="card">
+  <div class="badge" style="background:linear-gradient(135deg,#10a37f,#1a7f64)">
+    <svg viewBox="0 0 9 8" fill="white"><rect x="1.5" y="0" width="2" height="1"/><rect x="5.5" y="0" width="2" height="1"/><rect x="0.5" y="1" width="8" height="1"/><rect x="2.5" y="2" width="4" height="1"/><rect x="1.5" y="3" width="6" height="1"/><rect x="0.5" y="4" width="8" height="1"/><rect x="1.5" y="5" width="6" height="1"/><rect x="1.5" y="6" width="6" height="1"/><rect x="0" y="7" width="1" height="1"/><rect x="2" y="7" width="1" height="1"/><rect x="4" y="7" width="1" height="1"/><rect x="6" y="7" width="1" height="1"/><rect x="8" y="7" width="1" height="1"/></svg>
+    <svg viewBox="0 0 9 8" class="eyes"><rect x="2.5" y="3" width="1" height="1"/><rect x="5.5" y="3" width="1" height="1"/></svg>
+  </div>
+  <div class="label">weather</div>
+  <div class="mini" style="background:linear-gradient(135deg,#10a37f,#1a7f64)">
+    <svg viewBox="0 0 9 8" fill="white"><rect x="1.5" y="0" width="2" height="1"/><rect x="5.5" y="0" width="2" height="1"/><rect x="0.5" y="1" width="8" height="1"/><rect x="2.5" y="2" width="4" height="1"/><rect x="1.5" y="3" width="6" height="1"/><rect x="0.5" y="4" width="8" height="1"/><rect x="1.5" y="5" width="6" height="1"/><rect x="1.5" y="6" width="6" height="1"/><rect x="0" y="7" width="1" height="1"/><rect x="2" y="7" width="1" height="1"/><rect x="4" y="7" width="1" height="1"/><rect x="6" y="7" width="1" height="1"/><rect x="8" y="7" width="1" height="1"/></svg>
+    <svg viewBox="0 0 9 8" class="eyes"><rect x="2.5" y="3" width="1" height="1"/><rect x="5.5" y="3" width="1" height="1"/></svg>
+  </div>
+</div>
+
+<div class="card">
+  <div class="badge" style="background:linear-gradient(135deg,#326CE5,#244da4)">
+    <svg viewBox="0 0 9 8" fill="white"><rect x="2.5" y="0" width="4" height="1"/><rect x="0.5" y="1" width="8" height="1"/><rect x="2.5" y="2" width="4" height="1"/><rect x="1.5" y="3" width="6" height="1"/><rect x="0.5" y="4" width="8" height="1"/><rect x="1.5" y="5" width="6" height="1"/><rect x="1.5" y="6" width="6" height="1"/><rect x="0" y="7" width="1" height="1"/><rect x="2" y="7" width="1" height="1"/><rect x="4" y="7" width="1" height="1"/><rect x="6" y="7" width="1" height="1"/><rect x="8" y="7" width="1" height="1"/></svg>
+    <svg viewBox="0 0 9 8" class="eyes"><rect x="2.5" y="3" width="1" height="1"/><rect x="5.5" y="3" width="1" height="1"/></svg>
+  </div>
+  <div class="label">devops</div>
+  <div class="mini" style="background:linear-gradient(135deg,#326CE5,#244da4)">
+    <svg viewBox="0 0 9 8" fill="white"><rect x="2.5" y="0" width="4" height="1"/><rect x="0.5" y="1" width="8" height="1"/><rect x="2.5" y="2" width="4" height="1"/><rect x="1.5" y="3" width="6" height="1"/><rect x="0.5" y="4" width="8" height="1"/><rect x="1.5" y="5" width="6" height="1"/><rect x="1.5" y="6" width="6" height="1"/><rect x="0" y="7" width="1" height="1"/><rect x="2" y="7" width="1" height="1"/><rect x="4" y="7" width="1" height="1"/><rect x="6" y="7" width="1" height="1"/><rect x="8" y="7" width="1" height="1"/></svg>
+    <svg viewBox="0 0 9 8" class="eyes"><rect x="2.5" y="3" width="1" height="1"/><rect x="5.5" y="3" width="1" height="1"/></svg>
+  </div>
+</div>
+
+<div class="card">
+  <div class="badge" style="background:linear-gradient(135deg,#d97757,#b85c3e)">
+    <svg viewBox="0 0 9 8" fill="white"><rect x="0.5" y="0" width="8" height="1"/><rect x="2.5" y="1" width="4" height="1"/><rect x="2.5" y="2" width="4" height="1"/><rect x="1.5" y="3" width="6" height="1"/><rect x="0.5" y="4" width="8" height="1"/><rect x="1.5" y="5" width="6" height="1"/><rect x="1.5" y="6" width="6" height="1"/><rect x="0" y="7" width="1" height="1"/><rect x="2" y="7" width="1" height="1"/><rect x="4" y="7" width="1" height="1"/><rect x="6" y="7" width="1" height="1"/><rect x="8" y="7" width="1" height="1"/></svg>
+    <svg viewBox="0 0 9 8" class="eyes"><rect x="2.5" y="3" width="1" height="1"/><rect x="5.5" y="3" width="1" height="1"/></svg>
+  </div>
+  <div class="label">librarian</div>
+  <div class="mini" style="background:linear-gradient(135deg,#d97757,#b85c3e)">
+    <svg viewBox="0 0 9 8" fill="white"><rect x="0.5" y="0" width="8" height="1"/><rect x="2.5" y="1" width="4" height="1"/><rect x="2.5" y="2" width="4" height="1"/><rect x="1.5" y="3" width="6" height="1"/><rect x="0.5" y="4" width="8" height="1"/><rect x="1.5" y="5" width="6" height="1"/><rect x="1.5" y="6" width="6" height="1"/><rect x="0" y="7" width="1" height="1"/><rect x="2" y="7" width="1" height="1"/><rect x="4" y="7" width="1" height="1"/><rect x="6" y="7" width="1" height="1"/><rect x="8" y="7" width="1" height="1"/></svg>
+    <svg viewBox="0 0 9 8" class="eyes"><rect x="2.5" y="3" width="1" height="1"/><rect x="5.5" y="3" width="1" height="1"/></svg>
+  </div>
+</div>

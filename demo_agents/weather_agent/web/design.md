@@ -442,6 +442,51 @@ catalog Hallmark), khoá nguyên giá trị đang chạy thật để tránh l�
   - **Quy tắc thêm vào hệ:** khi 1 file bị FORK sang agent khác (đã xảy ra với devops_agent), bug ở
     phần code KẾ THỪA (không phải phần delta đã khoá riêng) phải sửa ở bản GỐC trước, rồi propagate
     y hệt sang mọi bản fork — không sửa riêng lẻ từng fork, tránh 2 bản trôi dạt logic theo thời gian.
+- **2026-08-26 — Icon mark đổi sang PIXEL ART (rect-grid), giữ nguyên ý nghĩa "đám mây thời tiết".**
+  User yêu cầu 3 agent (weather/devops/librarian) cùng chuyển sang 1 hệ icon pixel-art thống nhất,
+  sau khi research `/last30days` về xu hướng "AI agent pixel style" (Pixel Agents, AgentRoom — biến
+  agent thành nhân vật pixel-art trong văn phòng ảo). Thay `<path>` cong (`M17.5 19a4.5...`,
+  `stroke`-based) bằng lưới `<rect>` vuông (`fill`-based, `shape-rendering:crispEdges`) — VẪN vẽ
+  hình đám mây (khối trên nhỏ, khối dưới rộng), chỉ đổi kỹ thuật vẽ, không đổi Ý NGHĨA biểu tượng.
+  Áp dụng ĐÚNG 4 chỗ như cũ (favicon, empty-state, 2× avatar JS).
+  ```html
+  <svg viewBox="0 0 8 5"><rect x="3" y="0" width="2" height="1"/><rect x="1" y="1" width="6" height="1"/><rect x="0" y="2" width="8" height="2"/><rect x="1" y="4" width="6" height="1"/></svg>
+  ```
+  CSS đổi từ `stroke:var(--color-on-accent);fill:none;stroke-width:var(--icon-stroke);stroke-linecap/
+  linejoin:round` sang `fill:var(--color-on-accent);stroke:none;shape-rendering:crispEdges`. Áp
+  dụng ĐỒNG BỘ sang `devops_agent/web/chat.html` (đổi kỹ thuật vẽ tương tự cho icon vòng vô cực —
+  xem `demo_agents/devops_agent/web/design.md` § Icon mark, cập nhật cùng ngày) + icon librarian
+  (kính lúp pixel, không thuộc phần "avatar" đã khoá ở đây — xem `wiki/log.md`).
+- **2026-08-29 — Icon mark đổi từ icon hình học (đám mây) sang NHÂN VẬT pixel "Clawd-style" (thân
+  block trắng + mắt chấm + chân, lấy cảm hứng mascot Clawd của Claude Code) mặc SUIT + CÀ VẠT ĐỎ.**
+  User yêu cầu style pixel NHÂN VẬT liên quan chức nghiệp cho cả 3 agent (không phải icon hình học
+  đơn giản nữa) — quy trình đầy đủ + ~30 vòng Design Feedback nằm ở `wiki/log.md` (entry
+  "2026-08-28 — feature — clawd-pixel-character-avatars..."), rồi trích xuất thành skill
+  `/create-agent-avatar` (`.claude/skills/create-agent-avatar/SKILL.md`) + engine dùng chung
+  `harness/scripts/pixel_icon_gen.py`. Weather: research ảnh thật cho thấy weatherman KHÔNG đội/đeo
+  gì đặc trưng — chỉ suit + cà vạt (khác hẳn giả định ban đầu "mascot đội mũ mây"). Sinh markup qua
+  `python3 harness/scripts/pixel_icon_gen.py` → `build_icon_svg('weather')`, KHÔNG gõ tay toạ độ
+  `<rect>` (đổi cấu trúc nhân vật phải sửa `AGENTS['weather']` trong file đó trước, rồi generate
+  lại — không sửa trực tiếp SVG trong `chat.html`).
+  ```html
+  <svg viewBox="0 0 10 7" shape-rendering="crispEdges"><g fill="#ffffff"><rect x="1" y="0" width="8" height="1"/><rect x="0" y="1" width="10" height="1"/><rect x="1" y="2" width="8" height="1"/><rect x="1" y="3" width="8" height="1"/><rect x="1" y="4" width="8" height="1"/><rect x="1" y="5" width="8" height="1"/><rect x="1" y="6" width="1" height="1"/><rect x="3" y="6" width="1" height="1"/><rect x="6" y="6" width="1" height="1"/><rect x="8" y="6" width="1" height="1"/></g><g fill="#1a1a1a"><rect x="2" y="1" width="1" height="1"/><rect x="7" y="1" width="1" height="1"/></g><g fill="#1E3A5F"><rect x="1" y="3" width="8" height="1"/><rect x="1" y="4" width="8" height="1"/><rect x="1" y="5" width="8" height="1"/></g><g fill="#DC2626"><rect x="4" y="3" width="2" height="1"/><rect x="4" y="4" width="1" height="1"/><rect x="4" y="5" width="1" height="1"/></g></svg>
+  ```
+  Nhân vật giờ có MÀU RIÊNG cho từng phần (thân trắng, mắt đen, suit navy `#1E3A5F`, cà vạt đỏ
+  `#DC2626`) thay vì 1 màu đơn `fill:var(--color-on-accent)` kế thừa từ accent — CSS
+  `.avatar.assistant svg{fill:var(--color-on-accent)}` / `.empty-state .icon svg{...}` VẪN GIỮ
+  NGUYÊN (không xoá) vì màu inline trên từng `<g>` con LUÔN THẮNG màu kế thừa từ `<svg>` cha theo
+  đúng cơ chế CSS inheritance — không cần sửa CSS, chỉ cần confirm hành vi này qua browser thật
+  trước khi coi là xong. Áp dụng ĐÚNG 4 chỗ như cũ (favicon — viewBox nền 32×32 đổi theo tỉ lệ khung
+  nhân vật mới, empty-state, 2× avatar JS).
+- **2026-08-29 (tiếp) — Icon librarian trong step-indicator (`TOOL_STEPS.ask_librarian`) đổi từ
+  kính lúp pixel cũ sang NHÂN VẬT librarian đã khoá (mũ cử nhân + kính một mắt + tua).** User phát
+  hiện icon này bị bỏ sót ở lượt áp avatar chuẩn cho weather/devops (lượt trước chỉ đổi avatar
+  CHÍNH của agent, không đụng badge nhỏ gọi sang librarian). Sinh markup qua
+  `build_icon_svg('librarian')`. Đồng thời tăng size render từ 11px→15px
+  (`.step-indicator.step-librarian .step-icon svg`) vì nhân vật nhiều màu/chi tiết hơn hẳn kính
+  lúp đơn sắc cũ — so sánh trực quan 11/15/18px cho thấy 15px là mức nhỏ nhất vẫn đọc rõ mũ+tua+
+  monocle, badge tròn (20px) giữ nguyên không đổi. Áp dụng ĐỒNG BỘ sang
+  `devops_agent/web/chat.html` (xem file đó § Icon librarian, cùng ngày).
 
 ## Exports
 `tokens.css` (trong `demo_agents/weather_agent/web/`) là source of truth, nhưng KHÔNG được

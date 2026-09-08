@@ -37,4 +37,4 @@ jobs:
           base="${{ github.event.pull_request.base.sha || github.event.before }}"
           files=$(git diff --name-only "$base" HEAD 2>/dev/null | grep -E '\.md$' || true)
           [ -z "$files" ] && { echo "no changed .md"; exit 0; }
-          python3 "$HOME/.claude/harness/harness/poc-vendor-neutral/bin/llmwiki-validate.py" files $files
+          python3 "$HOME/.claude/harness/.harness/poc-vendor-neutral/bin/llmwiki-validate.py" files $files

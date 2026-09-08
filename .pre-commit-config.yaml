@@ -3,6 +3,6 @@ repos:
     hooks:
       - id: llmwiki-harness
         name: llmwiki harness validator (layer=repo)
-        entry: python3 harness/poc-vendor-neutral/bin/llmwiki-validate.py files
+        entry: python3 .harness/poc-vendor-neutral/bin/llmwiki-validate.py files
         language: system
         files: '\.md$'

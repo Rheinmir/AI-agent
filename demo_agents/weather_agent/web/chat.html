@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Weather Agent</title>
 <meta name="description" content="Chatbot agent thật — tra thời tiết mọi thành phố qua Open-Meteo, nhớ hội thoại nhiều lượt.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2310a37f'/%3E%3Cpath d='M9 20a4.5 4.5 0 0 1 .8-8.9A6 6 0 0 1 21.4 9 4 4 0 0 1 23 17H9z' fill='none' stroke='white' stroke-width='1.8' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2310a37f'/%3E%3Csvg x='6.1' y='9.1' width='19.8' height='13.9' viewBox='0 0 10 7' shape-rendering='crispEdges'%3E%3Cg fill='%23ffffff'%3E%3Crect x='1' y='0' width='8' height='1'/%3E%3Crect x='0' y='1' width='10' height='1'/%3E%3Crect x='1' y='2' width='8' height='1'/%3E%3Crect x='1' y='3' width='8' height='1'/%3E%3Crect x='1' y='4' width='8' height='1'/%3E%3Crect x='1' y='5' width='8' height='1'/%3E%3Crect x='1' y='6' width='1' height='1'/%3E%3Crect x='3' y='6' width='1' height='1'/%3E%3Crect x='6' y='6' width='1' height='1'/%3E%3Crect x='8' y='6' width='1' height='1'/%3E%3C/g%3E%3Cg fill='%231a1a1a'%3E%3Crect x='2' y='1' width='1' height='1'/%3E%3Crect x='7' y='1' width='1' height='1'/%3E%3C/g%3E%3Cg fill='%231E3A5F'%3E%3Crect x='1' y='3' width='8' height='1'/%3E%3Crect x='1' y='4' width='8' height='1'/%3E%3Crect x='1' y='5' width='8' height='1'/%3E%3C/g%3E%3Cg fill='%23DC2626'%3E%3Crect x='4' y='3' width='2' height='1'/%3E%3Crect x='4' y='4' width='1' height='1'/%3E%3Crect x='4' y='5' width='1' height='1'/%3E%3C/g%3E%3C/svg%3E%3C/svg%3E">
 <style>
   /* Hallmark · macrostructure: App Shell (non-catalog — chat interface, không phải trang
    * marketing nên không map vào 21 macrostructure) · genre: modern-minimal
@@ -194,7 +194,7 @@
   .row{display:flex;gap:14px;padding:18px 0}
   .avatar{width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center}
   .avatar.assistant{background:linear-gradient(135deg,var(--accent),var(--accent-2))}
-  .avatar.assistant svg{width:17px;height:17px;stroke:var(--color-on-accent);fill:none;stroke-width:var(--icon-stroke);stroke-linecap:round;stroke-linejoin:round}
+  .avatar.assistant svg{width:17px;height:17px;fill:var(--color-on-accent);stroke:none;shape-rendering:crispEdges}
   .avatar.user{background:var(--color-avatar-user);color:var(--color-on-accent);font-size:12.5px;font-weight:700}
 
   .row.user{justify-content:flex-end}
@@ -252,13 +252,13 @@
   .step-indicator.step-librarian .step-icon{width:20px;height:20px;border-radius:50%;flex-shrink:0;
     background:linear-gradient(135deg,var(--librarian-accent),var(--librarian-accent-2));
     display:flex;align-items:center;justify-content:center}
-  .step-indicator.step-librarian .step-icon svg{width:11px;height:11px;fill:var(--color-on-accent);stroke:none}
+  .step-indicator.step-librarian .step-icon svg{width:15px;height:15px;fill:var(--color-on-accent);stroke:none;shape-rendering:crispEdges}
   @keyframes step-pulse{0%,100%{opacity:.65}50%{opacity:1}}
 
   .empty-state{max-width:520px;margin:12vh auto 0;text-align:center;padding:0 20px}
   .empty-state .icon{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2));
     display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
-  .empty-state .icon svg{width:30px;height:30px;stroke:var(--color-on-accent);fill:none;stroke-width:var(--icon-stroke);stroke-linecap:round;stroke-linejoin:round}
+  .empty-state .icon svg{width:30px;height:30px;fill:var(--color-on-accent);stroke:none;shape-rendering:crispEdges}
   .empty-state h2{font-size:21px;font-weight:600;letter-spacing:-.01em;margin:0 0 6px;text-wrap:balance}
   .empty-state p{font-size:13.5px;color:var(--text-dim);line-height:1.6;margin:0 0 18px;text-wrap:pretty}
   .suggestions{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
@@ -390,7 +390,7 @@
     <div class="chat-scroll" id="scroll">
       <div class="thread" id="thread">
         <div class="empty-state" id="emptyState">
-          <div class="icon"><svg viewBox="0 0 24 24"><path d="M17.5 19a4.5 4.5 0 0 0 0-9 6 6 0 0 0-11.4-1.5A4 4 0 0 0 6.5 16"/></svg></div>
+          <div class="icon"><svg viewBox="0 0 10 7" shape-rendering="crispEdges"><g fill="#ffffff"><rect x="1" y="0" width="8" height="1"/><rect x="0" y="1" width="10" height="1"/><rect x="1" y="2" width="8" height="1"/><rect x="1" y="3" width="8" height="1"/><rect x="1" y="4" width="8" height="1"/><rect x="1" y="5" width="8" height="1"/><rect x="1" y="6" width="1" height="1"/><rect x="3" y="6" width="1" height="1"/><rect x="6" y="6" width="1" height="1"/><rect x="8" y="6" width="1" height="1"/></g><g fill="#1a1a1a"><rect x="2" y="1" width="1" height="1"/><rect x="7" y="1" width="1" height="1"/></g><g fill="#1E3A5F"><rect x="1" y="3" width="8" height="1"/><rect x="1" y="4" width="8" height="1"/><rect x="1" y="5" width="8" height="1"/></g><g fill="#DC2626"><rect x="4" y="3" width="2" height="1"/><rect x="4" y="4" width="1" height="1"/><rect x="4" y="5" width="1" height="1"/></g></svg></div>
           <h2>Weather Agent</h2>
           <p>Agent thật gọi Open-Meteo cho bất kỳ thành phố nào trên thế giới, nhớ ngữ cảnh hội thoại.</p>
           <div class="suggestions" data-tour="suggestions">
@@ -568,7 +568,7 @@ function addRow(kind, text) {
   row.className = 'row ' + kind;
   if (kind === 'assistant') {
     row.innerHTML =
-      '<div class="avatar assistant"><svg viewBox="0 0 24 24"><path d="M17.5 19a4.5 4.5 0 0 0 0-9 6 6 0 0 0-11.4-1.5A4 4 0 0 0 6.5 16"/></svg></div>' +
+      '<div class="avatar assistant"><svg viewBox="0 0 10 7" shape-rendering="crispEdges"><g fill="#ffffff"><rect x="1" y="0" width="8" height="1"/><rect x="0" y="1" width="10" height="1"/><rect x="1" y="2" width="8" height="1"/><rect x="1" y="3" width="8" height="1"/><rect x="1" y="4" width="8" height="1"/><rect x="1" y="5" width="8" height="1"/><rect x="1" y="6" width="1" height="1"/><rect x="3" y="6" width="1" height="1"/><rect x="6" y="6" width="1" height="1"/><rect x="8" y="6" width="1" height="1"/></g><g fill="#1a1a1a"><rect x="2" y="1" width="1" height="1"/><rect x="7" y="1" width="1" height="1"/></g><g fill="#1E3A5F"><rect x="1" y="3" width="8" height="1"/><rect x="1" y="4" width="8" height="1"/><rect x="1" y="5" width="8" height="1"/></g><g fill="#DC2626"><rect x="4" y="3" width="2" height="1"/><rect x="4" y="4" width="1" height="1"/><rect x="4" y="5" width="1" height="1"/></g></svg></div>' +
       '<div class="bubble">' + renderMarkdownLite(text) + '</div>';
   } else if (kind === 'user') {
     row.innerHTML = '<div class="bubble"></div>';
@@ -587,7 +587,7 @@ function addTypingRow() {
   const row = document.createElement('div');
   row.className = 'row assistant';
   row.innerHTML =
-    '<div class="avatar assistant"><svg viewBox="0 0 24 24"><path d="M17.5 19a4.5 4.5 0 0 0 0-9 6 6 0 0 0-11.4-1.5A4 4 0 0 0 6.5 16"/></svg></div>' +
+    '<div class="avatar assistant"><svg viewBox="0 0 10 7" shape-rendering="crispEdges"><g fill="#ffffff"><rect x="1" y="0" width="8" height="1"/><rect x="0" y="1" width="10" height="1"/><rect x="1" y="2" width="8" height="1"/><rect x="1" y="3" width="8" height="1"/><rect x="1" y="4" width="8" height="1"/><rect x="1" y="5" width="8" height="1"/><rect x="1" y="6" width="1" height="1"/><rect x="3" y="6" width="1" height="1"/><rect x="6" y="6" width="1" height="1"/><rect x="8" y="6" width="1" height="1"/></g><g fill="#1a1a1a"><rect x="2" y="1" width="1" height="1"/><rect x="7" y="1" width="1" height="1"/></g><g fill="#1E3A5F"><rect x="1" y="3" width="8" height="1"/><rect x="1" y="4" width="8" height="1"/><rect x="1" y="5" width="8" height="1"/></g><g fill="#DC2626"><rect x="4" y="3" width="2" height="1"/><rect x="4" y="4" width="1" height="1"/><rect x="4" y="5" width="1" height="1"/></g></svg></div>' +
     '<div class="bubble"><span class="typing"><span></span><span></span><span></span></span></div>';
   thread.appendChild(row);
   scrollEl.scrollTop = scrollEl.scrollHeight;
@@ -707,15 +707,12 @@ const TOOL_STEPS = {
   get_weather: { icon: '🌦️', label: 'Đang tra thời tiết…' },
   get_city_note: { icon: '📝', label: 'Đang tra ghi chú thành phố…' },
   recall_last_city: { icon: '🧠', label: 'Đang nhớ lại thành phố gần nhất…' },
-  // Icon librarian = 1 sparkle 4 cánh FILL KHỐI (không phải line-art nhiều nét như quả cầu+kính
-  // cũ — nhiều chi tiết nhỏ nhìn rối ở badge 20px). Bài học 25/08/2026 (Design Feedback: "không đủ
-  // đẹp, giống logo Claude Code") — đổi phong cách sang hình học tối giản 1 khối duy nhất, màu cam
-  // đất ấm (--librarian-accent, xem CSS :root) thay vì tím, gợi cảm giác "spark AI" quen thuộc mà
-  // KHÔNG copy logo thật của bất kỳ hãng nào.
+  // Icon librarian = NHÂN VẬT Clawd-style (mũ cử nhân + kính một mắt + tua), đồng bộ với avatar
+  // chính của weather/devops (29/08/2026) — sinh qua build_icon_svg('librarian') trong
+  // harness/scripts/pixel_icon_gen.py, KHÔNG gõ tay toạ độ <rect>. Đổi cấu trúc phải sửa
+  // AGENTS['librarian'] trong file đó trước rồi generate lại.
   ask_librarian: {
-    icon: '<svg viewBox="0 0 24 24"><path d="M12 2c0 4.4-1.1 6.5-2.3 7.7S6.4 12 2 12c4.4 0 '
-      + '6.5 1.1 7.7 2.3S12 17.6 12 22c0-4.4 1.1-6.5 2.3-7.7S17.6 12 22 12c-4.4 0-6.5-1.1-7.7-2.3'
-      + 'S12 6.4 12 2Z"/></svg>',
+    icon: '<svg viewBox="0 0 10 9" shape-rendering="crispEdges"><g fill="#C084FC"><rect x="0" y="0" width="10" height="1"/></g><g fill="#A855F7"><rect x="2" y="1" width="6" height="1"/></g><g fill="#ffffff"><rect x="1" y="2" width="8" height="1"/><rect x="0" y="3" width="10" height="1"/><rect x="1" y="4" width="8" height="1"/><rect x="1" y="5" width="8" height="1"/><rect x="1" y="6" width="8" height="1"/><rect x="1" y="7" width="8" height="1"/><rect x="1" y="8" width="1" height="1"/><rect x="3" y="8" width="1" height="1"/><rect x="6" y="8" width="1" height="1"/><rect x="8" y="8" width="1" height="1"/></g><g fill="#1a1a1a"><rect x="2" y="3" width="1" height="1"/><rect x="7" y="3" width="1" height="1"/></g><g fill="#FDE047"><rect x="4" y="0" width="1" height="1"/><rect x="2" y="1" width="1" height="1"/><rect x="1" y="2" width="1" height="1"/><rect x="6" y="2" width="3" height="1"/><rect x="6" y="3" width="1" height="1"/><rect x="8" y="3" width="1" height="1"/><rect x="6" y="4" width="3" height="1"/><rect x="8" y="5" width="1" height="1"/></g></svg>',
     label: 'Librarian đang tìm tài liệu…',
   },
   github_search: { icon: '🐙', label: 'Đang tìm trên GitHub…' },

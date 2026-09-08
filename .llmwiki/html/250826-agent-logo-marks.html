@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cloud, Loop &amp; Book</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23f4a340'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#eef1f5; --surface:#ffffff; --ink:#1b2430; --ink-dim:#5a6472; --border:#d7dee6;
+    --shadow: 0 1px 2px rgba(20,30,45,.06), 0 10px 28px rgba(20,30,45,.08);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#10141c; --surface:#171c26; --ink:#eef1f5; --ink-dim:#9aa5b3; --border:#2a3140;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#10141c; --surface:#171c26; --ink:#eef1f5; --ink-dim:#9aa5b3; --border:#2a3140;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.5);
+  }
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500&display=swap');
+
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:"IBM Plex Sans",-apple-system,"Segoe UI",sans-serif;
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    padding:3rem 1.5rem;
+  }
+  main{ max-width:920px; width:100%; }
+  .eyebrow{
+    font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:.72rem; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--ink-dim); font-weight:600; margin:0 0 .8rem;
+  }
+  h1{ font-family:"IBM Plex Mono",ui-monospace,monospace; font-weight:600; font-size:1.9rem; margin:0 0 .7rem; text-wrap:balance; }
+  p.lede{ color:var(--ink-dim); max-width:64ch; margin:0 0 2.4rem; font-size:1.02rem; }
+
+  .trio{ display:grid; grid-template-columns:repeat(3,1fr); gap:1.2rem; margin-bottom:2rem; }
+  .card{
+    background:var(--surface); border:1px solid var(--border); border-radius:20px;
+    padding:1.8rem 1.4rem 1.6rem; box-shadow:var(--shadow); text-align:center;
+  }
+  .card svg{ width:112px; height:112px; }
+  .card h2{ font-family:"IBM Plex Mono",monospace; font-size:1.1rem; margin:.9rem 0 .1rem; }
+  .card .role{
+    font-family:"IBM Plex Mono",monospace; font-size:.68rem; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--accent); font-weight:600; margin-bottom:.6rem;
+  }
+  .card p{ font-size:.85rem; color:var(--ink-dim); margin:0; line-height:1.5; }
+  .card.gale{ --accent:#c9930a; }
+  .card.patch{ --accent:#c9741d; }
+  .card.dewey{ --accent:#2fb8a6; }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]) .card.gale{ --accent:#ffd166; }
+    :root:not([data-theme="light"]) .card.patch{ --accent:#f4a340; }
+    :root:not([data-theme="light"]) .card.dewey{ --accent:#45d1bd; }
+  }
+  :root[data-theme="dark"] .card.gale{ --accent:#ffd166; }
+  :root[data-theme="dark"] .card.patch{ --accent:#f4a340; }
+  :root[data-theme="dark"] .card.dewey{ --accent:#45d1bd; }
+
+  .note{
+    background:var(--surface); border:1px solid var(--border); border-radius:16px;
+    padding:1.2rem 1.5rem; box-shadow:var(--shadow); font-size:.9rem; color:var(--ink-dim); line-height:1.6;
+  }
+  .note b{ color:var(--ink); }
+
+  @media (max-width:700px){ .trio{ grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <p class="eyebrow">agent mark set · logos, not mascots</p>
+  <h1>Cloud, Loop &amp; Book</h1>
+  <p class="lede">Flat marks this time, not faces — one symbol per agent in a shared badge shape, same three colors as Gale/Patch/Dewey so the set still reads as one family at logo scale (favicon, app header, README badge).</p>
+
+  <div class="trio">
+    <div class="card gale">
+      <svg viewBox="0 0 160 160" role="img" aria-label="Weather agent mark: a cloud with a lightning bolt, sky blue">
+        <rect x="8" y="8" width="144" height="144" rx="34" fill="#4a90d9"/>
+        <circle cx="56" cy="80" r="17" fill="#ffffff"/>
+        <circle cx="81" cy="64" r="23" fill="#ffffff"/>
+        <circle cx="106" cy="80" r="16" fill="#ffffff"/>
+        <rect x="46" y="80" width="70" height="24" rx="12" fill="#ffffff"/>
+        <polygon points="94,92 78,116 90,116 82,140 108,110 94,110 100,92" fill="#ffd166" stroke="#356fae" stroke-width="2"/>
+      </svg>
+      <h2>Gale</h2>
+      <div class="role">weather_agent</div>
+      <p>Cloud + bolt — a signal read, not just a picture of the sky.</p>
+    </div>
+
+    <div class="card patch">
+      <svg viewBox="0 0 160 160" role="img" aria-label="DevOps agent mark: an infinity loop of two interlocking rings, terminal green and amber">
+        <rect x="8" y="8" width="144" height="144" rx="34" fill="#3fae6a"/>
+        <circle cx="60" cy="80" r="28" fill="none" stroke="#ffffff" stroke-width="15"/>
+        <circle cx="100" cy="80" r="28" fill="none" stroke="#f4a340" stroke-width="15"/>
+      </svg>
+      <h2>Patch</h2>
+      <div class="role">devops_agent</div>
+      <p>The devops infinity loop, split two-tone — dev on one side, ops on the other.</p>
+    </div>
+
+    <div class="card dewey">
+      <svg viewBox="0 0 160 160" role="img" aria-label="Librarian agent mark: an open book with a teal bookmark ribbon, plum">
+        <rect x="8" y="8" width="144" height="144" rx="34" fill="#8a4fae"/>
+        <path d="M74,38 L88,38 L88,60 L81,52 L74,60 Z" fill="#2fb8a6"/>
+        <path d="M40,60 Q60,54 80,58 L80,110 Q60,105 40,111 Z" fill="#ffffff"/>
+        <path d="M120,60 Q100,54 80,58 L80,110 Q100,105 120,111 Z" fill="#ffffff"/>
+        <line x1="80" y1="58" x2="80" y2="110" stroke="#6b3a88" stroke-width="3"/>
+      </svg>
+      <h2>Dewey</h2>
+      <div class="role">librarian_agent</div>
+      <p>Open book, bookmark already placed — it cites, it doesn't skim.</p>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>Mark vs. mascot:</b> Gale/Patch/Dewey (the earlier avatar pass) are faces with personality, meant for a chat header or a card. These are flat, symbolic, and meant to survive being shrunk to 16px — a favicon, a badge, a CLI banner. Same three colors on purpose, so picking one doesn't mean abandoning the other.
+  </div>
+</main>
+</body>
+</html>

@@ -1,19 +1,19 @@
 
 # flywheel failure-flywheel raw history (local)
-harness/metrics/failures.jsonl
+.harness/metrics/failures.jsonl
 
 # code-logger raw event history (local)
-harness/metrics/events.jsonl
-harness/metrics/cost-by-session.json
+.harness/metrics/events.jsonl
+.harness/metrics/cost-by-session.json
 
 # mem-rank local memory store
-harness/metrics/memory.jsonl
-harness/metrics/tasks.json
+.harness/metrics/memory.jsonl
+.harness/metrics/tasks.json
 
 # per-machine harness runtime state (not source)
-harness/metrics/.stop-debounce.json
-harness/metrics/provenance-log.jsonl
-harness/metrics/scratch-log.jsonl
+.harness/metrics/.stop-debounce.json
+.harness/metrics/provenance-log.jsonl
+.harness/metrics/scratch-log.jsonl
 
 # wiki lint lock files (per-machine, transient)
 demo_agents/*/wiki/.stale.lock
@@ -38,3 +38,10 @@ __pycache__/
 
 # editor/tool backup files
 *.bak
+
+# macOS Finder metadata
+.DS_Store
+**/.DS_Store
+
+# unix domain sockets (per-machine runtime, not source)
+*.sock

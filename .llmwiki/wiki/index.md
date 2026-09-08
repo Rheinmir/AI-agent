@@ -53,6 +53,7 @@
 | [concepts/debugging-stale-process](concepts/debugging-stale-process.md) | concept | 2026-08-05 |
 | [concepts/click-depth-pyramid](concepts/click-depth-pyramid.md) | concept | 2026-08-05 |
 | [180826-deepseek-harness-docs](sources/draft/180826-deepseek-harness-docs.md) | draft | 2026-08-18 |
+| [concepts/create-agent-avatar-skill](concepts/create-agent-avatar-skill.md) | concept | 2026-08-28 |
 <!-- index:auto:start -->
 | [270726-session-provenance](sources/270726-session-provenance.md) | source | session-provenance bdb1a446 — auto-distill |
 | [010826-session-provenance](sources/010826-session-provenance.md) | source | session-provenance bdb1a446 — auto-distill |
